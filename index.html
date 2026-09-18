@@ -1,0 +1,98 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+<title>Sword Destiny - ex</title>
+<meta name="description" content="14등급 41종의 검을 주조하는 수집형 뽑기 게임. 상위 등급에는 전용 컷신이 재생됩니다.">
+<meta name="theme-color" content="#0a0908">
+<meta name="color-scheme" content="dark">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Sword Destiny">
+<meta name="format-detection" content="telephone=no">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="icon-192.png">
+<meta property="og:title" content="Sword Destiny - ex">
+<meta property="og:description" content="14등급 41종의 검을 주조하는 수집형 뽑기 게임.">
+<meta property="og:type" content="website">
+<link rel="stylesheet" href="css/game.css">
+</head>
+<body>
+
+<div id="app">
+  <header class="hud">
+    <div class="crest"><b>SWORD DESTINY</b><i>- ex</i></div>
+    <div class="hud-stats">
+      <div class="stat gold"><b id="s-gold">0</b><span>주화</span></div>
+      <div class="stat luck"><b id="s-luck">×1.00</b><span>행운</span></div>
+      <div class="stat"><b id="s-rolls">0</b><span>주조</span></div>
+    </div>
+    <div class="who" id="who" style="display:none">
+      <span id="who-name"></span><em id="who-role"></em>
+      <button id="btn-logout" aria-label="로그아웃" title="로그아웃"><svg viewBox="0 0 24 24" fill="none"
+        stroke="currentColor" stroke-width="1.6"><path d="M15 4h4v16h-4"/><path d="M10 8l-4 4 4 4"/><path d="M6 12h9"/></svg></button>
+    </div>
+    <button class="gear" id="btn-set" aria-label="설정"><svg viewBox="0 0 24 24" fill="none"
+      stroke="currentColor" stroke-width="1.6"><circle cx="12" cy="12" r="3.2"/>
+      <path d="M12 2.6v3M12 18.4v3M2.6 12h3M18.4 12h3M5.3 5.3l2.1 2.1M16.6 16.6l2.1 2.1M18.7 5.3l-2.1 2.1M7.4 16.6l-2.1 2.1"/>
+      </svg></button>
+  </header>
+  <main>
+    <section class="view on" id="v-roll">
+      <div class="buffs" id="buffs"></div>
+      <div class="altar">
+        <div class="altar-glow" id="glow"></div><div class="pedestal"></div>
+        <div class="slot idle" id="slot"></div>
+      </div>
+      <div class="readout">
+        <div class="rarity" id="r-rarity">화로가 식어 있습니다</div>
+        <div class="sname" id="r-name"></div>
+        <div class="odds" id="r-odds"></div>
+      </div>
+      <div class="controls">
+        <button class="forge" id="btn-forge">검 을 뽑 는 다</button>
+        <div class="sub-row">
+          <button class="mini" id="btn-auto" disabled>자동 주조 · 잠김</button>
+        </div>
+        <div class="pity"><i id="pity-bar"></i></div>
+        <div class="pity-txt"><span id="pity-txt"></span><span id="speed-txt"></span></div>
+      </div>
+    </section>
+    <section class="view" id="v-shop"></section>
+    <section class="view" id="v-codex">
+      <div class="codex-top">
+        <button id="btn-tree">도 전 과 제<i class="badge" id="ach-badge" style="display:none"></i></button>
+        <span class="cnt2" id="ach-cnt"></span>
+      </div>
+      <div class="codex-bar" id="codex-bar"></div>
+      <div class="grid" id="codex-grid"></div>
+      <div id="codex-count" style="font-size:11px;color:#6b6158;letter-spacing:.12em;margin:14px 0 2px;text-align:center"></div>
+    </section>
+    <div id="sheet"></div><div id="settings"></div><div id="tree"></div><div id="devm"></div>
+    <div id="rcard"></div><div id="toast"></div>
+  </main>
+  <nav>
+    <button class="on" data-v="roll">화 로</button>
+    <button data-v="shop">상 점</button>
+    <button data-v="codex">도 감<i class="badge" id="codex-badge" style="display:none"></i></button>
+  </nav>
+</div>
+<div id="login"></div>
+<div id="cs"></div>
+
+<script src="js/01-data-rarity.js"></script>
+<script src="js/02-data-swords.js"></script>
+<script src="js/03-data-economy.js"></script>
+<script src="js/04-state.js"></script>
+<script src="js/05-sword-svg.js"></script>
+<script src="js/06-audio.js"></script>
+<script src="js/07-roll.js"></script>
+<script src="js/08-cutscenes.js"></script>
+<script src="js/09-render.js"></script>
+<script src="js/10-events.js"></script>
+<script src="js/11-boot.js"></script>
+</body>
+</html>
