@@ -54,6 +54,16 @@ const SWORDS=[
  {t:13,n:"심판 審判",b:"great",g:"cross",c:["#fff0b8","#9a7a18"],e:"#fffce8",gem:"#ffdf6e",gr:"#4f3c0a",
   th:"scale",pd:8.4,end:15500,d:"빛과 어둠을 같은 접시에 올린다. 기우는 쪽이 곧 판결이다."},
  {t:13,n:"천기 天機",b:"straight",g:"halo",c:["#ffe89a","#b8912a"],e:"#fffbe0",gem:"#ffd45e",gr:"#4f3a0c",th:"fate",d:"하늘의 기틀. 이 검을 쥔 자는 고르지 않는다. 이미 골라져 있었을 뿐이다."},
+ /* ── 운명 이상: 무극(14)·혼돈(15)·영겁(16). 공용 승천 컷신(th:ascend) ── */
+ {t:14,n:"무한의 나선",b:"rift",g:"halo",c:["#bfffe6","#2f9f86"],e:"#e8fff6",gem:"#5fe0c4",gr:"#123a32",th:"ascend",d:"끝을 향해 감기지만 끝이 없다. 감길수록 처음에서 멀어질 뿐이다."},
+ {t:14,n:"경계 밖의 관측",b:"crystal",g:"ring",c:["#bcd0ff","#5a6fd0"],e:"#eef2ff",gem:"#8fa0ff",gr:"#1c2350",th:"ascend",d:"선 밖에서 보면, 안에 있던 모든 것이 한 점이었다."},
+ {t:14,n:"무극 無極",b:"great",g:"crown",c:["#d8bcff","#6a3fb0"],e:"#f2e6ff",gem:"#b48cff",gr:"#2a1a4a",th:"ascend",d:"더 나눌 수 없고 더 합칠 수 없는 자리. 끝도 시작도 없는 곳."},
+ {t:15,n:"혼돈의 이빨",b:"fang",g:"crown",c:["#ff9ce0","#a02f7a"],e:"#ffd6f2",gem:"#ff6ac4",gr:"#4a1236",th:"ascend",d:"물릴 때마다 규칙이 하나씩 사라진다. 무엇이 남을지는 정해지지 않았다."},
+ {t:15,n:"뒤틀린 인과",b:"rift",g:"none",c:["#ffb0a0","#a03f2f"],e:"#ffe0d6",gem:"#ff7a5a",gr:"#4a1e12",th:"ascend",d:"결과가 원인을 고른다. 벤 뒤에야 왜 베였는지 정해진다."},
+ {t:15,n:"혼돈 混沌",b:"flame",g:"crown",c:["#ffcf6e","#b07a1a"],e:"#fff0c4",gem:"#ffb84a",gr:"#4a3208",th:"ascend",d:"질서가 잠깐 한눈판 사이, 세계는 이 모습이었다."},
+ {t:16,n:"영겁의 파수꾼",b:"great",g:"crown",c:["#ffffff","#8a8a9a"],e:"#ffffff",gem:"#e8ecf5",gr:"#3a3f4a",th:"ascend",d:"셀 수 없는 시간을 서 있었다. 무엇을 지키는지는 잊은 지 오래다."},
+ {t:16,n:"시간의 종착",b:"crystal",g:"halo",c:["#ffe89a","#8a6f20"],e:"#fffbe0",gem:"#ffd45e",gr:"#4a3708",th:"ascend",d:"모든 시곗바늘이 여기서 멈춘다. 다음은 없다."},
+ {t:16,n:"영겁 永劫",b:"rift",g:"halo",c:["#eaf2ff","#9aa8c0"],e:"#ffffff",gem:"#cfe0ff",gr:"#2a3550",th:"ascend",d:"처음도 끝도 이 검 안에서 한 점이 된다. 뽑는 것 자체가 있을 수 없는 일이다."},
 ];
 SWORDS.forEach(s=>{if(s.gem==="#f濃")s.gem="#ff8fb8";});
 
@@ -89,19 +99,29 @@ const FX={
  "회귀 回歸":{pity:3.2,luck:.22},
  "심판 審判":{twin:1},
  "천기 天機":{luck:.6,pdur:.5},
+ /* 운명 이상 — 보석 획득(gem)·인첸트 성공(ench) 효과 포함 */
+ "무한의 나선":{gem:.6,luck:.3},
+ "경계 밖의 관측":{ench:.15,luck:.4},
+ "무극 無極":{luck:.9,speed:.2},
+ "혼돈의 이빨":{gem:1.0,dupe:1.5},
+ "뒤틀린 인과":{ench:.25,speed:.4},
+ "혼돈 混沌":{luck:1.2,gem:.5},
+ "영겁의 파수꾼":{luck:1.5,ench:.3},
+ "시간의 종착":{gem:2.0,gold:.6},
+ "영겁 永劫":{luck:2.0,gem:1.0,ench:.2},
 };
 SWORDS.forEach(x=>{x.fx=FX[x.n]||{gold:x.t*.02};});
 
 /* ═════════ 인첸트 ═════════
    각 검의 "대표 효과" 하나만 레벨 I~V로 키운다. 대표는 값이 가장 큰 수치 fx,
    동률이면 아래 우선순위. twin/rer 만 가진 검은 대표가 없으므로 소량 주화를 대표로 부여. */
-const ENCH_PRI=["luck","gold","speed","pity","dupe","pdur"];
+const ENCH_PRI=["luck","gold","speed","pity","dupe","pdur","gem","ench"];
 SWORDS.forEach(x=>{
  if(!ENCH_PRI.some(k=>x.fx[k]!=null)) x.fx.gold=Math.max(0.05,x.t*.02);   // 대표 없는 검 보정
 });
 const ENCH_MAX=5, ENCH_STEP=0.20;                                          // 레벨당 대표효과 +20%
 /* 인첸트 대표 효과별 색조 (글린트·라벨에 사용) */
-const ENCH_COLOR={luck:"#8fd0c0",gold:"#e0b04a",speed:"#e8a24d",pity:"#c98cff",dupe:"#7fd0e8",pdur:"#9be08a"};
+const ENCH_COLOR={luck:"#8fd0c0",gold:"#e0b04a",speed:"#e8a24d",pity:"#c98cff",dupe:"#7fd0e8",pdur:"#9be08a",gem:"#5fe0c4",ench:"#c9a3ff"};
 function enchKey(sw){
  const fx=sw.fx||{}; let best=null,bv=-1;
  for(const k of ENCH_PRI) if(fx[k]!=null&&+fx[k]>bv){bv=+fx[k];best=k;}
@@ -113,12 +133,13 @@ function enchFx(sw,lv){
  return fx;}
 
 const FXN={gold:"주화 획득",luck:"행운",speed:"주조 속도",pity:"전설 보장",
- dupe:"중복 주화",pdur:"포션 지속",twin:"",rer:""};
+ dupe:"중복 주화",pdur:"포션 지속",gem:"보석 획득",ench:"인첸트 성공",twin:"",rer:""};
 function fxText(fx){
  const o=[];
  if(fx.twin)o.push("주조마다 등급 판정을 두 번 굴려 높은 쪽을 취함");
  if(fx.rer)o.push(RARITY[fx.rer].n+" 이하가 나오면 한 번 다시 굴림");
- for(const k of ["luck","speed","gold","dupe","pdur"]) if(fx[k]){
+ for(const k of ["luck","speed","gold","dupe","pdur","gem"]) if(fx[k]){
   o.push(FXN[k]+(k==="speed"?" -":" +")+Math.round(fx[k]*100)+"%");}
+ if(fx.ench)o.push("인첸트 성공 +"+Math.round(fx.ench*100)+"%p");
  if(fx.pity)o.push("전설 보장 "+fx.pity.toFixed(1)+"배 빠름");
  return o.length?o.join(" · "):"효과 없음";}

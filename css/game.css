@@ -172,6 +172,36 @@ main{flex:1;position:relative;overflow:hidden;z-index:2}
 @keyframes ebShake{0%,100%{transform:translateX(0)}20%{transform:translateX(-7px)}40%{transform:translateX(6px)}
   60%{transform:translateX(-4px)}80%{transform:translateX(3px)}}
 
+/* 그라데이션 텍스트 — 운명 이상 등급의 이름·등급명이 계속 흐른다 */
+.rgrad{-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;color:transparent;
+  background-size:220% auto;animation:rgradShift 3.2s linear infinite}
+@keyframes rgradShift{to{background-position:220% center}}
+
+/* 승천 컷신 (th:ascend) */
+.th-ascend{position:absolute;inset:0;overflow:hidden}
+.asc-bg{position:absolute;inset:-10%;background:var(--grad);background-size:300% 300%;opacity:0;
+  animation:ascIn 1.2s ease-out forwards,ascShift 7s linear infinite}
+.asc-veil{position:absolute;inset:0;background:radial-gradient(circle at 50% 46%,transparent 22%,rgba(4,4,8,.74) 70%)}
+@keyframes ascIn{to{opacity:.5}}
+@keyframes ascShift{0%{background-position:0% 50%}100%{background-position:300% 50%}}
+.asc-cols{position:absolute;inset:0}
+.asc-cols .col{position:absolute;bottom:38%;width:2px;height:var(--ch);
+  background:linear-gradient(to top,transparent,#fff,transparent);opacity:0;will-change:transform,opacity;
+  animation:ascCol var(--cd) ease-out var(--cl) infinite}
+@keyframes ascCol{0%{opacity:0;transform:translateY(40px) scaleY(.5)}40%{opacity:.5}
+  100%{opacity:0;transform:translateY(-60px) scaleY(1.2)}}
+.asc-rings{position:absolute;left:50%;top:46%}
+.asc-rings .ring{position:absolute;left:0;top:0;width:60px;height:60px;margin:-30px;border:2px solid #fff;
+  border-radius:50%;opacity:0;will-change:transform,opacity;animation:ascRing var(--rd) ease-out var(--rl) infinite}
+@keyframes ascRing{0%{transform:scale(.2);opacity:.65}100%{transform:scale(4.6);opacity:0}}
+.asc-motes .am{position:absolute;width:3px;height:3px;border-radius:50%;background:#fff;opacity:0;
+  animation:ascMote var(--ad) ease-in-out var(--al) infinite}
+@keyframes ascMote{0%{opacity:0;transform:translateY(10px)}50%{opacity:.8}100%{opacity:0;transform:translateY(-32px)}}
+.asc-core{position:absolute;left:50%;top:46%;width:120px;height:120px;margin:-60px;border-radius:50%;
+  background:radial-gradient(circle,#fff,transparent 62%);will-change:transform,opacity;animation:ascCore 2.4s ease-in-out infinite}
+@keyframes ascCore{0%,100%{opacity:.22;transform:scale(.8)}50%{opacity:.68;transform:scale(1.1)}}
+.asc-flash{position:absolute;inset:0;background:radial-gradient(circle at 50% 46%,#fff,transparent 55%);opacity:0}
+
 #sheet{position:absolute;inset:0;z-index:20;display:none;background:rgba(10,9,8,.95);backdrop-filter:blur(6px);
   padding:22px 18px;overflow-y:auto}
 #sheet.on{display:block;animation:fade .2s}

@@ -52,7 +52,7 @@ function renderSettings(){
    <div style="display:flex;flex-wrap:wrap;gap:5px;margin-top:11px">
    ${CUT_STEPS.map(v=>`<button class="chip ${S.cardMin===v?"on":""}" data-card="${v}">${v>=99?"끄기":RARITY[v].n}</button>`).join("")}</div>
    <div class="eff">${S.cardMin>=99?"카드를 띄우지 않습니다":
-     "대상 "+(14-S.cardMin)+"개 등급 · 최소 확률 1 / "+RARITY[S.cardMin].one.toLocaleString()}</div></div>
+     "대상 "+(RARITY.length-S.cardMin)+"개 등급 · 최소 확률 1 / "+RARITY[S.cardMin].one.toLocaleString()}</div></div>
   <div class="sec">성능</div>
   <div class="card"><div class="card-top"><h3>연출 품질</h3>
     <span class="lv">${QNAME[S.perf]}${S.perf?"":" (현재 "+QNAME[QLV]+")"}</span></div>
@@ -136,7 +136,7 @@ function renderCodex(){
   return `<div class="tile ${c?"":"locked"} ${S.equipped&&S.equipped.n===s.n?"equipped":""}" style="--acc:${R.c}" data-s="${encodeURIComponent(s.n)}">
    ${c?`<span class="cnt">${c>999?"999+":c}</span>`:""}
    <div class="art">${swordSVG(s)}</div>
-   <div class="tn">${c?s.n:"???"}</div><div class="tr">${R.n}</div></div>`;}).join("");
+   <div class="tn">${c?gradText(R,s.n):"???"}</div><div class="tr">${gradText(R,R.n)}</div></div>`;}).join("");
  $("codex-badge").style.display="none";
  $("codex-count").textContent=`수집 ${coll()} / ${SWORDS.length}`;
  $("ach-cnt").textContent=`도전 과제 ${ACH.filter(a=>S.ach[a.id]).length} / ${ACH.length}`;}
@@ -191,7 +191,7 @@ function openSheet(name){
  const s=SWORDS.find(x=>x.n===name),R=RARITY[s.t],c=swordTotal(s.n),sh=$("sheet");
  sh.style.setProperty("--acc",R.c);
  sh.innerHTML=`<div class="sheet-art">${c?swordSVG(s):""}</div>
-  <div class="sheet-r">${R.n}</div><div class="sheet-n">${c?s.n:"미발견"}</div>
+  <div class="sheet-r">${gradText(R,R.n)}</div><div class="sheet-n">${c?gradText(R,s.n):"미발견"}</div>
   <div class="sheet-d">${c?s.d:"아직 이 검을 뽑지 못했습니다."}</div>
   <div class="sheet-meta">
     <div><b>1 / ${R.one.toLocaleString()}</b><span>기본 확률</span></div>

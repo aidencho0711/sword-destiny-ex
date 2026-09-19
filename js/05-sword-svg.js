@@ -177,6 +177,49 @@ function swordSVG(s,ench){
       <animateTransform attributeName="transform" type="rotate" values="-5 100 206;5 100 206;-5 100 206"
         dur="6s" repeatCount="indefinite"/></g>`;
    break;}
+  case "무한의 나선":{                        // 끝없이 감기는 나선
+   let sp="M100 250";for(let i=0;i<80;i++){const a=i*.5,r=4+i*1.55;sp+=` L${(100+Math.cos(a)*r).toFixed(1)} ${(250+Math.sin(a)*r).toFixed(1)}`;}
+   dcB=`<path d="${sp}" fill="none" stroke="${s.e}" stroke-width="1.2" opacity=".5">
+     <animateTransform attributeName="transform" type="rotate" from="0 100 250" to="360 100 250" dur="14s" repeatCount="indefinite"/></path>`;
+   break;}
+  case "경계 밖의 관측":{                      // 경계 밖에서 도는 겹틀
+   for(let i=0;i<3;i++)dcB+=`<rect x="${40+i*8}" y="${190+i*8}" width="${120-i*16}" height="${120-i*16}" fill="none" stroke="${s.e}" stroke-width="1" opacity="${(.5-i*.12).toFixed(2)}">
+     <animateTransform attributeName="transform" type="rotate" from="${i*15} 100 250" to="${i*15+360} 100 250" dur="${20-i*4}s" repeatCount="indefinite"/></rect>`;
+   break;}
+  case "무극 無極":{                          // 텅 빈 중심에서 뻗는 살
+   dcB=`<circle cx="100" cy="250" r="60" fill="none" stroke="${s.gem}" stroke-width="1" opacity=".4"/>`+
+     [0,1,2,3,4,5].map(i=>`<line x1="100" y1="250" x2="${(100+Math.cos(i*1.047)*90).toFixed(1)}" y2="${(250+Math.sin(i*1.047)*90).toFixed(1)}" stroke="${s.e}" stroke-width=".8" opacity=".3"/>`).join("")+
+     `<circle cx="100" cy="250" r="14" fill="#04040a" opacity=".7">${AN("r","10","18","3.5")}</circle>`;
+   break;}
+  case "혼돈의 이빨":{                        // 흩어진 이빨 조각
+   for(let i=0;i<7;i++){const a=Math.random()*6.28,r=40+Math.random()*70,x=(100+Math.cos(a)*r).toFixed(0),y=(250+Math.sin(a)*r).toFixed(0);
+    dcB+=`<path d="M${x} ${y} l6 14 l-12 0 Z" fill="${s.gem}" opacity=".5"><animate attributeName="opacity" values="0;.6;0" dur="${(2+Math.random()*2).toFixed(1)}s" begin="${(Math.random()*2).toFixed(1)}s" repeatCount="indefinite"/></path>`;}
+   break;}
+  case "뒤틀린 인과":{                        // 뒤엉켜 지나가는 인과선
+   for(let i=0;i<4;i++)dcB+=`<path d="M${30+i*15} 150 Q100 250 ${170-i*15} 350" fill="none" stroke="${s.e}" stroke-width="1" opacity=".35">
+     <animate attributeName="opacity" values=".1;.5;.1" dur="${(3+i*.5).toFixed(1)}s" repeatCount="indefinite"/></path>`;
+   break;}
+  case "혼돈 混沌":{                          // 불규칙하게 도는 소용돌이
+   let sw="M100 250";for(let i=0;i<60;i++){const a=i*.6,r=6+i*1.4*(i%2?1:.7);sw+=` L${(100+Math.cos(a)*r).toFixed(1)} ${(250+Math.sin(a)*r).toFixed(1)}`;}
+   dcB=`<path d="${sw}" fill="none" stroke="${s.gem}" stroke-width="1.1" opacity=".45">
+     <animateTransform attributeName="transform" type="rotate" from="360 100 250" to="0 100 250" dur="12s" repeatCount="indefinite"/></path>`;
+   break;}
+  case "영겁의 파수꾼":{                       // 영원히 도는 겹고리
+   for(let i=0;i<4;i++)dcB+=`<circle cx="100" cy="250" r="${40+i*22}" fill="none" stroke="${s.e}" stroke-width="1" opacity="${(.5-i*.1).toFixed(2)}">
+     <animateTransform attributeName="transform" type="rotate" from="0 100 250" to="${i%2?360:-360} 100 250" dur="${16+i*4}s" repeatCount="indefinite"/></circle>`;
+   break;}
+  case "시간의 종착":{                        // 멈춘 시계
+   let ticks="";for(let i=0;i<12;i++){const a=i*.5236;ticks+=`<line x1="${(100+Math.cos(a)*72).toFixed(1)}" y1="${(250+Math.sin(a)*72).toFixed(1)}" x2="${(100+Math.cos(a)*80).toFixed(1)}" y2="${(250+Math.sin(a)*80).toFixed(1)}" stroke="${s.e}" stroke-width="1.4" opacity=".5"/>`;}
+   dcB=`<circle cx="100" cy="250" r="80" fill="none" stroke="${s.e}" stroke-width="1" opacity=".4"/>${ticks}
+     <line x1="100" y1="250" x2="100" y2="196" stroke="${s.gem}" stroke-width="2" opacity=".7"/>
+     <line x1="100" y1="250" x2="140" y2="250" stroke="${s.gem}" stroke-width="2" opacity=".7"/>`;
+   break;}
+  case "영겁 永劫":{                          // 무한대 기호와 큰 고리
+   dcB=`<path d="M60 250 C60 226 100 226 100 250 C100 274 140 274 140 250 C140 226 100 226 100 250 C100 274 60 274 60 250 Z" fill="none" stroke="${s.e}" stroke-width="1.6" opacity=".5">
+     <animate attributeName="opacity" values=".25;.7;.25" dur="4s" repeatCount="indefinite"/></path>
+     <circle cx="100" cy="250" r="96" fill="none" stroke="${s.gem}" stroke-width=".8" opacity=".3">
+     <animateTransform attributeName="transform" type="rotate" from="0 100 250" to="360 100 250" dur="24s" repeatCount="indefinite"/></circle>`;
+   break;}
  }
  const spark=s.t>=8?`<g>${[0,1,2,3].map(i=>`<circle cx="${62+i*26}" cy="${92+((i*101)%230)}" r="1.7" fill="#fff">
    <animate attributeName="opacity" values="0;1;0" dur="${1.6+i*.4}s" begin="${i*.35}s" repeatCount="indefinite"/></circle>`).join("")}</g>`:"";

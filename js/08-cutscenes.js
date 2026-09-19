@@ -844,6 +844,18 @@ function themeHTML(s,R){
     <i class="blade"></i><div class="bflash"></div><i class="seam"></i>${ember}
     <span class="glyph">結</span>${shard}${mote}
   </div></div>`;}
+ case "ascend":{                                 // 운명 이상 공용 — 색이 흐르는 승천
+  const cg=(R.cg&&R.cg.length?R.cg:[R.c,"#ffffff"]);
+  const grad=cg.concat(cg[0]).join(",");
+  let rings="";for(let i=0,N=QC(5);i<N;i++)rings+=`<i class="ring" style="--rd:${(1.1+i*.45).toFixed(2)}s;--rl:${(i*.45).toFixed(2)}s"></i>`;
+  let cols="";for(let i=0,N=QC(11);i<N;i++)cols+=`<i class="col" style="left:${(4+i*(92/N)).toFixed(1)}%;--cd:${(1.3+Math.random()*1.3).toFixed(2)}s;--cl:${(Math.random()*1.8).toFixed(2)}s;--ch:${(28+Math.random()*52).toFixed(0)}vh"></i>`;
+  let motes="";for(let i=0,N=QC(30);i<N;i++)motes+=`<i class="am" style="left:${(Math.random()*100).toFixed(1)}%;top:${(Math.random()*100).toFixed(1)}%;--ad:${(2+Math.random()*3).toFixed(1)}s;--al:${(Math.random()*2.6).toFixed(1)}s"></i>`;
+  return `<div class="pl"><div class="th th-ascend" style="--grad:linear-gradient(120deg,${grad});--pd:${pd}s">
+    <div class="asc-bg"></div><div class="asc-veil"></div>
+    <div class="asc-cols">${cols}</div><div class="asc-rings">${rings}</div>
+    <div class="asc-motes">${motes}</div>
+    <i class="asc-core"></i><div class="asc-flash"></div>
+  </div></div>`;}
  }
  return "";}
 
@@ -867,7 +879,7 @@ function playCutscene(s,R){
   <div class="cs-dim"></div><div class="cs-after"></div>${parts}${mh}
   <div class="cs-stage">
     <div class="cs-sword ${s.t>=8?"float":""}">${swordSVG(s)}</div>
-    <div class="cs-cap"><div class="cs-rarity">${R.n}</div><div class="cs-name">${s.n}</div>
+    <div class="cs-cap"><div class="cs-rarity">${gradText(R,R.n)}</div><div class="cs-name">${gradText(R,s.n)}</div>
       <div class="cs-odds">1 / ${R.one.toLocaleString()}</div></div>
   </div><div class="cs-flash"></div>`;
  resolveQ();

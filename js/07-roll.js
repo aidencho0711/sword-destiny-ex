@@ -20,8 +20,8 @@ function showCard(){
  const fx=d.s.fx||{};
  el.innerHTML=`<div class="rc">
    <div class="rc-art">${swordSVG(d.s)}</div>
-   <div class="rc-r">${d.R.n}</div>
-   <div class="rc-n">${d.s.n}</div>
+   <div class="rc-r">${gradText(d.R,d.R.n)}</div>
+   <div class="rc-n">${gradText(d.R,d.s.n)}</div>
    ${d.isNew?'<div class="rc-new"><span>신 규 획 득</span></div>':""}
    <div class="rc-g">
      <div><b>1 / ${d.R.one.toLocaleString()}</b><span>기본 확률</span></div>
@@ -68,7 +68,7 @@ function doRoll(){
   let g=Math.floor(R.g*goldMult());
   if(!isNew)g=Math.floor(g*(1+(eqf().dupe||0)));
   S.gold+=g;S.goldTot+=g;
-  const gem=gemDrop(t);if(gem)S.gems=(S.gems||0)+gem;      // 신성 이상 보석 드랍
+  let gem=gemDrop(t);if(gem){gem=Math.round(gem*(1+(eqf().gem||0)));S.gems=(S.gems||0)+gem;}   // 신성+ 보석 드랍(장착 보석효과 반영)
   if(t>S.best)S.best=t;
   if(isNew)$("codex-badge").style.display="block";
   showResult(s,R,g,isNew,gem);checkAch();save();renderHUD();
@@ -86,8 +86,9 @@ function showResult(s,R,g,isNew,gem){
  glow.style.setProperty("--acc",R.c);glow.style.opacity=.09+s.t*.03;
  slot.classList.remove("idle","drop");void slot.offsetWidth;
  slot.innerHTML=swordSVG(s);slot.classList.add("drop");
- const ro=$("r-rarity");ro.textContent=R.n+(isNew?" · 신규":"");ro.style.color=R.c;
- $("r-name").textContent=s.n;
+ const ro=$("r-rarity");ro.style.color=R.grad?"":R.c;
+ ro.innerHTML=gradText(R,R.n)+(isNew?" · 신규":"");
+ $("r-name").innerHTML=gradText(R,s.n);
  $("r-odds").textContent="1 / "+R.one.toLocaleString()+"　·　+"+fmt(g)+" 주화"+(gem?"　·　💎 +"+gem:"");
  sfxClink(s.t);
  if(s.t>=CUT_FROM){$("app").classList.add("shake");setTimeout(()=>$("app").classList.remove("shake"),450);}}

@@ -37,8 +37,8 @@ function renderArmory(){
    items+=`<div class="tile ${eqd?"equipped":""} ${v.e>0?"ench":""}" style="--acc:${acc}" data-vn="${encodeURIComponent(s.n)}" data-ve="${v.e}">
      ${v.c>1?`<span class="cnt">×${v.c>999?"999+":v.c}</span>`:""}
      <div class="art">${swordSVG(s,v.e)}</div>
-     <div class="tn">${s.n}</div>
-     <div class="tr">${v.e>0?enchLabel(s,v.e):R.n}</div>
+     <div class="tn">${gradText(R,s.n)}</div>
+     <div class="tr">${v.e>0?enchLabel(s,v.e):gradText(R,R.n)}</div>
    </div>`;
   });});
  $("arm-grid").innerHTML=items||`<div class="arm-empty">보유한 검이 없습니다. 화로에서 검을 뽑아 보세요.</div>`;
@@ -60,7 +60,7 @@ function openArmSheet(name,level){
  }else if(level>=ENCH_MAX){
   enchBlock=`<div class="ench-panel">최고 레벨입니다 · ✦${ROMAN[ENCH_MAX]}</div>`;
  }else{
-  const cost=enchCost(level),rate=Math.round(enchRate(level)*100),afford=(S.gems||0)>=cost;
+  const cost=enchCost(level),rate=Math.round(Math.min(.99,enchRate(level)+(eqf().ench||0))*100),afford=(S.gems||0)>=cost;
   enchBlock=`<div class="ench-panel">
     <div class="ench-row"><span>${level>0?"✦"+ROMAN[level]:"기본"} → ✦${ROMAN[level+1]}</span><b>💎 ${cost}</b></div>
     <div class="ench-row"><span>성공 확률</span><b>${rate}%</b></div>
@@ -71,8 +71,8 @@ function openArmSheet(name,level){
  }
 
  sh.innerHTML=`<div class="sheet-art">${swordSVG(s,level)}</div>
-  <div class="sheet-r">${R.n}${level>0?" · "+enchLabel(s,level):""}</div>
-  <div class="sheet-n">${s.n}</div>
+  <div class="sheet-r">${gradText(R,R.n)}${level>0?" · "+enchLabel(s,level):""}</div>
+  <div class="sheet-n">${gradText(R,s.n)}</div>
   <div class="sheet-d">보유 ${cnt}자루</div>
   <div class="rc-fx" style="--acc:${acc};max-width:30em;margin:14px auto 0"><i>효과</i><p>${fxText(enchFx(s,level))}</p></div>
   ${enchBlock}
@@ -99,7 +99,7 @@ function doEnchant(name,level){
  if(variantCount(name,level)<1){toast("대상 검이 없습니다");return;}
  S.gems-=cost;
  if(level===0)S.owned[name]--; else S.ench[name][level]--;
- const ok=Math.random()<enchRate(level);
+ const ok=Math.random()<Math.min(.99,enchRate(level)+(eqf().ench||0));   // 장착 검의 인첸트 효과 반영
  const nl=ok?level+1:Math.max(0,level-1);
  if(nl===0)S.owned[name]=(S.owned[name]||0)+1;
  else{S.ench[name]=S.ench[name]||{};S.ench[name][nl]=(S.ench[name][nl]||0)+1;}

@@ -27,10 +27,19 @@ const POTIONS=[
  {id:"p10",n:"운명의 파편", k:"luck", m:2500,sec:90,  cost:180000000,       d:"90초. 한 번 사용에 운명이 46% 확률로 들어옵니다. 도감 완성을 위한 마지막 수단입니다."},
  {id:"p5",n:"신속의 가루",  k:"speed",m:0.4, sec:120, cost:500,      d:"120초 동안 주조 속도가 2.5배 빨라집니다. 행운 물약과 함께 쓰세요."},
  {id:"p6",n:"황금 향로",    k:"gold", m:2.2, sec:120, cost:650,      d:"120초 동안 주화 획득이 2.2배가 됩니다."},
+ {id:"p11",n:"무극의 숨결", k:"luck", m:12000,sec:60, cost:2500000000, d:"60초. 무극·혼돈·영겁 같은 극한 등급을 현실적인 확률로 노리는 최상급 행운 물약입니다."},
 ];
 /* 포션별 색 — 상점에서 한눈에 구별하도록 모형 색과 카드 강조색에 쓴다 */
 const POTION_COL={p1:"#5fbf7e",p2:"#4aa8e8",p3:"#b44dff",p4:"#ffd45e",
- p7:"#2f8fb8",p8:"#f0e2a8",p9:"#eaf2ff",p10:"#ff6a7a",p5:"#e8944d",p6:"#e0b04a"};
+ p7:"#2f8fb8",p8:"#f0e2a8",p9:"#eaf2ff",p10:"#ff6a7a",p5:"#e8944d",p6:"#e0b04a",p11:"#8fffe0"};
+
+/* ═════════ 그라데이션 텍스트 ═════════
+   운명 이상(grad) 등급의 이름·등급명을 계속 변하는 그라데이션으로 표시한다. */
+function gradText(R,text){
+ if(!R||!R.grad)return text;
+ const cg=(R.cg&&R.cg.length?R.cg:[R.c,"#ffffff"]);
+ const stops=cg.concat(cg[0]).join(",");
+ return `<span class="rgrad" style="background-image:linear-gradient(90deg,${stops})">${text}</span>`;}
 POTIONS.forEach(p=>{p.col=POTION_COL[p.id]||"#8fd0c0";});
 
 /* ═════════ 환생 ═════════ */
@@ -76,7 +85,8 @@ const tierCount=t=>SWORDS.filter(x=>x.t>=t&&hasSword(x.n)).length;
 /* ═════════ 보석 드랍 ═════════
    신성(11) 이상 뽑을 때 확률로 보석 획득. 등급이 높을수록 확률·개수 증가. */
 const GEM_FROM=11;
-const GEM_DROP={11:{p:.10,min:1,max:3},12:{p:.12,min:3,max:6},13:{p:.15,min:6,max:10}};
+const GEM_DROP={11:{p:.10,min:1,max:3},12:{p:.12,min:3,max:6},13:{p:.15,min:6,max:10},
+ 14:{p:.22,min:12,max:22},15:{p:.34,min:24,max:40},16:{p:.5,min:50,max:90}};
 function gemDrop(t){
  const d=GEM_DROP[t]; if(!d||Math.random()>=d.p)return 0;
  return d.min+Math.floor(Math.random()*(d.max-d.min+1));}
@@ -120,7 +130,7 @@ const ACH=[
  {id:"a11",n:"서른 자루",       d:"도감 30종",             c:()=>coll()>=30,        r:{pdur:.15},  x:4,y:3,p:["a7","a8"]},
  {id:"a12",n:"십만 번",         d:"주조 100,000회",        c:()=>S.rolls>=1e5,      r:{pity:120},  x:1,y:4,p:["a9"]},
  {id:"a13",n:"천상에 닿다",     d:"천상 등급 획득",         c:()=>S.best>=10,        r:{luck:.08},  x:2,y:4,p:["a10"]},
- {id:"a14",n:"도감 완성",       d:"47종 전부 수집",         c:()=>coll()>=SWORDS.length, r:{luck:.12,gold:.18}, x:3,y:4,p:["a11"]},
+ {id:"a14",n:"도감 완성",       d:"56종 전부 수집",         c:()=>coll()>=SWORDS.length, r:{luck:.12,gold:.18}, x:3,y:4,p:["a11"]},
  {id:"a15",n:"신성에 닿다",     d:"신성 등급 획득",         c:()=>S.best>=11,        r:{luck:.1},   x:2,y:5,p:["a13"]},
  {id:"a16",n:"다시 태어나다",   d:"환생 1회",              c:()=>S.rebirth>=1,      r:{gold:.10},   x:0,y:5,p:["a12"]},
  {id:"a17",n:"경의 영역",       d:"누적 주화 1경",          c:()=>S.goldTot>=1e16,   r:{gold:.14},   x:4,y:5,p:["a14"]},

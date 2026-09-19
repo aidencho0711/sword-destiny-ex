@@ -19,6 +19,10 @@ const RARITY=[
  {id:"divine", n:"신성", one:2500000,   c:"#f2e6b0", g:320000,  mode:"theme", pd:5.8, end:11200},
  {id:"origin", n:"태초", one:25000000,  c:"#ffffff", g:1600000, mode:"theme", pd:12.432, end:18700},
  {id:"destiny",n:"운명", one:200000000, c:"#ffd45e", g:8000000,       mode:"theme", pd:14.0625, end:20600},
+ /* ── 운명 이상: 색이 계속 변하는 그라데이션 등급 (grad+cg), 공용 승천 컷신 ── */
+ {id:"aeon",   n:"무극", one:1500000000,    c:"#8fffe0", g:50000000,   mode:"theme", pd:6.4, end:12800, grad:1, cg:["#8fffe0","#7ea6ff","#c58cff"]},
+ {id:"chaos",  n:"혼돈", one:15000000000,   c:"#ff8fe0", g:320000000,  mode:"theme", pd:6.8, end:13600, grad:1, cg:["#ff8fe0","#ff7a6a","#ffd36e"]},
+ {id:"aeternum",n:"영겁",one:500000000000,  c:"#ffffff", g:2400000000, mode:"theme", pd:7.6, end:15000, grad:1, cg:["#ffffff","#ffe08a","#8fd0ff","#c58cff"]},
 ];
 const CUT_FROM=6, PITY_AT=1200;
 
