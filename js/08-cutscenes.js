@@ -58,6 +58,28 @@ function starPath(pts,oR,iR,cx,cy){
   d+=(i?"L":"M")+(cx+Math.cos(a)*r).toFixed(1)+" "+(cy+Math.sin(a)*r).toFixed(1)+" ";}
  return d+"Z";}
 
+/* ═════════ 검의 기호 (sigil) ═════════
+   컷신 마지막에 심장박동처럼 두 번 쿵쿵 떠오른 뒤, 세 번째 박동에 검이 강림한다.
+   각 검의 이름·특징을 한 글자(주로 한자/기하 기호)로 압축했다. */
+const SIG={
+ "여명의 서약":"曙","심연의 포식자":"淵","뇌신 무라쿠모":"雷","파멸의 왕관검":"王",
+ "재의 불사자":"灰","천년의 맹세":"誓","시간을 거스르는 날":"逆",
+ "세계수의 가지":"樹","종언의 나팔검":"終","별을 가르는 자":"星",
+ "공허의 이빨":"空","법칙의 조각":"律","무형의 칼":"虛",
+ "천구의 축":"樞","뇌정의 심판":"霆",
+ "만상의 눈":"眼","창세의 첫 획":"一",
+ "EQUINOX":"◐","적요 寂寥":"寂","태동 胎動":"胎","관측자 觀測者":"觀",
+ "O P P R E S S I O N":"壓","회귀 回歸":"回","심판 審判":"審","천기 天機":"機",
+ "무한의 나선":"螺","경계 밖의 관측":"界","무극 無極":"極",
+ "혼돈의 이빨":"牙","뒤틀린 인과":"因","혼돈 混沌":"混",
+ "영겁의 파수꾼":"守","시간의 종착":"時","영겁 永劫":"永"};
+/* 지정 기호가 없으면 대표 효과로 대체 */
+const SIG_FX={luck:"運",gold:"富",speed:"迅",pity:"保",dupe:"重",pdur:"藥",gem:"寶",ench:"錬",twin:"雙",rer:"再"};
+function sigFor(s){
+ if(SIG[s.n])return SIG[s.n];
+ const fx=s.fx||{};for(const k of ["luck","gem","ench","dupe","gold","speed","pity","pdur","twin","rer"])if(fx[k])return SIG_FX[k];
+ return "◈";}
+
 function preludeHTML(s,R){
  const pd=s.pd||R.pd;
  if(R.mode==="bloom"){
@@ -878,6 +900,7 @@ function playCutscene(s,R){
  cs.innerHTML=preludeHTML(s,R)+`
   <div class="cs-dim"></div><div class="cs-after"></div>${parts}${mh}
   <div class="cs-stage">
+    <div class="cs-sig"><b>${sigFor(s)}</b></div>
     <div class="cs-sword ${s.t>=8?"float":""}">${swordSVG(s)}</div>
     <div class="cs-cap"><div class="cs-rarity">${gradText(R,R.n)}</div><div class="cs-name">${gradText(R,s.n)}</div>
       <div class="cs-odds">1 / ${R.one.toLocaleString()}</div></div>
@@ -891,6 +914,11 @@ function playCutscene(s,R){
  cs.classList.add("on");
  clearCsTimers();
  sfxCut(s,R);
+ // 심장박동 두 번 (쿵 쿵) — 세 번째 박동에 검이 강림한다
+ if(S.sound&&typeof AC!=="undefined"&&AC){
+  const beat=d=>{try{tone(66,40,.26,"sine",.11,d);noise(.16,.05,d);}catch(e){}};
+  beat(Math.max(0,pd-1.6));beat(Math.max(0,pd-0.85));
+ }
  csType();
  if(R.mode==="theme")watchFPS();
  clearTimeout(csT);csT=setTimeout(endCut,s.end||R.end);}
