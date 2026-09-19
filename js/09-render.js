@@ -175,12 +175,13 @@ function renderRebirth(){
    <div style="margin-top:11px;border-top:1px solid var(--line);padding-top:9px">
      <div style="font-size:10px;color:var(--ash-dim);letter-spacing:.14em">${S.rebirth+1}회차 조건</div>
      ${line(c.gold,"주화 "+fmt(q.gold)+" 보유  (현재 "+fmt(S.gold)+")")}
+     ${q.gems?line(c.gems,"💎 보석 "+q.gems.toLocaleString()+"  (현재 "+(S.gems||0).toLocaleString()+")"):""}
      ${line(c.sword,q.note)}
      ${q.coll?line(c.coll,"도감 "+q.coll+"종  (현재 "+coll()+"종)"):""}
    </div>
    ${rbArm?`
-   <div class="rb-warn">주화 ${fmt(S.gold)}, 영구 강화 ${Object.values(S.up).reduce((a,b)=>a+b,0)}단계,
-     소모품 ${Object.values(S.inv).reduce((a,b)=>a+b,0)}개가 사라집니다. 되돌릴 수 없습니다.</div>
+   <div class="rb-warn">주화 ${fmt(S.gold)}, 보석 ${(q.gems||0).toLocaleString()}, 영구 강화 ${Object.values(S.up).reduce((a,b)=>a+b,0)}단계,
+     소모품 ${Object.values(S.inv).reduce((a,b)=>a+b,0)}개가 사라집니다. (보석은 요구치만 소모) 되돌릴 수 없습니다.</div>
    <div class="btn-row">
      <button class="buy" data-rb="go">정말 환생한다</button>
      <button class="buy use" data-rb="no" style="flex:0 0 76px">취소</button></div>`:`

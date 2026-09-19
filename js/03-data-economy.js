@@ -44,11 +44,11 @@ POTIONS.forEach(p=>{p.col=POTION_COL[p.id]||"#8fd0c0";});
 
 /* ═════════ 환생 ═════════ */
 const RB_BASE=[
- {gold:250000,    tier:10, need:1, note:"천상 이상 1자루"},
- {gold:2500000,   tier:11, need:1, note:"신성 이상 1자루"},
- {gold:15000000,  tier:11, need:2, note:"신성 이상 2자루"},
- {gold:80000000,  tier:12, need:1, note:"태초 이상 1자루"},
- {gold:400000000, tier:13, need:1, note:"운명 1자루"},
+ {gold:450000,     gems:20,  tier:10, need:1, note:"천상 이상 1자루"},
+ {gold:4500000,    gems:50,  tier:11, need:1, note:"신성 이상 1자루"},
+ {gold:28000000,   gems:110, tier:11, need:2, note:"신성 이상 2자루"},
+ {gold:150000000,  gems:240, tier:12, need:1, note:"태초 이상 1자루"},
+ {gold:750000000,  gems:520, tier:13, need:1, note:"운명 1자루"},
 ];
 /* ═════════ 구 경제 → 신 경제 환산 ═════════
    주화 가치를 낮췄으므로 기존에 모아 둔 주화도 같은 비율로 내린다.
@@ -71,7 +71,7 @@ function migrateEcon(o){
 function rbReq(n){
  if(n<RB_BASE.length)return RB_BASE[n];
  const k=n-RB_BASE.length+1,c=Math.min(SWORDS.length,30+k*3);
- return {gold:Math.round(400000000*Math.pow(2.3,k)),tier:13,need:1,coll:c,
+ return {gold:Math.round(750000000*Math.pow(2.4,k)),gems:Math.round(520*Math.pow(1.85,k)),tier:13,need:1,coll:c,
          note:"운명 1자루 · 도감 "+c+"종"};}
 const rbGold=()=>Math.pow(1.75,S.rebirth);   // 환생 1회마다 주화 1.75배
 const rbLuck=()=>Math.pow(1.45,S.rebirth);   // 환생 1회마다 행운 1.45배
@@ -100,14 +100,16 @@ const ENCH_RATE=[0.95,0.90,0.75,0.55,0.35];      // 같은 순서의 성공 확�
 const enchCost=lv=>ENCH_COST[lv];
 const enchRate=lv=>ENCH_RATE[lv];
 function rbCheck(){
- const q=rbReq(S.rebirth);
- return {q,gold:S.gold>=q.gold,sword:tierCount(q.tier)>=(q.need||1),
+ const q=rbReq(S.rebirth),gneed=q.gems||0;
+ return {q,gold:S.gold>=q.gold,gems:(S.gems||0)>=gneed,sword:tierCount(q.tier)>=(q.need||1),
          coll:!q.coll||coll()>=q.coll,
-         ok:S.gold>=q.gold&&tierCount(q.tier)>=(q.need||1)&&(!q.coll||coll()>=q.coll)};}
+         ok:S.gold>=q.gold&&(S.gems||0)>=gneed&&tierCount(q.tier)>=(q.need||1)&&(!q.coll||coll()>=q.coll)};}
 function doRebirth(){
- if(!rbCheck().ok)return false;
+ const c=rbCheck();if(!c.ok)return false;
+ const gneed=c.q.gems||0;
  S.rebirth++;
- S.gold=0;S.up={luck:0,speed:0,greed:0,vault:0,auto:0};S.inv={};
+ S.gold=0;S.gems=Math.max(0,(S.gems||0)-gneed);       // 주화는 전부, 보석은 요구치만 소모
+ S.up={luck:0,speed:0,greed:0,vault:0,auto:0};S.inv={};
  S.buff={luck:{m:1,t:0},speed:{m:1,t:0},gold:{m:1,t:0}};
  S.pity=0;S.auto=false;
  save();checkAch();renderHUD();
