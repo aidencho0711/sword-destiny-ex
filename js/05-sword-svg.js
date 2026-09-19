@@ -17,6 +17,35 @@ const GUARD={
  halo:'<path d="M100 378 m-52 0 a52 52 0 1 0 104 0 a52 52 0 1 0 -104 0" fill="none" stroke-width="3" opacity=".5"/><path d="M100 378 m-34 0 a34 34 0 1 0 68 0 a34 34 0 1 0 -68 0" fill="none" stroke-width="6"/>',
  none:'<rect x="86" y="374" width="28" height="8" rx="4" opacity=".8"/>'};
 let uid=0;
+/* 포션 모형 — 종류별 병 모양 + 고유 색 액체. 상점에서 한눈에 구별하기 위한 것. */
+function potionSVG(p){
+ const c=p.col||"#8fd0c0", id="p"+(uid++), hi=p.cost>=1e6;   // 고급 물약엔 광채
+ const defs=`<linearGradient id="pl${id}" x1="0" y1="0" x2="0" y2="1">
+   <stop offset="0%" stop-color="${c}" stop-opacity=".95"/>
+   <stop offset="100%" stop-color="${c}" stop-opacity=".6"/></linearGradient>`;
+ let glass,liquid;
+ if(p.k==="speed"){                       // 키 큰 병 (가루/신속)
+  glass=`<rect x="17" y="12" width="14" height="42" rx="6"/>`;
+  liquid=`<rect x="19" y="28" width="10" height="24" rx="5" fill="url(#pl${id})"/>`;
+ }else if(p.k==="gold"){                   // 넓은 단지 (향로/황금)
+  glass=`<path d="M12 27 Q12 19 24 19 Q36 19 36 27 L36 47 Q36 54 24 54 Q12 54 12 47 Z"/>`;
+  liquid=`<path d="M14 35 Q24 31 34 35 L34 46 Q34 52 24 52 Q14 52 14 46 Z" fill="url(#pl${id})"/>`;
+ }else{                                    // 둥근 플라스크 (행운)
+  glass=`<path d="M20 13 L20 25 Q10 33 10 44 Q10 54 24 54 Q38 54 38 44 Q38 33 28 25 L28 13 Z"/>`;
+  liquid=`<path d="M15 35 Q24 31 33 35 Q36 41 33 47 Q24 52 15 47 Q12 41 15 35 Z" fill="url(#pl${id})"/>`;
+ }
+ return `<svg viewBox="0 0 48 62" xmlns="http://www.w3.org/2000/svg">
+   <defs>${defs}</defs>
+   ${hi?`<circle cx="24" cy="40" r="21" fill="${c}" opacity=".13"/>`:""}
+   <g fill="rgba(255,255,255,.05)" stroke="${c}" stroke-width="1.5" stroke-linejoin="round">${glass}</g>
+   ${liquid}
+   <rect x="19" y="6" width="10" height="9" rx="2" fill="#6a563b"/>
+   <rect x="17.5" y="11" width="13" height="3" rx="1.5" fill="#54432e"/>
+   <rect x="15" y="18" width="2.6" height="18" rx="1.3" fill="#fff" opacity=".22"/>
+   ${hi?`<circle cx="24" cy="40" r="1.6" fill="#fff" opacity=".8"><animate attributeName="cy" values="46;30" dur="2.6s" repeatCount="indefinite"/><animate attributeName="opacity" values="0;.8;0" dur="2.6s" repeatCount="indefinite"/></circle>`:""}
+ </svg>`;
+}
+
 /* 인첸트 글린트 — 날 모양으로 클립한 대각선 광택이 쓸고 지나간다.
    filter 애니메이션 없이 transform/opacity 만 움직인다. 블렌드는 컨테이너 한 장에만. */
 function enchGlint(s,lv,id){

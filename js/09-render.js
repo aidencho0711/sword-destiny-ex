@@ -96,7 +96,7 @@ function renderShop(){
   const maxAfford=Math.floor(S.gold/p.cost);
   const useN=Math.min(q,own);
   const val=p.k==="speed"?"주조 속도 ×"+(1/p.m).toFixed(1):(p.k==="luck"?"행운":"주화")+" ×"+p.m;
-  h+=`<div class="card"><div class="card-top"><h3>${p.n}</h3><span class="lv own">보유 ${own}</span></div>
+  h+=`<div class="card pot" style="--pc:${p.col}"><div class="card-top"><span class="pot-ico">${potionSVG(p)}</span><h3>${p.n}</h3><span class="lv own">보유 ${own}</span></div>
    <p>${p.d}</p><div class="eff">${val} · ${p.sec}초</div>
    <div class="qty">
      <button data-pq="${p.id}:-">−</button>

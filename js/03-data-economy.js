@@ -28,6 +28,10 @@ const POTIONS=[
  {id:"p5",n:"신속의 가루",  k:"speed",m:0.4, sec:120, cost:500,      d:"120초 동안 주조 속도가 2.5배 빨라집니다. 행운 물약과 함께 쓰세요."},
  {id:"p6",n:"황금 향로",    k:"gold", m:2.2, sec:120, cost:650,      d:"120초 동안 주화 획득이 2.2배가 됩니다."},
 ];
+/* 포션별 색 — 상점에서 한눈에 구별하도록 모형 색과 카드 강조색에 쓴다 */
+const POTION_COL={p1:"#5fbf7e",p2:"#4aa8e8",p3:"#b44dff",p4:"#ffd45e",
+ p7:"#2f8fb8",p8:"#f0e2a8",p9:"#eaf2ff",p10:"#ff6a7a",p5:"#e8944d",p6:"#e0b04a"};
+POTIONS.forEach(p=>{p.col=POTION_COL[p.id]||"#8fd0c0";});
 
 /* ═════════ 환생 ═════════ */
 const RB_BASE=[
