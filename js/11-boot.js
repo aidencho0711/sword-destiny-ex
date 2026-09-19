@@ -47,17 +47,44 @@ function renderLogin(inheritable){
    <div class="lg-msg" id="lg-msg"></div>
    <div class="lg-guest"><button id="lg-guest">계정 없이 이 기기에서 계속하기</button></div>
   </div>
-  <div class="lg-note">이 로그인은 이 기기 안에서만 진행을 나눕니다. 서버가 없어 다른 기기로는 옮겨지지 않으며, 비밀번호는 이 기기에 저장되니 중요한 비밀번호는 쓰지 마세요.</div>`;
+  <div class="lg-note">${CLOUD_ON
+    ? "클라우드 계정입니다. 로그인하면 다른 기기에서도 같은 진행이 이어집니다. 비밀번호는 서버에 안전하게 저장됩니다. ‘계정 없이 계속하기’는 이 기기에만 저장됩니다."
+    : "이 로그인은 이 기기 안에서만 진행을 나눕니다. 서버가 없어 다른 기기로는 옮겨지지 않으며, 비밀번호는 이 기기에 저장되니 중요한 비밀번호는 쓰지 마세요."}</div>`;
  el.querySelectorAll("[data-lm]").forEach(b=>b.onclick=()=>{lgMode=b.dataset.lm;renderLogin(inheritable);});
  $("lg-go").onclick=doAuth;
  $("lg-guest").onclick=async()=>{ await enterGame("__local__"); };
  [$("lg-name"),$("lg-pw"),$("lg-pw2")].forEach(i=>{if(i)i.addEventListener("keydown",e=>{if(e.key==="Enter")doAuth();});});
 }
 function lgErr(m,ok){const e=$("lg-msg");e.textContent=m;e.classList.toggle("ok",!!ok);}
+async function localGuestBlob(){
+ try{let r=null; try{r=await store.get("sworddestiny:acct:__local__");}catch(e){}
+  if(!(r&&r.value)){try{r=await store.get(LEGACY_KEY);}catch(e){}}
+  return (r&&r.value)?JSON.parse(r.value):null;}catch(e){return null;}}
 async function doAuth(){
  const name=($("lg-name")?.value||"").trim();
  const pw=$("lg-pw")?.value||"";
  if(name.length<1)return lgErr("이름을 입력하세요");
+ /* ── 클라우드 모드: Supabase 인증 ── */
+ if(CLOUD_ON&&typeof cloudReady==="function"&&cloudReady()){
+  if(pw.length<6)return lgErr("비밀번호는 6자 이상이어야 합니다");
+  lgErr("연결 중…",true);
+  if(lgMode==="signup"){
+   const pw2=$("lg-pw2")?.value||"";
+   if(pw!==pw2)return lgErr("비밀번호가 일치하지 않습니다");
+   const {data,error}=await cloudSignUp(name,pw);
+   if(error)return lgErr(cloudErr(error));
+   const user=(data&&data.user)||(data&&data.session&&data.session.user);
+   if(!user)return lgErr("가입되었습니다. 로그인해 주세요");
+   const seed=await localGuestBlob();
+   await enterCloudGame(user,seed);
+  }else{
+   const {data,error}=await cloudSignIn(name,pw);
+   if(error)return lgErr(cloudErr(error));
+   await enterCloudGame(data.user,null);
+  }
+  return;
+ }
+ /* ── 로컬 모드(오프라인/서버 미설정): 기기 내 계정 ── */
  if(pw.length<4)return lgErr("비밀번호는 4자 이상이어야 합니다");
  const id=acctId(name),accts=await acctList(),h=await acctHash(pw);
  if(lgMode==="signup"){
@@ -78,12 +105,29 @@ async function doAuth(){
   if(accts[id].hash!==h)return lgErr("비밀번호가 틀렸습니다");
   await enterGame(id);
  }}
+/* 클라우드 계정 입장 — 정체성은 Supabase 세션 기준, 저장은 서버 우선 */
+async function enterCloudGame(user,seed){
+ const uid=user.id, nm=((user.user_metadata&&user.user_metadata.name)||"").trim();
+ Object.assign(S,{gold:0,gems:0,rolls:0,goldTot:0,rebirth:0,ach:{},up:{luck:0,speed:0,greed:0,vault:0,auto:0},
+   inv:{},owned:{},ench:{},equipped:null,pity:0,best:-1,buff:{luck:{m:1,t:0},speed:{m:1,t:0},gold:{m:1,t:0}},
+   auto:false,cloud:true,uid:uid,acct:"cloud:"+uid});
+ let srv=null; try{srv=await cloudGetSave(uid);}catch(e){}
+ if(!(srv&&srv.data)&&seed){                                  // 신규 계정 + 기기 진행 물려받기
+  try{await store.set("sworddestiny:cloud:"+uid,JSON.stringify(seed));}catch(e){}}
+ await load();                                                // 서버 우선, 없으면 로컬 캐시(방금 심은 seed)
+ S.cloud=true;S.uid=uid;S.acct="cloud:"+uid;                  // load() 뒤 정체성 재확정
+ S.acctName=nm; S.role=(nm===DEV_NAME)?"dev":"";
+ resolveQ();recalcAB();
+ if(!(srv&&srv.data))save();                                  // 서버에 없던 계정은 첫 저장 업로드
+ $("login").classList.remove("on");
+ startGame();
+}
 async function enterGame(id){
  await acctSetSession(id==="__local__"?null:id);
  // 현재 상태를 비우고 그 계정의 저장을 불러온다
  Object.assign(S,{gold:0,gems:0,rolls:0,goldTot:0,rebirth:0,ach:{},up:{luck:0,speed:0,greed:0,vault:0,auto:0},
    inv:{},owned:{},ench:{},equipped:null,pity:0,best:-1,buff:{luck:{m:1,t:0},speed:{m:1,t:0},gold:{m:1,t:0}},
-   auto:false,acct:id});
+   auto:false,cloud:false,uid:null,acct:id});
  await load();
  /* 권한과 이름은 계정 레지스트리가 기준이다.
     load() 가 저장 데이터로 S 를 덮어쓰므로 반드시 그 뒤에 확정해야 한다 */
@@ -95,6 +139,10 @@ async function enterGame(id){
 async function doLogout(){
  clearTimeout(saveT);
  try{await store.set(saveKey(),JSON.stringify(S));}catch(e){}   // 즉시 저장 후 나간다
+ if(S.cloud&&typeof cloudReady==="function"&&cloudReady()){     // 클라우드면 서버에도 저장 후 로그아웃
+  try{await cloudPutSave(S.uid,S.acctName||"",S);}catch(e){}
+  await cloudSignOut();}
+ S.cloud=false;S.uid=null;
  await acctSetSession(null);
  lgMode="login";
  renderLogin((await acctList())&&Object.keys(await acctList()).length===0);
@@ -343,8 +391,11 @@ function startGame(){
 $("btn-logout")&&($("btn-logout").onclick=doLogout);
 
 (async function init(){
+ if(CLOUD_ON&&typeof cloudReady==="function"&&cloudReady()){   // 클라우드 세션이 살아 있으면 자동 입장
+  try{const sess=await cloudSession(); if(sess&&sess.user){ await enterCloudGame(sess.user,null); return; }}catch(e){}
+ }
  const accts=await acctList(),sess=await acctSession();
- if(sess&&accts[sess]){                                    // 이미 로그인된 세션
+ if(sess&&accts[sess]){                                    // 이미 로그인된 로컬 세션
   S.acct=sess;
   await load();
   await applyIdentity(sess);

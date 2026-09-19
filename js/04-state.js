@@ -1,6 +1,6 @@
 /* ═════════ 상태 ═════════ */
 const S={gold:0,gems:0,rolls:0,goldTot:0,rebirth:0,ach:{},up:{luck:0,speed:0,greed:0,vault:0,auto:0},inv:{},owned:{},ench:{},
-  equipped:null,pity:0,best:-1,sound:false,auto:false,cutMin:6,safe:0,cardMin:6,perf:0,autoQ:0,acct:"__local__",devLuck:1,econ:ECON_VER,filter:"all",vfilter:"all",
+  equipped:null,pity:0,best:-1,sound:false,auto:false,cutMin:6,safe:0,cardMin:6,perf:0,autoQ:0,acct:"__local__",cloud:false,uid:null,devLuck:1,econ:ECON_VER,filter:"all",vfilter:"all",
   buff:{luck:{m:1,t:0},speed:{m:1,t:0},gold:{m:1,t:0}}};
 
 /* ═════════ 연출 품질 ═════════
@@ -80,7 +80,8 @@ function cost(u){ return Math.floor(u.base*Math.pow(u.mul,S.up[u.id])); }
 
 /* 저장소 — 아티팩트 환경이면 window.storage, 일반 웹이면 localStorage */
 const LEGACY_KEY="sworddestiny:ex1";
-function saveKey(){ return "sworddestiny:acct:"+(S.acct||"__local__"); }
+/* 클라우드 로그인 시엔 로컬 캐시 키를 uid 기준으로 둔다(기기별 계정 슬롯과 분리) */
+function saveKey(){ return (S.cloud&&S.uid) ? "sworddestiny:cloud:"+S.uid : "sworddestiny:acct:"+(S.acct||"__local__"); }
 const store={
  async get(k){
   if(window.storage&&window.storage.get)return window.storage.get(k);
@@ -95,10 +96,15 @@ const store={
   localStorage.removeItem(k);}};
 let saveT=null;
 function save(){clearTimeout(saveT);saveT=setTimeout(async()=>{
-  try{await store.set(saveKey(),JSON.stringify(S));}catch(e){}},700);}
+  try{await store.set(saveKey(),JSON.stringify(S));}catch(e){}                 // 로컬 캐시(오프라인 대비)
+  if(S.cloud&&S.uid&&typeof cloudReady==="function"&&cloudReady()){            // 서버 동기화(최선 노력)
+   try{await cloudPutSave(S.uid,S.acctName||"",S);}catch(e){}}
+ },700);}
 async function load(){try{
   let r=null;
-  try{r=await store.get(saveKey());}catch(e){}
+  if(S.cloud&&S.uid&&typeof cloudReady==="function"&&cloudReady()){            // 로그인 상태면 서버 먼저
+   try{const srv=await cloudGetSave(S.uid); if(srv&&srv.data)r={value:JSON.stringify(srv.data)};}catch(e){}}
+  if(!(r&&r.value)){ try{r=await store.get(saveKey());}catch(e){} }            // 없으면 로컬 캐시
   if(!(r&&r.value)&&(S.acct==="__local__"||!S.acct)){
    try{const lr=await store.get(LEGACY_KEY); if(lr&&lr.value)r=lr;}catch(e){}}
   if(r&&r.value){const o=JSON.parse(r.value);

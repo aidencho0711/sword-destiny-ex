@@ -4,6 +4,8 @@ const CACHE = "sworddestiny-v33";
 const ASSETS = [
   "./", "./index.html", "./manifest.webmanifest",
   "./css/game.css",
+  "./js/00-config.js",
+  "./js/13-cloud.js",
   "./js/01-data-rarity.js",
   "./js/02-data-swords.js",
   "./js/03-data-economy.js",
