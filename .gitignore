@@ -4,3 +4,8 @@ node_modules/
 *.log
 .vscode/
 .idea/
+
+# Netlify 배포 (커밋 금지)
+.netlify-token
+.netlify-site
+_deploy.zip

@@ -28,10 +28,10 @@ body::before{content:"";position:fixed;inset:0;pointer-events:none;z-index:1;
 
 .hud{display:flex;align-items:center;gap:12px;padding:calc(env(safe-area-inset-top) + 11px) 15px 11px;
   border-bottom:1px solid var(--line);background:linear-gradient(var(--ink2),var(--ink));position:relative;z-index:3}
-.crest{font-family:var(--serif);line-height:1.05}
-.crest b{display:block;font-size:15px;letter-spacing:.2em;font-weight:500}
+.crest{font-family:var(--serif);line-height:1.05;min-width:0;overflow:hidden}
+.crest b{display:block;font-size:15px;letter-spacing:.2em;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .crest i{display:block;font-size:9px;letter-spacing:.5em;color:var(--ember);font-style:normal;margin-top:3px}
-.hud-stats{margin-left:auto;display:flex;gap:14px;align-items:baseline}
+.hud-stats{margin-left:auto;display:flex;gap:14px;align-items:baseline;flex:0 0 auto}
 .stat{text-align:right;line-height:1.15}
 .stat b{font-size:14.5px;font-variant-numeric:tabular-nums;font-weight:600}
 .stat span{display:block;font-size:9px;color:var(--ash-dim);letter-spacing:.13em}
@@ -207,16 +207,26 @@ nav button.on{color:var(--paper);border-top-color:var(--ember)}
 .lg-note{font-size:10px;color:#5a534c;line-height:1.7;margin-top:16px;text-align:center;letter-spacing:.02em}
 .lg-inherit{border:1px solid var(--ember-dim);background:rgba(200,106,43,.07);padding:9px 11px;
   font-size:11px;color:#e9b478;line-height:1.6;margin-bottom:14px;letter-spacing:.02em}
-.hud .who{margin-left:12px;display:flex;align-items:center;gap:7px;flex:0 0 auto}
+.hud .who{margin-left:12px;display:flex;align-items:center;gap:7px;flex:0 1 auto;min-width:0}
 .hud .who span{font-size:10.5px;color:var(--ash-dim);letter-spacing:.06em;max-width:86px;
-  white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  flex:0 1 auto;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .hud .who em{font-style:normal;font-size:9px;letter-spacing:.12em;padding:2px 6px;border:1px solid;
-  white-space:nowrap}
+  white-space:nowrap;flex:0 0 auto}
 .hud .who em.dev{color:#e0b04a;border-color:#8a6a24;background:rgba(224,176,74,.1)}
 .hud .who em.sub{color:#8fd0c0;border-color:#3f6b5e;background:rgba(143,208,192,.1)}
 .hud .who button{width:28px;height:28px;border:1px solid var(--line);background:transparent;
-  color:var(--ash);cursor:pointer;display:flex;align-items:center;justify-content:center;padding:0}
+  color:var(--ash);cursor:pointer;display:flex;align-items:center;justify-content:center;padding:0;flex:0 0 auto}
 .hud .who button svg{width:14px;height:14px}
+/* 좁은 화면: 공간이 빠듯하므로 장식 제목을 숨기고 간격·이름 폭을 줄인다.
+   스탯과 설정기어는 축소하지 않아 항상 보인다. */
+@media(max-width:430px){
+  .hud{gap:8px}
+  .crest{display:none}
+  .hud .who{margin-left:8px;gap:5px}
+  .hud .who span{max-width:64px}
+  .hud .who em{padding:2px 5px;letter-spacing:.06em}
+  .gear{margin-left:8px}
+}
 /* ── 도전 과제 트리 ── */
 .codex-top{display:flex;gap:7px;margin-bottom:12px}
 .codex-top button{flex:0 0 auto;padding:8px 13px;border:1px solid var(--line);background:transparent;
