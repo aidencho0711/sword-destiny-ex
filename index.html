@@ -26,7 +26,7 @@
   <header class="hud">
     <div class="crest"><b>SWORD DESTINY</b><i>- ex</i></div>
     <div class="hud-stats">
-      <div class="stat gold"><b id="s-gold">0</b><span>주화</span></div>
+      <div class="stat gold"><b id="s-gold">0</b><span id="s-cur-lbl">주화</span></div>
       <div class="stat luck"><b id="s-luck">×1.00</b><span>행운</span></div>
       <div class="stat"><b id="s-rolls">0</b><span>주조</span></div>
     </div>
@@ -71,6 +71,12 @@
       <div class="grid" id="codex-grid"></div>
       <div id="codex-count" style="font-size:11px;color:#6b6158;letter-spacing:.12em;margin:14px 0 2px;text-align:center"></div>
     </section>
+    <section class="view" id="v-armory">
+      <div id="arm-head"></div>
+      <div class="codex-bar" id="arm-bar"></div>
+      <div class="grid" id="arm-grid"></div>
+      <div id="arm-count" style="font-size:11px;color:#6b6158;letter-spacing:.12em;margin:14px 0 2px;text-align:center"></div>
+    </section>
     <div id="sheet"></div><div id="settings"></div><div id="tree"></div><div id="devm"></div>
     <div id="rcard"></div><div id="toast"></div>
   </main>
@@ -78,6 +84,7 @@
     <button class="on" data-v="roll">화 로</button>
     <button data-v="shop">상 점</button>
     <button data-v="codex">도 감<i class="badge" id="codex-badge" style="display:none"></i></button>
+    <button data-v="armory">병 기 고</button>
   </nav>
 </div>
 <div id="login"></div>
@@ -92,6 +99,7 @@
 <script src="js/07-roll.js"></script>
 <script src="js/08-cutscenes.js"></script>
 <script src="js/09-render.js"></script>
+<script src="js/12-armory.js"></script>
 <script src="js/10-events.js"></script>
 <script src="js/11-boot.js"></script>
 </body>

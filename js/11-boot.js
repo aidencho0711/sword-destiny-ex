@@ -81,8 +81,8 @@ async function doAuth(){
 async function enterGame(id){
  await acctSetSession(id==="__local__"?null:id);
  // 현재 상태를 비우고 그 계정의 저장을 불러온다
- Object.assign(S,{gold:0,rolls:0,goldTot:0,rebirth:0,ach:{},up:{luck:0,speed:0,greed:0,vault:0,auto:0},
-   inv:{},owned:{},equipped:null,pity:0,best:-1,buff:{luck:{m:1,t:0},speed:{m:1,t:0},gold:{m:1,t:0}},
+ Object.assign(S,{gold:0,gems:0,rolls:0,goldTot:0,rebirth:0,ach:{},up:{luck:0,speed:0,greed:0,vault:0,auto:0},
+   inv:{},owned:{},ench:{},equipped:null,pity:0,best:-1,buff:{luck:{m:1,t:0},speed:{m:1,t:0},gold:{m:1,t:0}},
    auto:false,acct:id});
  await load();
  /* 권한과 이름은 계정 레지스트리가 기준이다.
@@ -157,6 +157,14 @@ async function renderDev(){
      ${["1e4","1e6","1e8","1e10"].map(v=>`<button class="chip" data-dvg="${v}">+${fmt(Number(v))}</button>`).join("")}
    </div></div>
 
+  <div class="sec">보석 지급</div>
+  <div class="card"><p>대상 계정의 보석을 더합니다. 음수를 넣으면 회수됩니다.</p>
+   <div class="dv-row"><input id="dv-gems" type="text" inputmode="numeric" placeholder="예: 100 또는 5000">
+     <button data-dv="gems">지급</button></div>
+   <div class="dv-chips">
+     ${["10","100","1000","10000"].map(v=>`<button class="chip" data-dvgem="${v}">+${Number(v).toLocaleString()}</button>`).join("")}
+   </div></div>
+
   <div class="sec">행운 배수</div>
   <div class="card"><p>대상 계정의 행운에 곱해지는 개발자 배수입니다. 1이면 효과 없음.</p>
    <div class="dv-row"><input id="dv-luck" type="text" inputmode="decimal" placeholder="예: 100">
@@ -206,6 +214,11 @@ async function devAction(kind,val){
   if(!isFinite(n)||n===0){toast("숫자를 확인하세요");return;}
   await applyTo(id,o=>{o.gold=Math.max(0,(o.gold||0)+n); if(n>0)o.goldTot=(o.goldTot||0)+n;});
   toast(fmt(Math.abs(n))+" 주화 "+(n>0?"지급":"회수"));
+ }else if(kind==="gems"){
+  const n=Number(val);
+  if(!isFinite(n)||n===0){toast("숫자를 확인하세요");return;}
+  await applyTo(id,o=>{o.gems=Math.max(0,(o.gems||0)+n);});
+  toast(Math.abs(n).toLocaleString()+" 보석 "+(n>0?"지급":"회수"));
  }else if(kind==="luck"){
   const n=Number(val);
   if(!isFinite(n)||n<=0){toast("1 이상의 숫자를 넣으세요");return;}
@@ -292,6 +305,8 @@ $("devm").addEventListener("click",async e=>{
  if(t.dataset.dvdel){await devDelete(t.dataset.dvdel);return;}
  if(t.dataset.dvrole){await devToggleRole(t.dataset.dvrole);return;}
  if(t.dataset.dvg){await devAction("gold",t.dataset.dvg);return;}
+ if(t.dataset.dvgem){await devAction("gems",t.dataset.dvgem);return;}
+ if(t.dataset.dv==="gems"){await devAction("gems",$("dv-gems").value);return;}
  if(t.dataset.dvl){await devAction("luck",t.dataset.dvl);return;}
  if(t.dataset.dv==="gold"){await devAction("gold",$("dv-gold").value);return;}
  if(t.dataset.dv==="luck"){await devAction("luck",$("dv-luck").value);return;}

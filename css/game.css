@@ -126,6 +126,20 @@ main{flex:1;position:relative;overflow:hidden;z-index:2}
 .tile.equipped::before{content:"장착";position:absolute;top:4px;left:5px;font-size:8px;color:var(--acc);letter-spacing:.08em}
 .tile.locked .tn{color:var(--ash-dim)}
 
+/* ── 병기고 ── */
+.arm-top{display:flex;gap:12px;align-items:center;margin-bottom:9px}
+.arm-gem{font-size:16px;font-variant-numeric:tabular-nums}
+.arm-gem b{color:#8fd0c0}
+.arm-gem span{font-size:10px;color:var(--ash-dim);margin-left:4px;letter-spacing:.12em}
+.arm-eq{margin-left:auto;text-align:right;max-width:60%}
+.arm-eq span{display:block;font-size:9px;color:var(--ash-dim);letter-spacing:.16em}
+.arm-eq b{font-family:var(--serif);font-size:12.5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;display:block}
+.arm-eff{font-size:11px;color:var(--ash);margin-bottom:12px;line-height:1.55}
+.arm-ench{font-size:11px;color:var(--ash-dim);line-height:1.6;margin-bottom:14px}
+.arm-empty{grid-column:1/-1;text-align:center;color:var(--ash-dim);font-size:11px;padding:32px 0}
+#v-armory .tile{cursor:pointer}
+#v-armory .tile.ench .tn{color:var(--acc)}
+
 #sheet{position:absolute;inset:0;z-index:20;display:none;background:rgba(10,9,8,.95);backdrop-filter:blur(6px);
   padding:22px 18px;overflow-y:auto}
 #sheet.on{display:block;animation:fade .2s}

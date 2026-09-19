@@ -5,7 +5,9 @@ function fmt(n){
  if(n>=1e4)return (n/1e4).toFixed(1)+"만";
  return Math.floor(n).toLocaleString();}
 function renderHUD(){
- $("s-gold").textContent=fmt(S.gold);
+ const armOn=$("v-armory")&&$("v-armory").classList.contains("on");
+ $("s-gold").textContent=fmt(armOn?(S.gems||0):S.gold);
+ const gl=$("s-cur-lbl");if(gl)gl.textContent=armOn?"보석":"주화";
  $("s-luck").textContent="×"+(luck()>=1000?fmt(luck()):luck().toFixed(2));
  $("s-rolls").textContent=S.rolls.toLocaleString();
  $("pity-bar").style.width=Math.min(100,S.pity/pityMax()*100)+"%";
@@ -118,9 +120,9 @@ function renderShop(){
        ${maxUp(u).n?"":"disabled"}>최대 +${maxUp(u).n}</button>`}</div>
    ${mx?"":`<div class="qhint">최대 강화 시 ${fmt(maxUp(u).cost)} 주화 소모 · ${u.eff(Math.min(u.max,lv+maxUp(u).n))}</div>`}
    </div>`;});
- h+=`<div class="sec">장착</div><div class="card">
-   <div class="card-top"><h3>${S.equipped||"장착한 검 없음"}</h3></div>
-   <p>검마다 고유 효과가 다릅니다. 상위 등급이 항상 유리하지는 않으니 지금 필요한 효과를 골라 끼우세요.</p>
+ h+=`<div class="sec">현재 능력치</div><div class="card">
+   <div class="card-top"><h3>${S.equipped?S.equipped.n:"장착한 검 없음"}</h3></div>
+   <p>검 장착과 인첸트는 <b>병기고</b>에서 합니다.</p>
    <div class="eff">${S.equipped?fxText(eqf()):"효과 없음"}</div>
    <div class="eff">합산 · 행운 ×${luck().toFixed(2)} · 주화 ×${goldMult().toFixed(2)} · ${rollDelay().toFixed(3)}초/회 · 보장 ${pityMax().toLocaleString()}회</div></div>`;
  $("v-shop").innerHTML=h;}
@@ -130,8 +132,8 @@ function renderCodex(){
  $("codex-bar").innerHTML=tabs.map(t=>`<button class="chip ${S.filter===t.id?"on":""}" data-f="${t.id}">${t.n}</button>`).join("");
  const list=SWORDS.filter(s=>S.filter==="all"||RARITY[s.t].id===S.filter);
  $("codex-grid").innerHTML=list.map(s=>{
-  const c=S.owned[s.n]||0,R=RARITY[s.t];
-  return `<div class="tile ${c?"":"locked"} ${S.equipped===s.n?"equipped":""}" style="--acc:${R.c}" data-s="${encodeURIComponent(s.n)}">
+  const c=swordTotal(s.n),R=RARITY[s.t];
+  return `<div class="tile ${c?"":"locked"} ${S.equipped&&S.equipped.n===s.n?"equipped":""}" style="--acc:${R.c}" data-s="${encodeURIComponent(s.n)}">
    ${c?`<span class="cnt">${c>999?"999+":c}</span>`:""}
    <div class="art">${swordSVG(s)}</div>
    <div class="tn">${c?s.n:"???"}</div><div class="tr">${R.n}</div></div>`;}).join("");
@@ -186,7 +188,7 @@ function renderRebirth(){
      ${c.ok?"환생한다":"조건 미달"}</button></div>`}</div>`;}
 
 function openSheet(name){
- const s=SWORDS.find(x=>x.n===name),R=RARITY[s.t],c=S.owned[s.n]||0,sh=$("sheet");
+ const s=SWORDS.find(x=>x.n===name),R=RARITY[s.t],c=swordTotal(s.n),sh=$("sheet");
  sh.style.setProperty("--acc",R.c);
  sh.innerHTML=`<div class="sheet-art">${c?swordSVG(s):""}</div>
   <div class="sheet-r">${R.n}</div><div class="sheet-n">${c?s.n:"미발견"}</div>
@@ -197,12 +199,9 @@ function openSheet(name){
   <div class="rc-fx" style="--acc:${R.c};max-width:30em;margin:16px auto 0">
     <i>장착 효과</i><p>${fxText(s.fx||{})}</p></div>
   <div class="btn-row" style="margin-top:20px">
-   ${c?`<button class="mini" id="sh-eq">${S.equipped===s.n?"장착 해제":"장착하기"}</button>`:""}
    ${c&&R.mode!=="none"?`<button class="mini" id="sh-cut">컷신 다시 보기</button>`:""}
    <button class="mini" id="sh-close">닫기</button></div>`;
  sh.classList.add("on");
- const eq=$("sh-eq");if(eq)eq.onclick=()=>{S.equipped=S.equipped===s.n?null:s.n;save();renderHUD();renderCodex();
-  sh.classList.remove("on");toast(S.equipped?"장착했습니다":"해제했습니다");};
  const cu=$("sh-cut");if(cu)cu.onclick=()=>{sh.classList.remove("on");ac();playCutscene(s,R);};
  $("sh-close").onclick=()=>sh.classList.remove("on");}
 

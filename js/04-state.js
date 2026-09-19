@@ -1,6 +1,6 @@
 /* ═════════ 상태 ═════════ */
-const S={gold:0,rolls:0,goldTot:0,rebirth:0,ach:{},up:{luck:0,speed:0,greed:0,vault:0,auto:0},inv:{},owned:{},
-  equipped:null,pity:0,best:-1,sound:false,auto:false,cutMin:6,safe:0,cardMin:6,perf:0,autoQ:0,acct:"__local__",devLuck:1,econ:ECON_VER,filter:"all",
+const S={gold:0,gems:0,rolls:0,goldTot:0,rebirth:0,ach:{},up:{luck:0,speed:0,greed:0,vault:0,auto:0},inv:{},owned:{},ench:{},
+  equipped:null,pity:0,best:-1,sound:false,auto:false,cutMin:6,safe:0,cardMin:6,perf:0,autoQ:0,acct:"__local__",devLuck:1,econ:ECON_VER,filter:"all",vfilter:"all",
   buff:{luck:{m:1,t:0},speed:{m:1,t:0},gold:{m:1,t:0}}};
 
 /* ═════════ 연출 품질 ═════════
@@ -69,7 +69,9 @@ async function applyTo(id,fn){
 
 const now=()=>Date.now();
 function bf(k){ return S.buff[k].t>now() ? S.buff[k].m : 1; }
-function eqf(){ if(!S.equipped)return {}; const x=SWORDS.find(v=>v.n===S.equipped); return (x&&x.fx)||{}; }
+/* 장착 검 찾기 — equipped 는 {n:이름, e:인첸트레벨} 객체 */
+function eqSword(){ return S.equipped?SWORDS.find(v=>v.n===S.equipped.n)||null:null; }
+function eqf(){ const x=eqSword(); if(!x)return {}; return enchFx(x,(S.equipped&&S.equipped.e)||0); }
 function luck(){ return (1+S.up.luck*0.62)*(1+(eqf().luck||0))*(1+AB.luck)*rbLuck()*bf("luck")*(S.devLuck||1); }
 function goldMult(){ return (1+S.up.greed*0.10+(eqf().gold||0)+AB.gold)*rbGold()*bf("gold"); }
 function rollDelay(){ return Math.max(0.1,1.0*Math.pow(0.865,S.up.speed)*(1-(eqf().speed||0))*(1-AB.speed))*bf("speed"); }
@@ -105,7 +107,13 @@ async function load(){try{
    Object.assign(S,o);
     S.up=Object.assign({luck:0,speed:0,greed:0,vault:0,auto:0},o.up||{});
     S.buff=Object.assign({luck:{m:1,t:0},speed:{m:1,t:0},gold:{m:1,t:0}},o.buff||{});
-    S.inv=o.inv||{};S.ach=o.ach||{};
+    S.inv=o.inv||{};S.ach=o.ach||{};S.ench=o.ench||{};
+    if(typeof S.gems!=="number")S.gems=0;
+    // equipped: 예전엔 검 이름 문자열 → {n,e} 객체로 이전
+    if(typeof S.equipped==="string")S.equipped={n:S.equipped,e:0};
+    else if(S.equipped&&typeof S.equipped==="object")S.equipped={n:S.equipped.n,e:S.equipped.e||0};
+    else S.equipped=null;
+    if(typeof S.vfilter!=="string")S.vfilter="all";
     if(typeof S.rebirth!=="number")S.rebirth=0;
     if(typeof S.goldTot!=="number")S.goldTot=0;
     if(typeof S.cutMin!=="number")S.cutMin=(o.cut===false)?99:CUT_FROM;

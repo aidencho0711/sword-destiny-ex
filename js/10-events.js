@@ -22,7 +22,8 @@ document.querySelectorAll("nav button").forEach(b=>{b.onclick=()=>{
  document.querySelectorAll(".view").forEach(v=>v.classList.remove("on"));
  b.classList.add("on");$("v-"+b.dataset.v).classList.add("on");
  $("settings").classList.remove("on");$("tree").classList.remove("on");$("devm").classList.remove("on");
- if(b.dataset.v==="shop")renderShop();if(b.dataset.v==="codex")renderCodex();};});
+ if(b.dataset.v==="shop")renderShop();if(b.dataset.v==="codex")renderCodex();if(b.dataset.v==="armory")renderArmory();
+ renderHUD();};});                                    // 창 전환 시 주화↔보석 표시 갱신
 
 $("v-shop").addEventListener("change",e=>{
  const i=e.target;

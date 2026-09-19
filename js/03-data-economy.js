@@ -62,8 +62,20 @@ function rbReq(n){
          note:"운명 1자루 · 도감 "+c+"종"};}
 const rbGold=()=>Math.pow(1.75,S.rebirth);   // 환생 1회마다 주화 1.75배
 const rbLuck=()=>Math.pow(1.45,S.rebirth);   // 환생 1회마다 행운 1.45배
-const coll=()=>SWORDS.filter(x=>S.owned[x.n]).length;
-const tierCount=t=>SWORDS.filter(x=>x.t>=t&&S.owned[x.n]).length;
+/* 검 보유 판정 — 기본(owned) + 인첸트본(ench) 모두 고려 */
+const enchCount=n=>{const e=S.ench&&S.ench[n];return e?Object.values(e).reduce((a,b)=>a+b,0):0;};
+const swordTotal=n=>(S.owned[n]||0)+enchCount(n);
+const hasSword=n=>swordTotal(n)>0;
+const coll=()=>SWORDS.filter(x=>hasSword(x.n)).length;
+const tierCount=t=>SWORDS.filter(x=>x.t>=t&&hasSword(x.n)).length;
+
+/* ═════════ 보석 드랍 ═════════
+   신성(11) 이상 뽑을 때 확률로 보석 획득. 등급이 높을수록 확률·개수 증가. */
+const GEM_FROM=11;
+const GEM_DROP={11:{p:.10,min:1,max:3},12:{p:.12,min:3,max:6},13:{p:.15,min:6,max:10}};
+function gemDrop(t){
+ const d=GEM_DROP[t]; if(!d||Math.random()>=d.p)return 0;
+ return d.min+Math.floor(Math.random()*(d.max-d.min+1));}
 function rbCheck(){
  const q=rbReq(S.rebirth);
  return {q,gold:S.gold>=q.gold,sword:tierCount(q.tier)>=(q.need||1),

@@ -17,7 +17,8 @@ const GUARD={
  halo:'<path d="M100 378 m-52 0 a52 52 0 1 0 104 0 a52 52 0 1 0 -104 0" fill="none" stroke-width="3" opacity=".5"/><path d="M100 378 m-34 0 a34 34 0 1 0 68 0 a34 34 0 1 0 -68 0" fill="none" stroke-width="6"/>',
  none:'<rect x="86" y="374" width="28" height="8" rx="4" opacity=".8"/>'};
 let uid=0;
-function swordSVG(s){
+/* ench: 인첸트 레벨(0=기본). 2단계에서 인첸트본 전용 글린트 레이어에 사용. */
+function swordSVG(s,ench){
  const R=RARITY[s.t],id="s"+(uid++),glow=s.t>=4,aura=s.t>=6,prism=s.t>=11;
  let defs=`<linearGradient id="b${id}" x1="0" y1="0" x2="1" y2=".3">
    <stop offset="0%" stop-color="${s.c[0]}"/><stop offset="46%" stop-color="${s.e}"/>

@@ -17,7 +17,7 @@ function showCard(){
  const d=pending;pending=null;if(!d)return;
  const el=$("rcard");
  el.style.setProperty("--acc",d.R.c);
- const fx=d.s.fx||{},eq=S.equipped===d.s.n;
+ const fx=d.s.fx||{};
  el.innerHTML=`<div class="rc">
    <div class="rc-art">${swordSVG(d.s)}</div>
    <div class="rc-r">${d.R.n}</div>
@@ -29,11 +29,10 @@ function showCard(){
      <div><b>×${d.luck>=1000?fmt(d.luck):d.luck.toFixed(2)}</b><span>당시 행운</span></div>
      <div><b>+${fmt(d.g)}</b><span>획득 주화</span></div>
      <div><b>${d.own.toLocaleString()}</b><span>보유 수량</span></div>
-     <div><b>${d.buff>1?"×"+d.buff:"없음"}</b><span>사용 중 물약</span></div>
+     ${d.gem?`<div><b>💎 +${d.gem}</b><span>획득 보석</span></div>`:`<div><b>${d.buff>1?"×"+d.buff:"없음"}</b><span>사용 중 물약</span></div>`}
    </div>
    <div class="rc-fx"><i>장착 효과</i><p>${fxText(fx)}</p></div>
    <div class="btn-row">
-     <button class="mini" id="rc-eq">${eq?"장착 해제":"장착하기"}</button>
      ${d.R.mode!=="none"?'<button class="mini" id="rc-cut">컷신 다시 보기</button>':""}
      <button class="mini" id="rc-x">닫기</button>
    </div>
@@ -41,8 +40,6 @@ function showCard(){
  </div>`;
  el.classList.add("on");
  clearTimeout(cardT);cardT=setTimeout(closeCard,CARD_MS);
- $("rc-eq").onclick=e=>{e.stopPropagation();
-  S.equipped=S.equipped===d.s.n?null:d.s.n;save();renderHUD();toast(S.equipped?"장착했습니다":"해제했습니다");closeCard();};
  const c=$("rc-cut");
  if(c)c.onclick=e=>{e.stopPropagation();clearTimeout(cardT);
   el.classList.remove("on");el.innerHTML="";pending=d;ac();playCutscene(d.s,d.R);};
@@ -67,21 +64,22 @@ function doRoll(){
  setTimeout(()=>{
   const t=pickRarity(),s=pickSword(t),R=RARITY[t];
   S.rolls++;S.pity=t>=CUT_FROM?0:S.pity+1;
-  const isNew=!S.owned[s.n];S.owned[s.n]=(S.owned[s.n]||0)+1;
+  const isNew=!hasSword(s.n);S.owned[s.n]=(S.owned[s.n]||0)+1;
   let g=Math.floor(R.g*goldMult());
   if(!isNew)g=Math.floor(g*(1+(eqf().dupe||0)));
   S.gold+=g;S.goldTot+=g;
+  const gem=gemDrop(t);if(gem)S.gems=(S.gems||0)+gem;      // 신성 이상 보석 드랍
   if(t>S.best)S.best=t;
   if(isNew)$("codex-badge").style.display="block";
-  showResult(s,R,g,isNew);checkAch();save();renderHUD();
+  showResult(s,R,g,isNew,gem);checkAch();save();renderHUD();
   rolling=false;btn.disabled=false;
-  if(t>=S.cardMin)pending={s,R,g,isNew,rolls:S.rolls,luck:luck(),own:S.owned[s.n],
+  if(t>=S.cardMin)pending={s,R,g,isNew,gem,rolls:S.rolls,luck:luck(),own:swordTotal(s.n),
     buff:S.buff.luck.t>now()?S.buff.luck.m:1};
   if(R.mode!=="none"&&t>=S.cutMin)playCutscene(s,R);
   else afterResult();
  },dur*1000);}
 
-function showResult(s,R,g,isNew){
+function showResult(s,R,g,isNew,gem){
  const slot=$("slot"),glow=$("glow");
  slot.style.setProperty("--acc",s.acc||R.c);
  slot.style.setProperty("--gb",s.t>=4?(8+s.t*3)+"px":"0px");
@@ -90,6 +88,6 @@ function showResult(s,R,g,isNew){
  slot.innerHTML=swordSVG(s);slot.classList.add("drop");
  const ro=$("r-rarity");ro.textContent=R.n+(isNew?" · 신규":"");ro.style.color=R.c;
  $("r-name").textContent=s.n;
- $("r-odds").textContent="1 / "+R.one.toLocaleString()+"　·　+"+fmt(g)+" 주화";
+ $("r-odds").textContent="1 / "+R.one.toLocaleString()+"　·　+"+fmt(g)+" 주화"+(gem?"　·　💎 +"+gem:"");
  sfxClink(s.t);
  if(s.t>=CUT_FROM){$("app").classList.add("shake");setTimeout(()=>$("app").classList.remove("shake"),450);}}

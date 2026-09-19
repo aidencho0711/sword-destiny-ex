@@ -91,6 +91,25 @@ const FX={
  "천기 天機":{luck:.6,pdur:.5},
 };
 SWORDS.forEach(x=>{x.fx=FX[x.n]||{gold:x.t*.02};});
+
+/* ═════════ 인첸트 ═════════
+   각 검의 "대표 효과" 하나만 레벨 I~V로 키운다. 대표는 값이 가장 큰 수치 fx,
+   동률이면 아래 우선순위. twin/rer 만 가진 검은 대표가 없으므로 소량 주화를 대표로 부여. */
+const ENCH_PRI=["luck","gold","speed","pity","dupe","pdur"];
+SWORDS.forEach(x=>{
+ if(!ENCH_PRI.some(k=>x.fx[k]!=null)) x.fx.gold=Math.max(0.05,x.t*.02);   // 대표 없는 검 보정
+});
+const ENCH_MAX=5, ENCH_STEP=0.20;                                          // 레벨당 대표효과 +20%
+function enchKey(sw){
+ const fx=sw.fx||{}; let best=null,bv=-1;
+ for(const k of ENCH_PRI) if(fx[k]!=null&&+fx[k]>bv){bv=+fx[k];best=k;}
+ return best;}
+/* 인첸트 레벨을 반영한 fx (원본 불변, 복사본 반환) */
+function enchFx(sw,lv){
+ const fx=Object.assign({},sw.fx||{});
+ if(lv>0){ const k=enchKey(sw); if(k!=null) fx[k]=+fx[k]*(1+ENCH_STEP*lv); }
+ return fx;}
+
 const FXN={gold:"주화 획득",luck:"행운",speed:"주조 속도",pity:"전설 보장",
  dupe:"중복 주화",pdur:"포션 지속",twin:"",rer:""};
 function fxText(fx){

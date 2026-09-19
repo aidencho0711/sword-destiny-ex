@@ -13,6 +13,7 @@ const ASSETS = [
   "./js/07-roll.js",
   "./js/08-cutscenes.js",
   "./js/09-render.js",
+  "./js/12-armory.js",
   "./js/10-events.js",
   "./js/11-boot.js",
   "./icon.svg", "./icon-192.png", "./icon-512.png", "./icon-512-maskable.png"
