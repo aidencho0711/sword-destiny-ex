@@ -139,6 +139,33 @@ main{flex:1;position:relative;overflow:hidden;z-index:2}
 .arm-empty{grid-column:1/-1;text-align:center;color:var(--ash-dim);font-size:11px;padding:32px 0}
 #v-armory .tile{cursor:pointer}
 #v-armory .tile.ench .tn{color:var(--acc)}
+.ench-panel{max-width:30em;margin:16px auto 0;border:1px solid var(--acc);border-radius:2px;
+  padding:13px 14px;background:rgba(255,255,255,.02)}
+.ench-panel.locked{text-align:center;color:var(--ash-dim);font-size:11px;border-color:var(--line)}
+.ench-row{display:flex;justify-content:space-between;align-items:baseline;font-size:12px;margin-bottom:6px;color:var(--ash)}
+.ench-row b{font-variant-numeric:tabular-nums;color:var(--paper)}
+.ench-row.warn b{color:#e8776a}
+.ench-next{font-size:10.5px;color:var(--ash-dim);line-height:1.5;margin:8px 0 12px}
+.ench-panel .buy{width:100%}
+/* 인첸트 결과 이펙트 */
+.ench-burst{position:absolute;inset:0;pointer-events:none;z-index:6;overflow:hidden}
+.eb-flash{position:absolute;inset:0;background:radial-gradient(circle at 50% 28%,var(--bc),transparent 52%);
+  opacity:0;animation:ebFlash .5s ease-out}
+.ench-burst.no .eb-flash{background:radial-gradient(circle at 50% 28%,#e8564a,transparent 52%)}
+@keyframes ebFlash{0%{opacity:0}18%{opacity:.55}100%{opacity:0}}
+.eb-ring{position:absolute;left:50%;top:28%;width:44px;height:44px;margin:-22px 0 0 -22px;
+  border:2px solid var(--bc);border-radius:50%;opacity:.9;animation:ebRing .8s ease-out forwards}
+@keyframes ebRing{0%{transform:scale(.3);opacity:.9}100%{transform:scale(3.6);opacity:0}}
+.eb-parts i{position:absolute;left:50%;top:28%;width:5px;height:5px;margin:-2.5px;border-radius:50%;
+  background:var(--bc);box-shadow:0 0 6px var(--bc);transform:rotate(var(--a)) translateY(0);
+  animation:ebPart .85s cubic-bezier(.2,.6,.3,1) forwards}
+@keyframes ebPart{to{transform:rotate(var(--a)) translateY(calc(var(--d) * -1));opacity:0}}
+.eb-x{position:absolute;left:0;right:0;top:24%;text-align:center;color:#e8564a;font-size:44px;
+  font-weight:700;opacity:0;animation:ebX .72s ease-out}
+@keyframes ebX{0%{opacity:0;transform:translateY(-8px)}28%{opacity:.95}100%{opacity:0;transform:translateY(10px)}}
+.eb-shake{animation:ebShake .45s}
+@keyframes ebShake{0%,100%{transform:translateX(0)}20%{transform:translateX(-7px)}40%{transform:translateX(6px)}
+  60%{transform:translateX(-4px)}80%{transform:translateX(3px)}}
 
 #sheet{position:absolute;inset:0;z-index:20;display:none;background:rgba(10,9,8,.95);backdrop-filter:blur(6px);
   padding:22px 18px;overflow-y:auto}

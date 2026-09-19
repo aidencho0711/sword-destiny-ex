@@ -100,6 +100,8 @@ SWORDS.forEach(x=>{
  if(!ENCH_PRI.some(k=>x.fx[k]!=null)) x.fx.gold=Math.max(0.05,x.t*.02);   // 대표 없는 검 보정
 });
 const ENCH_MAX=5, ENCH_STEP=0.20;                                          // 레벨당 대표효과 +20%
+/* 인첸트 대표 효과별 색조 (글린트·라벨에 사용) */
+const ENCH_COLOR={luck:"#8fd0c0",gold:"#e0b04a",speed:"#e8a24d",pity:"#c98cff",dupe:"#7fd0e8",pdur:"#9be08a"};
 function enchKey(sw){
  const fx=sw.fx||{}; let best=null,bv=-1;
  for(const k of ENCH_PRI) if(fx[k]!=null&&+fx[k]>bv){bv=+fx[k];best=k;}

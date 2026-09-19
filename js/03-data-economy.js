@@ -76,6 +76,15 @@ const GEM_DROP={11:{p:.10,min:1,max:3},12:{p:.12,min:3,max:6},13:{p:.15,min:6,ma
 function gemDrop(t){
  const d=GEM_DROP[t]; if(!d||Math.random()>=d.p)return 0;
  return d.min+Math.floor(Math.random()*(d.max-d.min+1));}
+
+/* ═════════ 인첸트 비용·성공률 ═════════
+   현재 레벨 lv 에서 lv+1 로 올릴 때의 보석 비용과 성공 확률.
+   실패하면 레벨이 1 내려간다(최소 0). 환생 3회부터 사용 가능. */
+const ENCH_UNLOCK_RB=3;
+const ENCH_COST=[20,40,80,160,320];              // 0→I, I→II, II→III, III→IV, IV→V
+const ENCH_RATE=[0.95,0.90,0.75,0.55,0.35];      // 같은 순서의 성공 확률
+const enchCost=lv=>ENCH_COST[lv];
+const enchRate=lv=>ENCH_RATE[lv];
 function rbCheck(){
  const q=rbReq(S.rebirth);
  return {q,gold:S.gold>=q.gold,sword:tierCount(q.tier)>=(q.need||1),

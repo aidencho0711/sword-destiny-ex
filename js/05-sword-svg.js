@@ -17,8 +17,38 @@ const GUARD={
  halo:'<path d="M100 378 m-52 0 a52 52 0 1 0 104 0 a52 52 0 1 0 -104 0" fill="none" stroke-width="3" opacity=".5"/><path d="M100 378 m-34 0 a34 34 0 1 0 68 0 a34 34 0 1 0 -68 0" fill="none" stroke-width="6"/>',
  none:'<rect x="86" y="374" width="28" height="8" rx="4" opacity=".8"/>'};
 let uid=0;
-/* ench: 인첸트 레벨(0=기본). 2단계에서 인첸트본 전용 글린트 레이어에 사용. */
+/* 인첸트 글린트 — 날 모양으로 클립한 대각선 광택이 쓸고 지나간다.
+   filter 애니메이션 없이 transform/opacity 만 움직인다. 블렌드는 컨테이너 한 장에만. */
+function enchGlint(s,lv,id){
+ if(!lv||lv<=0)return "";
+ const col=(typeof ENCH_COLOR!=="undefined"&&ENCH_COLOR[enchKey(s)])||"#ffffff";
+ const tint=Math.min(.52,.15+lv*.075);          // 지속 착색 (정적 상태에서도 색이 보이게)
+ const shine=Math.min(.62,.22+lv*.06);          // 쓸고 지나가는 광택
+ const bands=`<rect x="0" y="0" width="150" height="560" fill="url(#eg${id})">
+     <animateTransform attributeName="transform" type="translate" from="-170 0" to="360 0"
+       dur="2.6s" repeatCount="indefinite"/></rect>
+   ${QC(1)?`<rect x="0" y="0" width="95" height="560" fill="url(#eg${id})" opacity=".55">
+     <animateTransform attributeName="transform" type="translate" from="-260 0" to="420 0"
+       dur="4.1s" repeatCount="indefinite"/></rect>`:""}`;
+ return `<clipPath id="ec${id}"><path d="${BLADE[s.b]}"/></clipPath>
+  <linearGradient id="eg${id}" x1="0" y1="0" x2="1" y2="1">
+    <stop offset="0%" stop-color="${col}" stop-opacity="0"/>
+    <stop offset="42%" stop-color="${col}" stop-opacity="${shine.toFixed(3)}"/>
+    <stop offset="50%" stop-color="#ffffff" stop-opacity="${(shine*.95).toFixed(3)}"/>
+    <stop offset="58%" stop-color="${col}" stop-opacity="${shine.toFixed(3)}"/>
+    <stop offset="100%" stop-color="${col}" stop-opacity="0"/>
+  </linearGradient>
+  <g clip-path="url(#ec${id})" style="mix-blend-mode:screen">
+    <rect x="0" y="0" width="200" height="560" fill="${col}" opacity="${tint.toFixed(3)}">
+      <animate attributeName="opacity" values="${(tint*.62).toFixed(3)};${tint.toFixed(3)};${(tint*.62).toFixed(3)}" dur="2.6s" repeatCount="indefinite"/></rect>
+    ${bands}
+  </g>
+  <path d="${BLADE[s.b]}" fill="none" stroke="${col}" stroke-width="${(1.4+lv*.7).toFixed(1)}"
+    opacity="${Math.min(.62,.18+lv*.07).toFixed(3)}"/>`;
+}
+/* ench: 인첸트 레벨(0=기본). 인첸트본이면 전용 글린트 레이어를 덧입힌다. */
 function swordSVG(s,ench){
+ const elv=(typeof ench==="number"?ench:(ench&&ench.e)||0);
  const R=RARITY[s.t],id="s"+(uid++),glow=s.t>=4,aura=s.t>=6,prism=s.t>=11;
  let defs=`<linearGradient id="b${id}" x1="0" y1="0" x2="1" y2=".3">
    <stop offset="0%" stop-color="${s.c[0]}"/><stop offset="46%" stop-color="${s.e}"/>
@@ -132,5 +162,5 @@ function swordSVG(s,ench){
    ${[0,1,2,3,4].map(i=>`<rect class="gp" x="90" y="${394+i*19}" width="20" height="4" rx="2" fill="#000" opacity=".28"/>`).join("")}
    <circle class="gp" cx="100" cy="502" r="15" fill="url(#g${id})" stroke="${s.c[1]}"/>
    <circle class="gp" cx="100" cy="502" r="7" fill="${s.gem}">${s.t>=6?'<animate attributeName="opacity" values=".55;1;.55" dur="2.4s" repeatCount="indefinite"/>':""}</circle>
-  </g>${dcF}${orbFront}${spark}</svg>`;
+  </g>${enchGlint(s,elv,id)}${dcF}${orbFront}${spark}</svg>`;
 }
