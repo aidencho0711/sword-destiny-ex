@@ -139,20 +139,35 @@ const ACH=[
  {id:"a18",n:"태초를 보다",     d:"태초 등급 획득",         c:()=>S.best>=12,        r:{luck:.14},  x:1,y:6,p:["a15"]},
  {id:"a19",n:"운명을 쥐다",     d:"운명 등급 획득",         c:()=>S.best>=13,        r:{luck:.2},   x:3,y:6,p:["a15"]},
  {id:"a20",n:"세 번의 윤회",    d:"환생 3회",              c:()=>S.rebirth>=3,      r:{luck:.15,gold:.20}, x:2,y:7,p:["a16","a17"]},
+ /* ── 운명 이상 새 등급 ── */
+ {id:"a21",n:"무극에 이르다",   d:"무극 등급 획득",         c:()=>S.best>=14,        r:{luck:.12},          x:3,y:7,p:["a19"]},
+ {id:"a22",n:"혼돈을 보다",     d:"혼돈 등급 획득",         c:()=>S.best>=15,        r:{luck:.15},          x:3,y:8,p:["a21"]},
+ {id:"a23",n:"영겁을 쥐다",     d:"영겁 등급 획득",         c:()=>S.best>=16,        r:{luck:.25,gold:.25}, x:3,y:9,p:["a22"]},
+ /* ── 보석 ── */
+ {id:"a24",n:"첫 보석",        d:"보석을 처음 얻는다",      c:()=>S.gemTot>=1,       r:{gem:.05},           x:4,y:6,p:["a15"]},
+ {id:"a25",n:"보석 수집가",     d:"누적 보석 1,000",        c:()=>S.gemTot>=1000,    r:{gem:.15},           x:4,y:7,p:["a24"]},
+ /* ── 인첸트 ── */
+ {id:"a26",n:"첫 인첸트",       d:"인첸트 ✦I 달성",         c:()=>S.enchMax>=1,      r:{ench:.03},          x:1,y:8,p:["a20"]},
+ {id:"a27",n:"완전한 인첸트",   d:"인첸트 ✦V 달성",         c:()=>S.enchMax>=5,      r:{ench:.08},          x:1,y:9,p:["a26"]},
+ /* ── 심화 ── */
+ {id:"a28",n:"다섯 번의 윤회",  d:"환생 5회",              c:()=>S.rebirth>=5,      r:{luck:.18,gold:.18}, x:2,y:8,p:["a20"]},
+ {id:"a29",n:"백만 번의 주조",  d:"주조 1,000,000회",       c:()=>S.rolls>=1e6,      r:{speed:.05},         x:1,y:5,p:["a12"]},
 ];
 const ACHM=Object.fromEntries(ACH.map(a=>[a.id,a]));
-const RN={luck:"행운",gold:"주화 획득",speed:"주조 속도",pdur:"포션 지속",pity:"전설 보장"};
+const RN={luck:"행운",gold:"주화 획득",speed:"주조 속도",pdur:"포션 지속",pity:"전설 보장",gem:"보석 획득",ench:"인첸트 성공"};
 function rewText(r){
- return Object.keys(r).map(k=>k==="pity"?"전설 보장 -"+r[k]+"회"
-   :RN[k]+(k==="speed"?" -":" +")+Math.round(r[k]*100)+"%").join(" · ");}
-let AB={luck:0,gold:0,speed:0,pdur:0,pity:0};
+ return Object.keys(r).map(k=>
+   k==="pity"?"전설 보장 -"+r[k]+"회":
+   k==="ench"?"인첸트 성공 +"+Math.round(r[k]*100)+"%p":
+   RN[k]+(k==="speed"?" -":" +")+Math.round(r[k]*100)+"%").join(" · ");}
+let AB={luck:0,gold:0,speed:0,pdur:0,pity:0,gem:0,ench:0};
 function recalcAB(){
- AB={luck:0,gold:0,speed:0,pdur:0,pity:0};
+ AB={luck:0,gold:0,speed:0,pdur:0,pity:0,gem:0,ench:0};
  ACH.forEach(a=>{if(S.ach[a.id])for(const k in a.r)AB[k]+=a.r[k];});}
 const achOpen=a=>a.p.every(id=>S.ach[id]);
 function checkAch(){
  let got=null,n=0;
- for(let pass=0;pass<3;pass++)
+ for(let pass=0;pass<6;pass++)
   ACH.forEach(a=>{if(!S.ach[a.id]&&achOpen(a)&&a.c()){S.ach[a.id]=true;got=a;n++;}});
  if(n){recalcAB();save();
   toast("도전 과제 달성 · "+got.n+(n>1?" 외 "+(n-1)+"건":""));

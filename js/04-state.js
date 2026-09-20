@@ -1,5 +1,5 @@
 /* ═════════ 상태 ═════════ */
-const S={gold:0,gems:0,rolls:0,goldTot:0,rebirth:0,ach:{},up:{luck:0,speed:0,greed:0,vault:0,auto:0},inv:{},owned:{},ench:{},
+const S={gold:0,gems:0,gemTot:0,rolls:0,goldTot:0,rebirth:0,ach:{},up:{luck:0,speed:0,greed:0,vault:0,auto:0},inv:{},owned:{},ench:{},enchMax:0,
   equipped:null,pity:0,best:-1,sound:false,auto:false,cutMin:6,safe:0,cardMin:6,perf:0,autoQ:0,acct:"__local__",cloud:false,uid:null,devLuck:1,econ:ECON_VER,filter:"all",vfilter:"all",
   buff:{luck:{m:1,t:0},speed:{m:1,t:0},gold:{m:1,t:0}}};
 
@@ -115,6 +115,8 @@ async function load(){try{
     S.buff=Object.assign({luck:{m:1,t:0},speed:{m:1,t:0},gold:{m:1,t:0}},o.buff||{});
     S.inv=o.inv||{};S.ach=o.ach||{};S.ench=o.ench||{};
     if(typeof S.gems!=="number")S.gems=0;
+    if(typeof S.gemTot!=="number")S.gemTot=0;
+    if(typeof S.enchMax!=="number")S.enchMax=0;
     // equipped: 예전엔 검 이름 문자열 → {n,e} 객체로 이전
     if(typeof S.equipped==="string")S.equipped={n:S.equipped,e:0};
     else if(S.equipped&&typeof S.equipped==="object")S.equipped={n:S.equipped.n,e:S.equipped.e||0};

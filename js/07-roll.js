@@ -68,7 +68,7 @@ function doRoll(){
   let g=Math.floor(R.g*goldMult());
   if(!isNew)g=Math.floor(g*(1+(eqf().dupe||0)));
   S.gold+=g;S.goldTot+=g;
-  let gem=gemDrop(t);if(gem){gem=Math.round(gem*(1+(eqf().gem||0)));S.gems=(S.gems||0)+gem;}   // 신성+ 보석 드랍(장착 보석효과 반영)
+  let gem=gemDrop(t);if(gem){gem=Math.round(gem*(1+(eqf().gem||0)+AB.gem));S.gems=(S.gems||0)+gem;S.gemTot=(S.gemTot||0)+gem;}   // 신성+ 보석 드랍(장착·도전과제 보석효과 반영)
   if(t>S.best)S.best=t;
   if(isNew)$("codex-badge").style.display="block";
   showResult(s,R,g,isNew,gem);checkAch();save();renderHUD();

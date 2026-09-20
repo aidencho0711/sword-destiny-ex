@@ -60,7 +60,7 @@ function openArmSheet(name,level){
  }else if(level>=ENCH_MAX){
   enchBlock=`<div class="ench-panel">최고 레벨입니다 · ✦${ROMAN[ENCH_MAX]}</div>`;
  }else{
-  const cost=enchCost(level),rate=Math.round(Math.min(.99,enchRate(level)+(eqf().ench||0))*100),afford=(S.gems||0)>=cost;
+  const cost=enchCost(level),rate=Math.round(Math.min(.99,enchRate(level)+(eqf().ench||0)+AB.ench)*100),afford=(S.gems||0)>=cost;
   enchBlock=`<div class="ench-panel">
     <div class="ench-row"><span>${level>0?"✦"+ROMAN[level]:"기본"} → ✦${ROMAN[level+1]}</span><b>💎 ${cost}</b></div>
     <div class="ench-row"><span>성공 확률</span><b>${rate}%</b></div>
@@ -99,8 +99,9 @@ function doEnchant(name,level){
  if(variantCount(name,level)<1){toast("대상 검이 없습니다");return;}
  S.gems-=cost;
  if(level===0)S.owned[name]--; else S.ench[name][level]--;
- const ok=Math.random()<Math.min(.99,enchRate(level)+(eqf().ench||0));   // 장착 검의 인첸트 효과 반영
+ const ok=Math.random()<Math.min(.99,enchRate(level)+(eqf().ench||0)+AB.ench);   // 장착 검·도전과제 인첸트 효과 반영
  const nl=ok?level+1:Math.max(0,level-1);
+ if(ok)S.enchMax=Math.max(S.enchMax||0,nl);
  if(nl===0)S.owned[name]=(S.owned[name]||0)+1;
  else{S.ench[name]=S.ench[name]||{};S.ench[name][nl]=(S.ench[name][nl]||0)+1;}
  if(S.equipped&&S.equipped.n===name&&(S.equipped.e||0)===level)S.equipped={n:name,e:nl};

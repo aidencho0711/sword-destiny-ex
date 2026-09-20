@@ -900,7 +900,7 @@ function playCutscene(s,R){
  cs.innerHTML=preludeHTML(s,R)+`
   <div class="cs-dim"></div><div class="cs-after"></div>${parts}${mh}
   <div class="cs-stage">
-    <div class="cs-sig"><b>${sigFor(s)}</b></div>
+    ${s.t>=14?`<div class="cs-sig"><b>${sigFor(s)}</b></div>`:""}
     <div class="cs-sword ${s.t>=8?"float":""}">${swordSVG(s)}</div>
     <div class="cs-cap"><div class="cs-rarity">${gradText(R,R.n)}</div><div class="cs-name">${gradText(R,s.n)}</div>
       <div class="cs-odds">1 / ${R.one.toLocaleString()}</div></div>
@@ -914,8 +914,8 @@ function playCutscene(s,R){
  cs.classList.add("on");
  clearCsTimers();
  sfxCut(s,R);
- // 심장박동 두 번 (쿵 쿵) — 세 번째 박동에 검이 강림한다
- if(S.sound&&typeof AC!=="undefined"&&AC){
+ // 심장박동 두 번 (쿵 쿵) — 무극 이상 등급에서만, 세 번째 박동에 검이 강림한다
+ if(s.t>=14&&S.sound&&typeof AC!=="undefined"&&AC){
   const beat=d=>{try{tone(66,40,.26,"sine",.11,d);noise(.16,.05,d);}catch(e){}};
   beat(Math.max(0,pd-1.6));beat(Math.max(0,pd-0.85));
  }
