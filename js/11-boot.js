@@ -109,7 +109,7 @@ async function doAuth(){
 async function enterCloudGame(user,seed){
  const uid=user.id, nm=((user.user_metadata&&user.user_metadata.name)||"").trim();
  Object.assign(S,{gold:0,gems:0,rolls:0,goldTot:0,rebirth:0,ach:{},up:{luck:0,speed:0,greed:0,vault:0,auto:0},
-   inv:{},owned:{},ench:{},equipped:null,pity:0,best:-1,buff:{luck:{m:1,t:0},speed:{m:1,t:0},gold:{m:1,t:0}},
+   inv:{},owned:{},ench:{},enchMax:0,equipped:null,pity:0,best:-1,gemTot:0,devLuck:1,buff:{luck:{m:1,t:0},speed:{m:1,t:0},gold:{m:1,t:0}},
    auto:false,cloud:true,uid:uid,acct:"cloud:"+uid});
  let srv=null; try{srv=await cloudGetSave(uid);}catch(e){}
  if(!(srv&&srv.data)&&seed){                                  // 신규 계정 + 기기 진행 물려받기
@@ -126,7 +126,7 @@ async function enterGame(id){
  await acctSetSession(id==="__local__"?null:id);
  // 현재 상태를 비우고 그 계정의 저장을 불러온다
  Object.assign(S,{gold:0,gems:0,rolls:0,goldTot:0,rebirth:0,ach:{},up:{luck:0,speed:0,greed:0,vault:0,auto:0},
-   inv:{},owned:{},ench:{},equipped:null,pity:0,best:-1,buff:{luck:{m:1,t:0},speed:{m:1,t:0},gold:{m:1,t:0}},
+   inv:{},owned:{},ench:{},enchMax:0,equipped:null,pity:0,best:-1,gemTot:0,devLuck:1,buff:{luck:{m:1,t:0},speed:{m:1,t:0},gold:{m:1,t:0}},
    auto:false,cloud:false,uid:null,acct:id});
  await load();
  /* 권한과 이름은 계정 레지스트리가 기준이다.
@@ -180,6 +180,10 @@ async function renderDevCloud(){
    <div class="dv-row"><select id="dv-sword">${SWORDS.map(x=>`<option value="${encodeURIComponent(x.n)}">[${RARITY[x.t].n}] ${x.n}</option>`).join("")}</select>
      <button data-dv="sword">지급</button></div>
    <div class="dv-chips"><button class="chip" data-dv="allsword">도감 전체 지급</button></div></div>
+  <div class="sec">이름 변경</div>
+  <div class="card"><p>내 계정의 표시 이름을 바꿉니다. (로그인할 때 입력하는 이름은 그대로 유지됩니다)</p>
+   <div class="dv-row"><input id="dv-rename" type="text" maxlength="20" placeholder="새 표시 이름" value="${(S.acctName||"").replace(/"/g,"&quot;")}">
+     <button data-ca="rename">변경</button></div></div>
   <div class="sec">컷신 미리보기</div>
   <div class="card"><div class="dv-chips">
    ${RARITY.filter(r=>r.mode!=="none").map(r=>`<button class="mini" data-prev="${r.id}" style="flex:0 0 auto;padding:8px 11px;color:${r.c};border-color:${r.c}55">${r.n}</button>`).join("")}
@@ -203,7 +207,6 @@ async function loadCaList(){
     <span>주화 ${fmt(a.gold||0)} · 보석 ${(a.gems||0).toLocaleString()}<br>환생 ${a.rebirth||0} · 최고 ${best}</span>
     ${self?"":`
       ${rl!=="subdev"?`<button data-carole="${a.user_id}:subdev">부개발자</button>`:""}
-      ${rl!=="dev"?`<button data-carole="${a.user_id}:dev">개발자</button>`:""}
       ${rl?`<button data-carole="${a.user_id}:">권한해제</button>`:""}
       <button data-cagrant="${a.user_id}:g">+1억</button>
       <button data-cagrant="${a.user_id}:m">+1천보석</button>
@@ -415,6 +418,14 @@ $("devm").addEventListener("click",async e=>{
   if(!confirm("이 계정의 저장 데이터를 초기화(삭제)합니다. 되돌릴 수 없습니다. 진행할까요?"))return;
   t.disabled=true;const {error}=await adminReset(t.dataset.careset);
   toast(error?("오류: "+(error.message||error)):"초기화 완료");await loadCaList();return;}
+ if(t.dataset.ca==="rename"){
+  const nm=($("dv-rename")?.value||"").trim();
+  if(nm.length<1){toast("이름을 입력하세요");return;}
+  if(nm.length>20){toast("이름이 너무 깁니다");return;}
+  t.disabled=true;const {error}=await cloudRename(nm);
+  if(error){toast("오류: "+(error.message||error));t.disabled=false;return;}
+  S.acctName=nm; save(); renderWho(); renderHUD();
+  toast("표시 이름을 '"+nm+"'(으)로 변경했습니다");await renderDev();return;}
  if(t.dataset.dvask){dvDel=t.dataset.dvask;await renderDev();return;}
  if(t.dataset.dvcancel){dvDel="";await renderDev();return;}
  if(t.dataset.dvdel){await devDelete(t.dataset.dvdel);return;}
@@ -449,6 +460,7 @@ function renderWho(){
 }
 
 function startGame(){
+ ["devm","settings","tree","sheet","rcard","cs"].forEach(id=>{const e=$(id);if(e)e.classList.remove("on");});  // 진입 시 열린 오버레이 정리
  checkAch();renderHUD();renderWho();
  $("slot").innerHTML=swordSVG(SWORDS[0]);$("slot").classList.add("idle");
  $("r-name").textContent="";$("r-odds").textContent="";

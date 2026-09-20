@@ -39,6 +39,8 @@ async function adminList(){ if(!SB)return {data:null,error:"no client"}; return 
 async function adminSetRole(target,role){ if(!SB)return {error:"no client"}; return SB.rpc("admin_set_role",{target,new_role:role||""}); }
 async function adminGrant(target,gold,gems){ if(!SB)return {error:"no client"}; return SB.rpc("admin_grant",{target,gold_delta:gold||0,gems_delta:gems||0}); }
 async function adminReset(target){ if(!SB)return {error:"no client"}; return SB.rpc("admin_reset",{target}); }
+/* 내 계정 표시 이름 변경 (auth 메타데이터). 로그인 이름 자체는 유지됨 */
+async function cloudRename(newName){ if(!SB)return {error:"no client"}; return SB.auth.updateUser({data:{name:String(newName).trim()}}); }
 async function cloudPutSave(uid,name,stateObj){
  if(!SB)return "no client";
  try{ const {error}=await SB.from("saves")
