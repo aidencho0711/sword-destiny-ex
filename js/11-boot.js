@@ -204,7 +204,6 @@ async function renderDevCloud(){
      <button data-cax="luckset">×X 설정</button><button data-cax="luckinv">1/X 설정</button></div>
    <div class="qhint">개발자 행운 배수(devLuck)를 X 또는 1/X 로 설정합니다. 대상의 전체 행운이 1 미만이 되면 실행되지 않습니다.</div>
    <div class="dv-row" style="margin-top:8px"><input id="ca-rename" type="text" maxlength="20" placeholder="새 표시 이름"><button data-cax="rename">이름 변경</button></div>
-   <div class="dv-chips" id="ca-admin"></div>
   </div>
   ${devPreviewCard()}
   <div class="sec">전체 계정 (읽기 전용)</div><div class="dv-list" id="ca-list"></div>
@@ -214,20 +213,21 @@ async function renderDevCloud(){
  caRefresh(); caRenderList();
 }
 function caRefresh(){
- const a=caFind(caTarget), info=$("ca-info"), adm=$("ca-admin"), nm=$("ca-rename");
- if(!a){ if(info)info.textContent="대상 없음"; if(adm)adm.innerHTML=""; return; }
+ const a=caFind(caTarget), info=$("ca-info"), nm=$("ca-rename");
+ if(!a){ if(info)info.textContent="대상 없음"; return; }
  const best=(typeof a.best==="number"&&a.best>=0)?RARITY[a.best].n:"없음";
  if(info)info.innerHTML=`${a.name||"(이름없음)"}${a.role?" · "+roleLabel(a.role):""}${a.user_id===S.uid?" (나)":""}<br>주화 ${fmt(a.gold||0)} · 보석 ${(a.gems||0).toLocaleString()} · 환생 ${a.rebirth||0} · 최고 ${best}`;
- if(nm)nm.value=a.name||"";
- if(adm)adm.innerHTML=(a.user_id===S.uid)?"":
-   `<button class="chip" data-cax="roletoggle">${a.role==="subdev"?"부개발자 해제":"부개발자 부여"}</button>
-    <button class="chip danger" data-cax="reset">계정 초기화</button>`;}
+ if(nm)nm.value=a.name||"";}
 function caRenderList(){
  const box=$("ca-list"); if(!box)return;
  box.innerHTML=caAccts.map(a=>{
   const best=(typeof a.best==="number"&&a.best>=0)?RARITY[a.best].n:"없음";
+  const act=(a.user_id===S.uid||a.role==="dev")?"":`<div class="dv-row" style="margin-top:8px;flex-wrap:wrap;gap:5px">
+      <button data-carow="${a.user_id}|role">${a.role==="subdev"?"부개발자 해제":"부개발자 부여"}</button>
+      <button class="danger" data-carow="${a.user_id}|reset">초기화</button>
+      <button class="danger" data-carow="${a.user_id}|del">삭제</button></div>`;
   return `<div class="dv-acc"><b>${a.name||"(이름없음)"}</b>${a.role?`<i class="${a.role==="dev"?"dev":"sub"}">${roleLabel(a.role)}</i>`:""}${a.user_id===S.uid?' <i>(나)</i>':""}
-    <span>주화 ${fmt(a.gold||0)} · 보석 ${(a.gems||0).toLocaleString()}<br>환생 ${a.rebirth||0} · 최고 ${best}</span></div>`;
+    <span>주화 ${fmt(a.gold||0)} · 보석 ${(a.gems||0).toLocaleString()}<br>환생 ${a.rebirth||0} · 최고 ${best}</span>${act}</div>`;
  }).join("")||`<div class="dv-acc">계정이 없습니다</div>`;}
 /* 대상 계정에 지급·이름·권한 적용. 본인이면 로컬 S 즉시 반영, 남이면 서버 RPC */
 async function caAction(btn,op){
@@ -265,6 +265,22 @@ async function caAction(btn,op){
   if(!confirm("이 계정의 저장 데이터를 초기화합니다. 되돌릴 수 없습니다. 진행할까요?"))return;
   btn.disabled=true; const {error}=await adminReset(target);
   toast(error?("오류: "+(error.message||error)):"초기화 완료"); await renderDev();return;}
+}
+/* 계정 목록 행의 권한/초기화/삭제 (per-row) */
+async function caRowAction(btn,uid,op){
+ const a=caFind(uid); if(!a)return;
+ if(op==="role"){
+  const nr=a.role==="subdev"?"":"subdev"; btn.disabled=true;
+  const {error}=await adminSetRole(uid,nr);
+  toast(error?("오류: "+(error.message||error)):(nr?"부개발자 부여":"권한 해제")); await renderDev();return;}
+ if(op==="reset"){
+  if(!confirm("["+(a.name||"")+"] 저장 데이터를 초기화합니다. 되돌릴 수 없습니다."))return;
+  btn.disabled=true; const {error}=await adminReset(uid);
+  toast(error?("오류: "+(error.message||error)):"초기화 완료"); await renderDev();return;}
+ if(op==="del"){
+  if(!confirm("["+(a.name||"")+"] 계정을 완전히 삭제합니다. 로그인·저장 모두 사라지며 되돌릴 수 없습니다."))return;
+  btn.disabled=true; const {error}=await adminDelete(uid);
+  toast(error?("오류: "+(error.message||error)):"계정 삭제됨"); await renderDev();return;}
 }
 async function renderDev(){
  if(!hasDev())return;
@@ -459,6 +475,7 @@ $("devm").addEventListener("click",async e=>{
  const t=e.target.closest("button"); if(!t)return;
  /* ── 클라우드 관리자: 대상 계정 지급/이름/권한 (서버 RPC 또는 본인 로컬) ── */
  if(t.dataset.cax){await caAction(t,t.dataset.cax);return;}
+ if(t.dataset.carow){const i=t.dataset.carow.indexOf("|");await caRowAction(t,t.dataset.carow.slice(0,i),t.dataset.carow.slice(i+1));return;}
  if(t.dataset.dvask){dvDel=t.dataset.dvask;await renderDev();return;}
  if(t.dataset.dvcancel){dvDel="";await renderDev();return;}
  if(t.dataset.dvdel){await devDelete(t.dataset.dvdel);return;}

@@ -48,6 +48,8 @@ async function adminGet(target){ if(!SB)return {error:"no client"};
 async function adminSetLuck(target,value){ if(!SB)return {error:"no client"}; return SB.rpc("admin_set_luck",{target,value}); }
 /* 대상 표시 이름 변경 (관리자만, saves.name 이 표시 기준) */
 async function adminRename(target,newName){ if(!SB)return {error:"no client"}; return SB.rpc("admin_rename",{target,new_name:String(newName).trim()}); }
+/* 대상 계정 완전 삭제 (관리자만, auth 유저 + saves 캐스케이드) */
+async function adminDelete(target){ if(!SB)return {error:"no client"}; return SB.rpc("admin_delete",{target}); }
 async function cloudPutSave(uid,name,stateObj){
  if(!SB)return "no client";
  try{ const {error}=await SB.from("saves")
