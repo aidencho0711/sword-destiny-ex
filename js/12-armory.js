@@ -15,15 +15,18 @@ function variantCount(name,lv){ return lv===0?(S.owned[name]||0):((S.ench[name]&
 
 function renderArmory(){
  const eqName=S.equipped?S.equipped.n+(S.equipped.e>0?" ✦"+ROMAN[S.equipped.e]:""):"없음";
+ const cloudOn=S.cloud&&typeof cloudReady==="function"&&cloudReady();
  $("arm-head").innerHTML=`
   <div class="arm-top">
     <div class="arm-gem">💎 <b>${fmt(S.gems||0)}</b><span>보석</span></div>
     <div class="arm-eq"><span>장착</span><b>${eqName}</b></div>
+    ${cloudOn?`<button class="mini" id="arm-trade" style="flex:0 0 auto;margin-left:8px">거래</button>`:""}
   </div>
   <div class="arm-eff">${S.equipped?fxText(eqf()):"장착한 검이 없습니다. 아래에서 검을 눌러 장착하세요."}</div>
   <div class="card arm-ench">${S.rebirth<ENCH_UNLOCK_RB
     ? `인첸트는 <b>환생 ${ENCH_UNLOCK_RB}회</b>부터 열립니다. (현재 ${S.rebirth}회)`
     : `검을 눌러 상세 창에서 <b>보석</b>으로 인첸트할 수 있습니다.`}</div>`;
+ const tb=$("arm-trade"); if(tb)tb.onclick=()=>{if(typeof openTrade==="function")openTrade();};
 
  const tabs=[{id:"all",n:"전체"}].concat(RARITY.map(r=>({id:r.id,n:r.n})));
  $("arm-bar").innerHTML=tabs.map(t=>`<button class="chip ${S.vfilter===t.id?"on":""}" data-vf="${t.id}">${t.n}</button>`).join("");

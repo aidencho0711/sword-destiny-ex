@@ -50,6 +50,15 @@ async function adminSetLuck(target,value){ if(!SB)return {error:"no client"}; re
 async function adminRename(target,newName){ if(!SB)return {error:"no client"}; return SB.rpc("admin_rename",{target,new_name:String(newName).trim()}); }
 /* 대상 계정 완전 삭제 (관리자만, auth 유저 + saves 캐스케이드) */
 async function adminDelete(target){ if(!SB)return {error:"no client"}; return SB.rpc("admin_delete",{target}); }
+
+/* ── 거래 ── */
+async function findUser(name){ if(!SB)return {error:"no client"};
+ const {data,error}=await SB.rpc("find_user",{uname:String(name).trim()}); return error?{error:error.message||String(error)}:{uid:data}; }
+async function tradeList(){ if(!SB)return {data:[],error:"no client"};
+ return SB.from("trades").select("*").eq("status","pending").order("created_at",{ascending:false}); }
+async function tradeCreate(row){ if(!SB)return {error:"no client"}; return SB.from("trades").insert(row); }
+async function tradeAccept(tid){ if(!SB)return {error:"no client"}; return SB.rpc("trade_accept",{tid}); }
+async function tradeCancel(tid){ if(!SB)return {error:"no client"}; return SB.rpc("trade_cancel",{tid}); }
 async function cloudPutSave(uid,name,stateObj){
  if(!SB)return "no client";
  try{ const {error}=await SB.from("saves")

@@ -1,11 +1,12 @@
 /* Sword Destiny - ex : 오프라인 캐시
    파일을 수정하면 CACHE 버전을 올려야 사용자 기기에 새 버전이 반영됩니다. */
-const CACHE = "sworddestiny-v40";
+const CACHE = "sworddestiny-v41";
 const ASSETS = [
   "./", "./index.html", "./manifest.webmanifest",
   "./css/game.css",
   "./js/00-config.js",
   "./js/13-cloud.js",
+  "./js/14-trade.js",
   "./js/01-data-rarity.js",
   "./js/02-data-swords.js",
   "./js/03-data-economy.js",

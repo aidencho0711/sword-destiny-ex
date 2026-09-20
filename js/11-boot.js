@@ -510,7 +510,7 @@ function renderWho(){
 }
 
 function startGame(){
- ["devm","settings","tree","sheet","rcard","cs"].forEach(id=>{const e=$(id);if(e)e.classList.remove("on");});  // 진입 시 열린 오버레이 정리
+ ["devm","settings","tree","sheet","rcard","cs","trade"].forEach(id=>{const e=$(id);if(e)e.classList.remove("on");});  // 진입 시 열린 오버레이 정리
  checkAch();renderHUD();renderWho();
  $("slot").innerHTML=swordSVG(SWORDS[0]);$("slot").classList.add("idle");
  $("r-name").textContent="";$("r-odds").textContent="";
