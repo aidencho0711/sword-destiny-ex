@@ -1,0 +1,10 @@
+wrangler.jsonc
+.assetsignore
+CLAUDE.md
+README.md
+deploy.ps1
+.gitignore
+.git
+.netlify-token
+.netlify-site
+_deploy.zip

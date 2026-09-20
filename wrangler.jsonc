@@ -1,0 +1,8 @@
+{
+  // Cloudflare Workers 정적 자산 배포 설정 (빌드 없는 정적 사이트)
+  "name": "sword-destiny-ex",
+  "compatibility_date": "2025-09-01",
+  "assets": {
+    "directory": "./"
+  }
+}
