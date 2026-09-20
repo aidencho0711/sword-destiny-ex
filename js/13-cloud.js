@@ -41,6 +41,13 @@ async function adminGrant(target,gold,gems){ if(!SB)return {error:"no client"}; 
 async function adminReset(target){ if(!SB)return {error:"no client"}; return SB.rpc("admin_reset",{target}); }
 /* 내 계정 표시 이름 변경 (auth 메타데이터). 로그인 이름 자체는 유지됨 */
 async function cloudRename(newName){ if(!SB)return {error:"no client"}; return SB.auth.updateUser({data:{name:String(newName).trim()}}); }
+/* 대상 계정 전체 데이터 읽기 (관리자만) — 행운 계산용 */
+async function adminGet(target){ if(!SB)return {error:"no client"};
+ const {data,error}=await SB.rpc("admin_get",{target}); return error?{error:error.message||String(error)}:(data||{}); }
+/* 대상 devLuck 설정 (관리자만) */
+async function adminSetLuck(target,value){ if(!SB)return {error:"no client"}; return SB.rpc("admin_set_luck",{target,value}); }
+/* 대상 표시 이름 변경 (관리자만, saves.name 이 표시 기준) */
+async function adminRename(target,newName){ if(!SB)return {error:"no client"}; return SB.rpc("admin_rename",{target,new_name:String(newName).trim()}); }
 async function cloudPutSave(uid,name,stateObj){
  if(!SB)return "no client";
  try{ const {error}=await SB.from("saves")

@@ -116,7 +116,8 @@ async function enterCloudGame(user,seed){
   try{await store.set("sworddestiny:cloud:"+uid,JSON.stringify(seed));}catch(e){}}
  await load();                                                // 서버 우선, 없으면 로컬 캐시(방금 심은 seed)
  S.cloud=true;S.uid=uid;S.acct="cloud:"+uid;                  // load() 뒤 정체성 재확정
- S.acctName=nm; S.role=(srv&&srv.role)||"";                   // 권한은 서버 role 컬럼이 기준(안전)
+ S.acctName=((srv&&srv.name)||nm||"").trim();                 // 표시 이름은 서버 saves.name 기준(관리자 변경 반영)
+ S.role=(srv&&srv.role)||"";                                  // 권한은 서버 role 컬럼이 기준(안전)
  resolveQ();recalcAB();
  if(!(srv&&srv.data))save();                                  // 서버에 없던 계정은 첫 저장 업로드
  $("login").classList.remove("on");
@@ -158,60 +159,112 @@ async function applyIdentity(id){
   S.acctName=a[id].name; S.role=a[id].role||""; }
  else { S.acctName=""; S.role=""; }}
 
-/* ── 클라우드 개발자 메뉴 (서버 RPC 기반, 다른 기기 계정까지 관리) ── */
-async function renderDevCloud(){
- dvTarget="";                                                  // 내 계정 지급은 항상 본인 대상
- const el=$("devm");
- el.innerHTML=`
-  <div class="dv-head"><h2>개 발 자 메 뉴</h2><em>${roleLabel(S.role)} · 클라우드</em>
-    <button id="dv-close">닫기</button></div>
-  <div class="sec">내 계정 지급</div>
-  <div class="card"><p>내 클라우드 계정(${S.acctName||"나"})에 바로 적용되고 서버에 동기화됩니다.</p>
-   <div class="dv-row"><input id="dv-gold" type="text" inputmode="numeric" placeholder="주화 (예: 1e12, 음수는 회수)">
-     <button data-dv="gold">주화</button></div>
-   <div class="dv-row" style="margin-top:8px"><input id="dv-gems" type="text" inputmode="numeric" placeholder="보석 (예: 1000)">
-     <button data-dv="gems">보석</button></div>
-   <div class="dv-row" style="margin-top:8px"><input id="dv-luck" type="text" inputmode="decimal" placeholder="행운 배수 (예: 100)">
-     <button data-dv="luck">행운</button></div>
-   <div class="dv-chips">
-     <button class="chip" data-dvg="1e8">+1억 주화</button><button class="chip" data-dvg="1e12">+1조 주화</button>
-     <button class="chip" data-dvgem="1000">+1000 보석</button></div></div>
-  <div class="card"><p>내 도감에 검을 추가합니다.</p>
-   <div class="dv-row"><select id="dv-sword">${SWORDS.map(x=>`<option value="${encodeURIComponent(x.n)}">[${RARITY[x.t].n}] ${x.n}</option>`).join("")}</select>
-     <button data-dv="sword">지급</button></div>
-   <div class="dv-chips"><button class="chip" data-dv="allsword">도감 전체 지급</button></div></div>
-  <div class="sec">이름 변경</div>
-  <div class="card"><p>내 계정의 표시 이름을 바꿉니다. (로그인할 때 입력하는 이름은 그대로 유지됩니다)</p>
-   <div class="dv-row"><input id="dv-rename" type="text" maxlength="20" placeholder="새 표시 이름" value="${(S.acctName||"").replace(/"/g,"&quot;")}">
-     <button data-ca="rename">변경</button></div></div>
-  <div class="sec">컷신 미리보기</div>
-  <div class="card"><div class="dv-chips">
+/* ── 클라우드 개발자 메뉴 (대상 선택형, 서버 RPC 기반) ── */
+let caAccts=[], caTarget="";
+const caFind=uid=>caAccts.find(a=>a.user_id===uid)||null;
+/* devLuck 을 제외한 전체 행운 배수 (임의 계정 데이터 블롭 기준) */
+function baseLuck(d){
+ d=d||{}; const up=d.up||{}, ach=d.ach||{};
+ let ab=0; ACH.forEach(a=>{if(ach[a.id]&&a.r&&a.r.luck)ab+=a.r.luck;});
+ const eq=d.equipped, sw=(eq&&eq.n)?SWORDS.find(v=>v.n===eq.n):null;
+ const eqL=sw?(enchFx(sw,(eq.e||0)).luck||0):0;
+ return (1+(up.luck||0)*0.62)*(1+eqL)*(1+ab)*Math.pow(1.45,d.rebirth||0);}
+function devPreviewCard(){
+ return `<div class="sec">컷신 미리보기</div><div class="card"><div class="dv-chips">
    ${RARITY.filter(r=>r.mode!=="none").map(r=>`<button class="mini" data-prev="${r.id}" style="flex:0 0 auto;padding:8px 11px;color:${r.c};border-color:${r.c}55">${r.n}</button>`).join("")}
    ${SWORDS.filter(x=>x.th).map(x=>`<button class="mini" data-prevs="${encodeURIComponent(x.n)}" style="flex:0 0 auto;padding:8px 11px;color:${RARITY[x.t].c};border-color:${RARITY[x.t].c}55">${x.n}</button>`).join("")}
-   </div></div>
-  ${isDev()?`<div class="sec">전체 계정 (서버)</div><div class="dv-list" id="ca-list"><div class="dv-acc">불러오는 중…</div></div>`:
-   `<div class="dv-note">부개발자는 본인 계정 지급만 가능합니다.</div>`}
-  <div class="dv-note">서버 관리자 기능입니다. <b>권한 변경은 서버에 즉시 반영</b>되어 다른 기기에도 적용됩니다. 자원 지급은 대상이 접속 중이면 그 기기 저장에 덮어써질 수 있어, 오프라인일 때가 확실합니다.</div>`;
+   </div></div>`;}
+async function renderDevCloud(){
+ const el=$("devm");
+ if(!isDev()){                                                 // 부개발자: 본인 지급만
+  el.innerHTML=`
+   <div class="dv-head"><h2>개 발 자 메 뉴</h2><em>${roleLabel(S.role)} · 클라우드</em><button id="dv-close">닫기</button></div>
+   <div class="sec">내 계정 지급</div>
+   <div class="card"><p>본인 계정에만 적용됩니다.</p>
+    <div class="dv-row"><input id="dv-gold" type="text" inputmode="numeric" placeholder="주화 (음수는 회수)"><button data-dv="gold">주화</button></div>
+    <div class="dv-row" style="margin-top:8px"><input id="dv-gems" type="text" inputmode="numeric" placeholder="보석"><button data-dv="gems">보석</button></div>
+    <div class="dv-row" style="margin-top:8px"><select id="dv-sword">${SWORDS.map(x=>`<option value="${encodeURIComponent(x.n)}">[${RARITY[x.t].n}] ${x.n}</option>`).join("")}</select><button data-dv="sword">검</button></div></div>
+   ${devPreviewCard()}
+   <div class="dv-note">부개발자는 본인 계정 지급만 가능합니다.</div>`;
+  $("dv-close").onclick=()=>el.classList.remove("on"); return;
+ }
+ const {data,error}=await adminList();                          // 개발자: 대상 선택 + 관리
+ caAccts = error? [] : (data||[]);
+ if(!caFind(caTarget)) caTarget = S.uid || (caAccts[0]&&caAccts[0].user_id) || "";
+ el.innerHTML=`
+  <div class="dv-head"><h2>개 발 자 메 뉴</h2><em>${roleLabel(S.role)} · 클라우드</em><button id="dv-close">닫기</button></div>
+  <div class="sec">대상 계정</div>
+  <div class="card">
+   ${error?`<p style="color:#e8776a">계정 목록 오류: ${error.message||error}</p>`:""}
+   <div class="dv-row"><select id="ca-target">${caAccts.map(a=>`<option value="${a.user_id}" ${a.user_id===caTarget?"selected":""}>${a.name||"(이름없음)"}${a.role?" · "+roleLabel(a.role):""}${a.user_id===S.uid?" (나)":""}</option>`).join("")||`<option value="">계정 없음</option>`}</select></div>
+   <div class="eff" id="ca-info"></div>
+   <div class="dv-row" style="margin-top:10px"><input id="ca-gold" type="text" inputmode="numeric" placeholder="주화 (음수는 회수)"><button data-cax="gold">주화</button></div>
+   <div class="dv-row" style="margin-top:8px"><input id="ca-gems" type="text" inputmode="numeric" placeholder="보석 (음수는 회수)"><button data-cax="gems">보석</button></div>
+   <div class="dv-row" style="margin-top:8px"><input id="ca-luck" type="text" inputmode="decimal" placeholder="행운 배수 X">
+     <button data-cax="luckset">×X 설정</button><button data-cax="luckinv">1/X 설정</button></div>
+   <div class="qhint">개발자 행운 배수(devLuck)를 X 또는 1/X 로 설정합니다. 대상의 전체 행운이 1 미만이 되면 실행되지 않습니다.</div>
+   <div class="dv-row" style="margin-top:8px"><input id="ca-rename" type="text" maxlength="20" placeholder="새 표시 이름"><button data-cax="rename">이름 변경</button></div>
+   <div class="dv-chips" id="ca-admin"></div>
+  </div>
+  ${devPreviewCard()}
+  <div class="sec">전체 계정 (읽기 전용)</div><div class="dv-list" id="ca-list"></div>
+  <div class="dv-note">대상 계정을 골라 지급·이름 변경·권한 조정을 합니다. 권한 변경은 서버에 즉시 반영(다른 기기 포함). 자원·행운 지급은 대상이 접속 중이면 그 기기 저장에 덮어써질 수 있어, 오프라인일 때가 확실합니다.</div>`;
  $("dv-close").onclick=()=>el.classList.remove("on");
- if(isDev())loadCaList();
+ const sel=$("ca-target"); if(sel)sel.onchange=()=>{caTarget=sel.value;caRefresh();};
+ caRefresh(); caRenderList();
 }
-async function loadCaList(){
+function caRefresh(){
+ const a=caFind(caTarget), info=$("ca-info"), adm=$("ca-admin"), nm=$("ca-rename");
+ if(!a){ if(info)info.textContent="대상 없음"; if(adm)adm.innerHTML=""; return; }
+ const best=(typeof a.best==="number"&&a.best>=0)?RARITY[a.best].n:"없음";
+ if(info)info.innerHTML=`${a.name||"(이름없음)"}${a.role?" · "+roleLabel(a.role):""}${a.user_id===S.uid?" (나)":""}<br>주화 ${fmt(a.gold||0)} · 보석 ${(a.gems||0).toLocaleString()} · 환생 ${a.rebirth||0} · 최고 ${best}`;
+ if(nm)nm.value=a.name||"";
+ if(adm)adm.innerHTML=(a.user_id===S.uid)?"":
+   `<button class="chip" data-cax="roletoggle">${a.role==="subdev"?"부개발자 해제":"부개발자 부여"}</button>
+    <button class="chip danger" data-cax="reset">계정 초기화</button>`;}
+function caRenderList(){
  const box=$("ca-list"); if(!box)return;
- const {data,error}=await adminList();
- if(error){box.innerHTML=`<div class="dv-acc">목록을 불러오지 못했습니다: ${error.message||error}</div>`;return;}
- box.innerHTML=(data||[]).map(a=>{
-  const self=a.user_id===S.uid, rl=a.role||"";
+ box.innerHTML=caAccts.map(a=>{
   const best=(typeof a.best==="number"&&a.best>=0)?RARITY[a.best].n:"없음";
-  return `<div class="dv-acc">
-    <b>${a.name||"(이름없음)"}</b>${rl?`<i class="${rl==="dev"?"dev":"sub"}">${roleLabel(rl)}</i>`:""}${self?' <i>(나)</i>':""}
-    <span>주화 ${fmt(a.gold||0)} · 보석 ${(a.gems||0).toLocaleString()}<br>환생 ${a.rebirth||0} · 최고 ${best}</span>
-    ${self?"":`
-      ${rl!=="subdev"?`<button data-carole="${a.user_id}:subdev">부개발자</button>`:""}
-      ${rl?`<button data-carole="${a.user_id}:">권한해제</button>`:""}
-      <button data-cagrant="${a.user_id}:g">+1억</button>
-      <button data-cagrant="${a.user_id}:m">+1천보석</button>
-      <button class="danger" data-careset="${a.user_id}">초기화</button>`}
-  </div>`;}).join("")||`<div class="dv-acc">계정이 없습니다</div>`;
+  return `<div class="dv-acc"><b>${a.name||"(이름없음)"}</b>${a.role?`<i class="${a.role==="dev"?"dev":"sub"}">${roleLabel(a.role)}</i>`:""}${a.user_id===S.uid?' <i>(나)</i>':""}
+    <span>주화 ${fmt(a.gold||0)} · 보석 ${(a.gems||0).toLocaleString()}<br>환생 ${a.rebirth||0} · 최고 ${best}</span></div>`;
+ }).join("")||`<div class="dv-acc">계정이 없습니다</div>`;}
+/* 대상 계정에 지급·이름·권한 적용. 본인이면 로컬 S 즉시 반영, 남이면 서버 RPC */
+async function caAction(btn,op){
+ const target=caTarget, a=caFind(target);
+ if(!target||!a){toast("대상 계정을 고르세요");return;}
+ const self=target===S.uid;
+ if(op==="gold"||op==="gems"){
+  const n=Number($("ca-"+op).value);
+  if(!isFinite(n)||n===0){toast("숫자를 확인하세요");return;}
+  if(self){ if(op==="gold"){S.gold=Math.max(0,S.gold+n);if(n>0)S.goldTot=(S.goldTot||0)+n;} else S.gems=Math.max(0,(S.gems||0)+n); save();renderHUD(); }
+  else{ btn.disabled=true; const {error}=await adminGrant(target,op==="gold"?n:0,op==="gems"?n:0); if(error){toast("오류: "+(error.message||error));return;} }
+  toast((op==="gold"?"주화":"보석")+" "+Math.abs(n).toLocaleString()+" "+(n>0?"지급":"회수")); await renderDev();return;}
+ if(op==="luckset"||op==="luckinv"){
+  const x=Number($("ca-luck").value);
+  if(!isFinite(x)||x<=0){toast("0보다 큰 숫자를 넣으세요");return;}
+  const nd=op==="luckinv"?1/x:x;
+  let base;
+  if(self)base=baseLuck(S);
+  else{ const d=await adminGet(target); if(d&&d.error){toast("오류: "+d.error);return;} base=baseLuck(d); }
+  if(base*nd<1){toast("실행 불가: 전체 행운 배수가 1 미만이 됩니다");return;}
+  if(self){ S.devLuck=nd; save();renderHUD(); }
+  else{ btn.disabled=true; const {error}=await adminSetLuck(target,nd); if(error){toast("오류: "+(error.message||error));return;} }
+  toast("행운 배수 ×"+ (+nd.toFixed(4)) +" 설정"); await renderDev();return;}
+ if(op==="rename"){
+  const name=($("ca-rename").value||"").trim();
+  if(name.length<1){toast("이름을 입력하세요");return;} if(name.length>20){toast("이름이 너무 깁니다");return;}
+  if(self){ btn.disabled=true; try{await cloudRename(name);}catch(e){} S.acctName=name; save(); renderWho();renderHUD(); }
+  else{ btn.disabled=true; const {error}=await adminRename(target,name); if(error){toast("오류: "+(error.message||error));return;} }
+  toast("표시 이름을 '"+name+"'(으)로 변경"); await renderDev();return;}
+ if(op==="roletoggle"){
+  const nr=a.role==="subdev"?"":"subdev"; btn.disabled=true;
+  const {error}=await adminSetRole(target,nr);
+  toast(error?("오류: "+(error.message||error)):(nr?"부개발자 부여":"권한 해제")); await renderDev();return;}
+ if(op==="reset"){
+  if(!confirm("이 계정의 저장 데이터를 초기화합니다. 되돌릴 수 없습니다. 진행할까요?"))return;
+  btn.disabled=true; const {error}=await adminReset(target);
+  toast(error?("오류: "+(error.message||error)):"초기화 완료"); await renderDev();return;}
 }
 async function renderDev(){
  if(!hasDev())return;
@@ -404,28 +457,8 @@ async function devToggleRole(id){
 
 $("devm").addEventListener("click",async e=>{
  const t=e.target.closest("button"); if(!t)return;
- /* ── 클라우드 관리자: 다른 계정 권한/지급/초기화 (서버 RPC) ── */
- if(t.dataset.carole!==undefined){
-  const i=t.dataset.carole.indexOf(":"),uid=t.dataset.carole.slice(0,i),role=t.dataset.carole.slice(i+1);
-  t.disabled=true;const {error}=await adminSetRole(uid,role);
-  toast(error?("오류: "+(error.message||error)):(role?roleLabel(role)+" 부여":"권한 해제"));
-  await loadCaList();return;}
- if(t.dataset.cagrant){
-  const [uid,k]=t.dataset.cagrant.split(":");
-  t.disabled=true;const {error}=await adminGrant(uid,k==="g"?1e8:0,k==="m"?1000:0);
-  toast(error?("오류: "+(error.message||error)):"지급 완료");await loadCaList();return;}
- if(t.dataset.careset){
-  if(!confirm("이 계정의 저장 데이터를 초기화(삭제)합니다. 되돌릴 수 없습니다. 진행할까요?"))return;
-  t.disabled=true;const {error}=await adminReset(t.dataset.careset);
-  toast(error?("오류: "+(error.message||error)):"초기화 완료");await loadCaList();return;}
- if(t.dataset.ca==="rename"){
-  const nm=($("dv-rename")?.value||"").trim();
-  if(nm.length<1){toast("이름을 입력하세요");return;}
-  if(nm.length>20){toast("이름이 너무 깁니다");return;}
-  t.disabled=true;const {error}=await cloudRename(nm);
-  if(error){toast("오류: "+(error.message||error));t.disabled=false;return;}
-  S.acctName=nm; save(); renderWho(); renderHUD();
-  toast("표시 이름을 '"+nm+"'(으)로 변경했습니다");await renderDev();return;}
+ /* ── 클라우드 관리자: 대상 계정 지급/이름/권한 (서버 RPC 또는 본인 로컬) ── */
+ if(t.dataset.cax){await caAction(t,t.dataset.cax);return;}
  if(t.dataset.dvask){dvDel=t.dataset.dvask;await renderDev();return;}
  if(t.dataset.dvcancel){dvDel="";await renderDev();return;}
  if(t.dataset.dvdel){await devDelete(t.dataset.dvdel);return;}
