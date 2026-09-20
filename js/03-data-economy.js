@@ -44,11 +44,11 @@ POTIONS.forEach(p=>{p.col=POTION_COL[p.id]||"#8fd0c0";});
 
 /* ═════════ 환생 ═════════ */
 const RB_BASE=[
- {gold:450000,     gems:20,  tier:10, need:1, note:"천상 이상 1자루"},
- {gold:4500000,    gems:50,  tier:11, need:1, note:"신성 이상 1자루"},
- {gold:28000000,   gems:110, tier:11, need:2, note:"신성 이상 2자루"},
- {gold:150000000,  gems:240, tier:12, need:1, note:"태초 이상 1자루"},
- {gold:750000000,  gems:520, tier:13, need:1, note:"운명 1자루"},
+ {gold:450000,     gems:0,   tier:10, need:1, note:"천상 이상 1자루"},
+ {gold:4500000,    gems:0,   tier:11, need:1, note:"신성 이상 1자루"},
+ {gold:28000000,   gems:0,   tier:11, need:2, note:"신성 이상 2자루"},
+ {gold:150000000,  gems:20,  tier:12, need:1, note:"태초 이상 1자루 · 보석 20"},
+ {gold:750000000,  gems:60,  tier:13, need:1, note:"운명 1자루 · 보석 60"},
 ];
 /* ═════════ 구 경제 → 신 경제 환산 ═════════
    주화 가치를 낮췄으므로 기존에 모아 둔 주화도 같은 비율로 내린다.
@@ -71,8 +71,9 @@ function migrateEcon(o){
 function rbReq(n){
  if(n<RB_BASE.length)return RB_BASE[n];
  const k=n-RB_BASE.length+1,c=Math.min(SWORDS.length,30+k*3);
- return {gold:Math.round(750000000*Math.pow(2.4,k)),gems:Math.round(520*Math.pow(1.85,k)),tier:13,need:1,coll:c,
-         note:"운명 1자루 · 도감 "+c+"종"};}
+ const g=Math.round(60*Math.pow(1.85,k));
+ return {gold:Math.round(750000000*Math.pow(2.4,k)),gems:g,tier:13,need:1,coll:c,
+         note:"운명 1자루 · 도감 "+c+"종 · 보석 "+g};}
 const rbGold=()=>Math.pow(1.75,S.rebirth);   // 환생 1회마다 주화 1.75배
 const rbLuck=()=>Math.pow(1.45,S.rebirth);   // 환생 1회마다 행운 1.45배
 /* 검 보유 판정 — 기본(owned) + 인첸트본(ench) 모두 고려 */
@@ -123,9 +124,9 @@ const ACH=[
  {id:"a2", n:"전설을 보다",     d:"전설 등급 획득",         c:()=>S.best>=6,         r:{luck:.04},  x:2,y:1,p:["a0"]},
  {id:"a3", n:"수집의 시작",     d:"도감 10종",             c:()=>coll()>=10,        r:{gold:.04},   x:4,y:1,p:["a0"]},
  {id:"a4", n:"천 번의 불꽃",    d:"주조 1,000회",          c:()=>S.rolls>=1e3,      r:{speed:.03}, x:0,y:2,p:["a1"]},
- {id:"a5", n:"첫 재산",        d:"누적 주화 10억",         c:()=>S.goldTot>=1e9,    r:{gold:.06},  x:1,y:2,p:["a1"]},
+ {id:"a5", n:"첫 재산",        d:"누적 주화 1000만",       c:()=>S.goldTot>=1e7,    r:{gold:.06},  x:1,y:2,p:["a1"]},
  {id:"a6", n:"신화의 목격자",   d:"신화 등급 획득",         c:()=>S.best>=8,         r:{luck:.05},  x:2,y:2,p:["a2"]},
- {id:"a7", n:"금고를 채우다",   d:"누적 주화 1000조",       c:()=>S.goldTot>=1e15,   r:{gold:.08},  x:3,y:2,p:["a3"]},
+ {id:"a7", n:"금고를 채우다",   d:"누적 주화 10억",         c:()=>S.goldTot>=1e9,    r:{gold:.08},  x:3,y:2,p:["a3"]},
  {id:"a8", n:"스무 자루",       d:"도감 20종",             c:()=>coll()>=20,        r:{pdur:.1},   x:4,y:2,p:["a3"]},
  {id:"a9", n:"만 번의 망치질",  d:"주조 10,000회",         c:()=>S.rolls>=1e4,      r:{speed:.04}, x:0,y:3,p:["a4"]},
  {id:"a10",n:"초월을 딛다",     d:"초월 등급 획득",         c:()=>S.best>=9,         r:{luck:.06},  x:2,y:3,p:["a6"]},
@@ -135,7 +136,7 @@ const ACH=[
  {id:"a14",n:"도감 완성",       d:"56종 전부 수집",         c:()=>coll()>=SWORDS.length, r:{luck:.12,gold:.18}, x:3,y:4,p:["a11"]},
  {id:"a15",n:"신성에 닿다",     d:"신성 등급 획득",         c:()=>S.best>=11,        r:{luck:.1},   x:2,y:5,p:["a13"]},
  {id:"a16",n:"다시 태어나다",   d:"환생 1회",              c:()=>S.rebirth>=1,      r:{gold:.10},   x:0,y:5,p:["a12"]},
- {id:"a17",n:"경의 영역",       d:"누적 주화 1000경",       c:()=>S.goldTot>=1e19,   r:{gold:.14},   x:4,y:5,p:["a14"]},
+ {id:"a17",n:"거부의 영역",     d:"누적 주화 10조",         c:()=>S.goldTot>=1e13,   r:{gold:.14},   x:4,y:5,p:["a14"]},
  {id:"a18",n:"태초를 보다",     d:"태초 등급 획득",         c:()=>S.best>=12,        r:{luck:.14},  x:1,y:6,p:["a15"]},
  {id:"a19",n:"운명을 쥐다",     d:"운명 등급 획득",         c:()=>S.best>=13,        r:{luck:.2},   x:3,y:6,p:["a15"]},
  {id:"a20",n:"세 번의 윤회",    d:"환생 3회",              c:()=>S.rebirth>=3,      r:{luck:.15,gold:.20}, x:2,y:7,p:["a16","a17"]},
