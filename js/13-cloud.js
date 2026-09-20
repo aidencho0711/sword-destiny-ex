@@ -28,11 +28,17 @@ async function cloudSession(){
  if(!SB)return null;
  try{ const {data}=await SB.auth.getSession(); return (data&&data.session)||null; }catch(e){ return null; } }
 
-/* 저장 데이터 읽기/쓰기 (본인 행만 — RLS) */
+/* 저장 데이터 읽기/쓰기 (본인 행만 — RLS). role 컬럼은 서버가 관리하는 권한(권위 기준) */
 async function cloudGetSave(uid){
  if(!SB)return null;
- try{ const {data,error}=await SB.from("saves").select("data,name,updated_at").eq("user_id",uid).maybeSingle();
+ try{ const {data,error}=await SB.from("saves").select("data,name,role,updated_at").eq("user_id",uid).maybeSingle();
   return error?null:data; }catch(e){ return null; } }
+
+/* 관리자 RPC (서버 함수가 is_admin 검사로 게이트) */
+async function adminList(){ if(!SB)return {data:null,error:"no client"}; return SB.rpc("admin_list"); }
+async function adminSetRole(target,role){ if(!SB)return {error:"no client"}; return SB.rpc("admin_set_role",{target,new_role:role||""}); }
+async function adminGrant(target,gold,gems){ if(!SB)return {error:"no client"}; return SB.rpc("admin_grant",{target,gold_delta:gold||0,gems_delta:gems||0}); }
+async function adminReset(target){ if(!SB)return {error:"no client"}; return SB.rpc("admin_reset",{target}); }
 async function cloudPutSave(uid,name,stateObj){
  if(!SB)return "no client";
  try{ const {error}=await SB.from("saves")
