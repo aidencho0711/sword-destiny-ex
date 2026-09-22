@@ -14,7 +14,9 @@ function armVariants(name){
 function variantCount(name,lv){ return lv===0?(S.owned[name]||0):((S.ench[name]&&S.ench[name][lv])||0); }
 
 function renderArmory(){
- const eqName=S.equipped?S.equipped.n+(S.equipped.e>0?" ✦"+ROMAN[S.equipped.e]:""):"없음";
+ const eqS=S.equipped&&SWORDS.find(x=>x.n===S.equipped.n);
+ const eqName=!S.equipped?"없음"
+  :(eqS?gradText(RARITY[eqS.t],eqS.n):S.equipped.n)+(S.equipped.e>0?" ✦"+ROMAN[S.equipped.e]:"");
  const cloudOn=S.cloud&&typeof cloudReady==="function"&&cloudReady();
  $("arm-head").innerHTML=`
   <div class="arm-top">

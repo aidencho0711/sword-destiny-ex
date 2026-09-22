@@ -214,6 +214,42 @@ function swordSVG(s,ench){
      <line x1="100" y1="250" x2="100" y2="196" stroke="${s.gem}" stroke-width="2" opacity=".7"/>
      <line x1="100" y1="250" x2="140" y2="250" stroke="${s.gem}" stroke-width="2" opacity=".7"/>`;
    break;}
+  case "T I M E  D E S T R O Y E R":{        // 부서진 시계들이 검을 둘러싸고 제멋대로 돈다
+   defs+=`<radialGradient id="ta${id}" cx="50%" cy="50%" r="50%">
+     <stop offset="0%" stop-color="${s.e}" stop-opacity=".26"/>
+     <stop offset="55%" stop-color="${s.gem}" stop-opacity=".10"/>
+     <stop offset="100%" stop-color="${s.gem}" stop-opacity="0"/></radialGradient>`;
+   const rot=(cx,cy,dir,dur,inner)=>`<g>${inner}<animateTransform attributeName="transform" type="rotate"
+      from="0 ${cx} ${cy}" to="${dir*360} ${cx} ${cy}" dur="${dur}s" repeatCount="indefinite"/></g>`;
+   /* 아우라 — 번져 나가는 고리와 반대로 도는 눈금 테 */
+   dcB=`<circle cx="100" cy="258" r="196" fill="url(#ta${id})"/>`;
+   for(let i=0;i<3;i++)dcB+=`<circle cx="100" cy="258" r="52" fill="none" stroke="${s.e}" stroke-width="1" opacity="0">
+     <animate attributeName="r" values="52;186" dur="5.4s" begin="${(i*1.8).toFixed(1)}s" repeatCount="indefinite"/>
+     <animate attributeName="opacity" values="0;.4;0" dur="5.4s" begin="${(i*1.8).toFixed(1)}s" repeatCount="indefinite"/></circle>`;
+   dcB+=rot(100,258,-1,46,`<circle cx="100" cy="258" r="168" fill="none" stroke="${s.c[0]}" stroke-width=".8" opacity=".3" stroke-dasharray="3 13"/>`)
+      +rot(100,258,1,30,`<circle cx="100" cy="258" r="132" fill="none" stroke="${s.gem}" stroke-width=".7" opacity=".26" stroke-dasharray="20 9"/>`);
+   /* 시계 — 시침은 느리게, 분침은 빠르게. 절반은 거꾸로 돈다 */
+   [[-20,130,42,1],[226,176,44,-1],[-26,300,34,-1],[234,330,36,1],[10,452,28,1],[198,470,30,-1]]
+   .forEach(([cx,cy,r,dir],k)=>{
+    let tk="";
+    for(let i=0;i<12;i++){const a=i*Math.PI/6,big=i%3===0;
+     tk+=`<line x1="${(cx+Math.cos(a)*r*(big?.76:.85)).toFixed(1)}" y1="${(cy+Math.sin(a)*r*(big?.76:.85)).toFixed(1)}"
+       x2="${(cx+Math.cos(a)*r*.94).toFixed(1)}" y2="${(cy+Math.sin(a)*r*.94).toFixed(1)}"
+       stroke="${s.e}" stroke-width="${big?1.5:.8}" opacity="${big?.7:.4}"/>`;}
+    const hand=(len,w,dur,op)=>rot(cx,cy,dir,dur,
+     `<line x1="${cx}" y1="${cy}" x2="${cx}" y2="${(cy-r*len).toFixed(1)}" stroke="${s.gem}"
+       stroke-width="${w}" stroke-linecap="round" opacity="${op}"/>`);
+    dcB+=`<g><circle cx="${cx}" cy="${cy}" r="${r}" fill="#081a34" fill-opacity=".42" stroke="${s.e}" stroke-width="1.2" opacity=".62"/>
+      <circle cx="${cx}" cy="${cy}" r="${(r*.86).toFixed(1)}" fill="none" stroke="${s.c[0]}" stroke-width=".6" opacity=".3"/>
+      ${tk}${hand(.5,2.4,14+k*3,.9)}${hand(.76,1.4,(4+k*.8).toFixed(1),.72)}
+      <circle cx="${cx}" cy="${cy}" r="2.3" fill="${s.e}" opacity=".95"/></g>`;});
+   /* 부서진 시간 조각이 검 바깥을 흩날린다 */
+   const nsh=QC(7);
+   for(let i=0;i<nsh;i++){const a=i*(6.283/nsh),rr=124+((i*37)%68);
+    dcF+=`<path d="M${(100+Math.cos(a)*rr).toFixed(1)} ${(258+Math.sin(a)*rr*.82).toFixed(1)} l7 3 l-3 7 l-7 -3 Z"
+      fill="${s.gem}" opacity="0"><animate attributeName="opacity" values="0;.72;0"
+      dur="${(2.4+(i%4)*.6).toFixed(1)}s" begin="${(i*.41).toFixed(2)}s" repeatCount="indefinite"/></path>`;}
+   break;}
   case "영겁 永劫":{                          // 무한대 기호와 큰 고리
    dcB=`<path d="M60 250 C60 226 100 226 100 250 C100 274 140 274 140 250 C140 226 100 226 100 250 C100 274 60 274 60 250 Z" fill="none" stroke="${s.e}" stroke-width="1.6" opacity=".5">
      <animate attributeName="opacity" values=".25;.7;.25" dur="4s" repeatCount="indefinite"/></path>

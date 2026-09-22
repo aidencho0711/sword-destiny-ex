@@ -23,6 +23,9 @@ const RARITY=[
  {id:"aeon",   n:"무극", one:1500000000,    c:"#8fffe0", g:50000000,   mode:"theme", pd:6.4, end:12800, grad:1, cg:["#8fffe0","#7ea6ff","#c58cff"]},
  {id:"chaos",  n:"혼돈", one:15000000000,   c:"#ff8fe0", g:320000000,  mode:"theme", pd:6.8, end:13600, grad:1, cg:["#ff8fe0","#ff7a6a","#ffd36e"]},
  {id:"aeternum",n:"영겁",one:500000000000,  c:"#ffffff", g:2400000000, mode:"theme", pd:7.6, end:15000, grad:1, cg:["#ffffff","#ffe08a","#8fd0ff","#c58cff"]},
+ /* ── 최상위: 푸름과 흼이 번갈아 흐르는 등급. 전용 서체(font)와 글자 떨림(jitter)을 쓴다 ── */
+ {id:"absolute",n:"ABSOLUTE",one:25000000000000, c:"#bfe0ff", g:20000000000, mode:"theme", pd:8.0, end:15600,
+  grad:1, cg:["#2f7fd8","#ffffff","#7fc4ff","#eaf6ff"], font:1, jitter:1},
 ];
 const CUT_FROM=6, PITY_AT=1200;
 

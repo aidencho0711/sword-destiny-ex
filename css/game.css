@@ -177,6 +177,31 @@ main{flex:1;position:relative;overflow:hidden;z-index:2}
   background-size:220% auto;animation:rgradShift 3.2s linear infinite}
 @keyframes rgradShift{to{background-position:220% center}}
 
+/* ── ABSOLUTE 전용 서체 · 글자 떨림 ──
+   도감·결과 카드·병기고·컷신 어디서든 gradText 를 거치면 이 모양이 된다. */
+.rfont{font-family:"Orbitron","Michroma",var(--serif),sans-serif;font-weight:800;
+  letter-spacing:0;font-size:.62em}
+.rjit{display:inline-flex;align-items:baseline;justify-content:center;
+  flex-wrap:nowrap;max-width:100%;vertical-align:baseline;text-indent:0}
+.rjit .rj{display:inline-block;font-style:normal;white-space:pre;
+  -webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;color:transparent;
+  background-size:240% auto;
+  animation:rgradShift 3.2s linear infinite,rjTrem var(--jt,2s) ease-in-out infinite;
+  animation-delay:var(--gd,0s),var(--jd,0s)}
+.rjit .rj-sp{display:inline-block;width:.3em}
+@keyframes rjTrem{
+  0%,100%{transform:translate(0,0) rotate(0)}
+  18%{transform:translate(.7px,-1.1px) rotate(-1.5deg)}
+  36%{transform:translate(-.9px,.6px) rotate(1.2deg)}
+  57%{transform:translate(.5px,1px) rotate(1.6deg)}
+  78%{transform:translate(-.6px,-.7px) rotate(-1.1deg)}}
+/* 좁은 자리에선 더 줄인다 — 타일은 폭이 100px 남짓이다 */
+.tile .tn .rfont{font-size:.72em}
+.tile .tn .rjit .rj-sp{width:.16em}
+.arm-eq b .rfont,.readout .rarity .rfont,.rc-r .rfont,.sheet-r .rfont,.cs-rarity .rfont{font-size:.78em}
+@media (prefers-reduced-motion:reduce){
+  .rjit .rj{animation:rgradShift 3.2s linear infinite}}
+
 /* 승천 컷신 (th:ascend) */
 .th-ascend{position:absolute;inset:0;overflow:hidden}
 .asc-bg{position:absolute;inset:-10%;background:var(--grad);background-size:300% 300%;opacity:0;

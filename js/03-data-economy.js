@@ -38,8 +38,20 @@ const POTION_COL={p1:"#5fbf7e",p2:"#4aa8e8",p3:"#b44dff",p4:"#ffd45e",
 function gradText(R,text){
  if(!R||!R.grad)return text;
  const cg=(R.cg&&R.cg.length?R.cg:[R.c,"#ffffff"]);
- const stops=cg.concat(cg[0]).join(",");
- return `<span class="rgrad" style="background-image:linear-gradient(90deg,${stops})">${text}</span>`;}
+ const bg="linear-gradient(90deg,"+cg.concat(cg[0]).join(",")+")";
+ const ff=R.font?" rfont":"";
+ if(!R.jitter)
+  return `<span class="rgrad${ff}" style="background-image:${bg}">${text}</span>`;
+ /* 글자마다 따로 흐르고 따로 떨린다.
+    배경 클립은 글자 span 각각에 건다 — 부모에 걸면 transform 을 가진 자식이
+    별도 스태킹 컨텍스트가 되면서 클립된 배경이 비치지 않는다. */
+ const chars=Array.from(text).map((ch,i)=>{
+  if(ch===" ")return `<i class="rj-sp"></i>`;
+  const r=(i*2654435761)%1013/1013;                       // 인덱스 기반 결정적 흔들림
+  return `<i class="rj" style="background-image:${bg};`+
+   `--gd:${(-i*0.13).toFixed(2)}s;`+                      // 색이 글자를 타고 흐르도록 어긋나게
+   `--jt:${(1.5+r*1.3).toFixed(2)}s;--jd:${(-r*2.4).toFixed(2)}s">${ch}</i>`;}).join("");
+ return `<span class="rjit${ff}">${chars}</span>`;}
 POTIONS.forEach(p=>{p.col=POTION_COL[p.id]||"#8fd0c0";});
 
 /* ═════════ 환생 ═════════ */
@@ -87,7 +99,8 @@ const tierCount=t=>SWORDS.filter(x=>x.t>=t&&hasSword(x.n)).length;
    신성(11) 이상 뽑을 때 확률로 보석 획득. 등급이 높을수록 확률·개수 증가. */
 const GEM_FROM=11;
 const GEM_DROP={11:{p:.10,min:1,max:3},12:{p:.12,min:3,max:6},13:{p:.15,min:6,max:10},
- 14:{p:.22,min:12,max:22},15:{p:.34,min:24,max:40},16:{p:.5,min:50,max:90}};
+ 14:{p:.22,min:12,max:22},15:{p:.34,min:24,max:40},16:{p:.5,min:50,max:90},
+ 17:{p:.7,min:120,max:200}};
 function gemDrop(t){
  const d=GEM_DROP[t]; if(!d||Math.random()>=d.p)return 0;
  return d.min+Math.floor(Math.random()*(d.max-d.min+1));}
@@ -133,7 +146,7 @@ const ACH=[
  {id:"a11",n:"서른 자루",       d:"도감 30종",             c:()=>coll()>=30,        r:{pdur:.15},  x:4,y:3,p:["a7","a8"]},
  {id:"a12",n:"십만 번",         d:"주조 100,000회",        c:()=>S.rolls>=1e5,      r:{pity:120},  x:1,y:4,p:["a9"]},
  {id:"a13",n:"천상에 닿다",     d:"천상 등급 획득",         c:()=>S.best>=10,        r:{luck:.08},  x:2,y:4,p:["a10"]},
- {id:"a14",n:"도감 완성",       d:"56종 전부 수집",         c:()=>coll()>=SWORDS.length, r:{luck:.12,gold:.18}, x:3,y:4,p:["a11"]},
+ {id:"a14",n:"도감 완성",       d:SWORDS.length+"종 전부 수집", c:()=>coll()>=SWORDS.length, r:{luck:.12,gold:.18}, x:3,y:4,p:["a11"]},
  {id:"a15",n:"신성에 닿다",     d:"신성 등급 획득",         c:()=>S.best>=11,        r:{luck:.1},   x:2,y:5,p:["a13"]},
  {id:"a16",n:"다시 태어나다",   d:"환생 1회",              c:()=>S.rebirth>=1,      r:{gold:.10},   x:0,y:5,p:["a12"]},
  {id:"a17",n:"거부의 영역",     d:"누적 주화 10조",         c:()=>S.goldTot>=1e13,   r:{gold:.14},   x:4,y:5,p:["a14"]},

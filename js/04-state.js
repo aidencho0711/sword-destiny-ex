@@ -132,5 +132,5 @@ async function load(){try{
     if(typeof S.acct!=="string")S.acct="__local__";
     if(typeof S.devLuck!=="number"||!(S.devLuck>0))S.devLuck=1;
   }}catch(e){}}
-const CUT_STEPS=[6,7,8,9,10,11,12,13,14,15,16,99];
+const CUT_STEPS=[6,7,8,9,10,11,12,13,14,15,16,17,99];
 function cutLabel(v){return v>=99?"컷신 끄기":RARITY[v].n+" 이상";}
