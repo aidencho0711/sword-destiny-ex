@@ -98,11 +98,12 @@ const inkQuad=(()=>{
    l1~a 는 자막이 뜨는 시각, title 은 이름이 화면을 채우는 시각,
    open/close 는 어두워지고 다시 밝아지는 두 번의 아우라 시점이다. */
 const TDZ_T={
- open:  1.50,   // ① 중앙에서 아우라가 퍼지며 화면이 서서히 → 빠르게 어두워진다
+ open:  1.25,   // ① 중앙에서 아우라가 퍼지며 화면이 서서히 → 빠르게 어두워진다
  l1:    2.00,   // ② "Why do you think time always goes only one way?"
- l2:    6.20,   // ③ "I don't follow time."
- l3:    8.60,   // ④ "Time follows me."
- f:    10.90,   // ⑤ "FOR"
+ l2:    6.20,   // ③ "I don't follow time." — 여기서부터 시계가 느려진다
+ l3:    8.60,   // ④ "Time follows me." — 웅 거리며 초록으로, 시간이 거꾸로 흐른다
+ stop:  8.10,   // 시계가 완전히 멎는 시각 (회색)
+ f:    10.90,   // ⑤ "FOR" — 다른 차원의 시계들이 열리기 시작한다
  i:    11.75,   // ⑥ "I"
  a:    12.50,   // ⑦ "AM"
  title:13.40,   // ⑧ 이름이 떨리며 화면을 채운다 (배경은 그대로)

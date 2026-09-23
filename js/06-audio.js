@@ -587,25 +587,57 @@ function sfxEquinox(pd){
  [D5/2,Fs5/2,A5/2,D5,Fs5,A5].forEach((f,i)=>eqVoice("sine",f,pd+.05+i*.04,3.2,.05));
  eqPluck(D6,pd+.08,1.5,.06);}
 
+
+/* ───── 종 ─────
+   기계음이 아니라 쇠를 친 소리. 종 특유의 비조화 배음을 함께 울리고,
+   전체 음정을 아래로 끌어내려 "멎어 가는" 느낌을 만든다. */
+function bellFall(dl,f0,f1,dur,vol){
+ if(!S.sound)return;
+ const P=[1,2.00,2.76,5.40,8.10],A=[1,.52,.34,.16,.08];
+ P.forEach((p,i)=>tone(f0*p,Math.max(24,f1*p),dur*(1-i*.12),"sine",vol*A[i],dl));
+ noise(.13,.028,dl);}
+
 /* ───── T I M E  D E S T R O Y E R ─────
-   거꾸로 가는 초침이 점점 빨라지다 이름 앞에서 끊기고,
-   선언 세 번(FOR·I·AM) 뒤에 저음이 한 번 크게 떨어진다.
+   ① 정주행 초침 → ② 느려지며 종이 세 번, 점점 낮게 → ③ 정적
+   → ④ 웅 하는 저음과 함께 역주행 → ⑤ FOR·I·AM → ⑥ 이름 → ⑦ 밝아짐.
    타이밍은 TDZ_T 하나만 본다 — 화면과 어긋나지 않게. */
 function sfxTdz(){
  if(!S.sound)return;
- const T=TDZ_T;
- tone(150,34,T.open+.4,"sine",.17,0);              // 빨려 들어가는 저음
+ const T=TDZ_T,TOT=TDZ_END/1000;
+ tone(150,34,T.open+.4,"sine",.17,0);                       // 빨려 들어가는 저음
  noise(1.15,.10,0);
- let t=T.open+.25,step=.54;                         // 초침 — 점점 빨라진다
- while(t<T.title-.15){
-  tone(430,250,.045,"square",.017,t);
-  t+=step;step=Math.max(.1,step*.955);
- }
- tone(49,46,T.title-T.open+.6,"sawtooth",.05,T.open);            // 바닥에 깔리는 지속음
- [T.f,T.i,T.a].forEach((tt,k)=>{                                  // FOR · I · AM
-  tone(146-k*20,40,.46,"triangle",.13,tt);noise(.2,.085,tt);});
- tone(92,28,2.8,"sawtooth",.17,T.title);                          // 이름 — 한 방
+ tone(49,46,T.l2-T.open+.4,"sawtooth",.045,T.open);         // 바닥에 깔리는 지속음
+
+ /* ① 정주행 — 고르게 또각또각 */
+ let t=T.open+.3;
+ while(t<T.l2){tone(430,250,.045,"square",.017,t);t+=.5;}
+ /* ② 감속 — 간격이 벌어지다 멎는다. 종이 세 번, 점점 낮고 길게 */
+ let step=.5;
+ while(t<T.stop){tone(400,230,.05,"square",.016,t);t+=step;step*=1.42;}
+ bellFall(T.l2+.10,560,330,2.6,.075);
+ bellFall(T.l2+1.00,380,205,3.0,.070);
+ bellFall(T.stop-.15,252,110,3.8,.066);                     // 마지막 한 번 — 가장 낮게 내려앉는다
+
+ /* ③ 정적 → ④ 웅. 저음이 차오르고 시간이 뒤집힌다 */
+ tone(30,44,1.1,"sawtooth",.11,T.l3-.16);
+ tone(60,88,2.6,"sine",.07,T.l3-.10);
+ tone(44,41,TOT-T.l3,"sawtooth",.05,T.l3);                  // 끝까지 깔리는 웅
+ bellFall(T.l3,190,300,2.2,.05);                            // 거꾸로 — 음정이 되레 올라간다
+ /* 역주행 초침 — 점점 빨라진다 */
+ t=T.l3+.22;let rs=.34;
+ while(t<T.title-.1){tone(300,470,.04,"square",.015,t);t+=rs;rs=Math.max(.075,rs*.93);}
+
+ /* ⑤ FOR · I · AM — 세 번의 타격. 차원이 하나씩 열린다 */
+ [T.f,T.i,T.a].forEach((tt,k)=>{
+  tone(146-k*20,40,.46,"triangle",.13,tt);noise(.2,.085,tt);
+  bellFall(tt+.05,300+k*130,150+k*70,1.7,.038);});
+
+ /* ⑥ 이름 — 한 방, 그리고 낮게 울린다 */
+ tone(92,28,2.8,"sawtooth",.17,T.title);
  noise(.75,.15,T.title);
  [73.4,110,146.8].forEach((f,i)=>tone(f,f,3.4,"sine",.055,T.title+.06+i*.05));
- tone(190,860,T.fade,"sine",.085,T.close);                        // 마감 — 밝아지며 올라간다
+ bellFall(T.title+.04,150,62,4.2,.075);                     // 모든 차원의 종이 한꺼번에 내려앉는다
+
+ /* ⑦ 마감 — 밝아지며 올라간다 */
+ tone(190,860,T.fade,"sine",.085,T.close);
  noise(1.0,.075,T.close);}

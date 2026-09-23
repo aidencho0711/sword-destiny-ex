@@ -869,47 +869,102 @@ function themeHTML(s,R){
   </div></div>`;}
  case "tdz":{                                    // 시간 파괴자 — 검이 끝내 등장하지 않는 유일한 컷신
   const E=v=>String(v).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/"/g,"&quot;");
-  const T=TDZ_T;
+  const T=TDZ_T,TOT=TDZ_END/1000,P=t=>+(t/TOT*100).toFixed(3);
+
   /* 대사 — 순서는 고정. [뜨는 시각, 머무는 시간, 세로 위치, 문장, 추가 class] */
   const say=[
-   [T.l1,4.10,"25%","Why do you think time always goes only one way?",""],
-   [T.l2,2.30,"29%","I don't follow time.",""],
-   [T.l3,2.20,"62%","Time follows me.",""],
+   [T.l1,4.10,"24%","Why do you think time always goes only one way?",""],
+   [T.l2,2.30,"27%","I don't follow time.",""],
+   [T.l3,2.20,"73%","Time follows me.",""],
    [T.f ,0.86,"44%","FOR","big"],
    [T.i ,0.74,"44%","I","big"],
    [T.a ,0.94,"44%","AM","big"],
   ].map(([d,l,top,tx,cl])=>`<div class="csay ${cl}" data-t="${E(tx)}" data-d="${d}"
     style="top:${top};--sd:${d}s;--sl:${l}s"></div>`).join("");
-  /* 거꾸로 도는 시계 — 초침이 시침보다 먼저 미친다 */
+
+  /* ── 바늘 ──
+     국면이 키프레임 하나 안에서 전부 끝난다.
+     정주행 → (l2) 감속 → (stop) 정지 → (l3) 역주행 가속.
+     국면마다 timing-function 을 따로 주어야 "멎는다 / 튕겨 나간다"가 산다. */
+  const handKF=(nm,fw,bk)=>{
+   const a=fw*T.l2, b=a+fw*(T.stop-T.l2)*0.42, c=b-bk*(TOT-T.l3);
+   return `@keyframes ${nm}{
+ 0%{transform:rotate(0deg);animation-timing-function:linear}
+ ${P(T.l2)}%{transform:rotate(${a.toFixed(1)}deg);animation-timing-function:cubic-bezier(.08,.72,.28,1)}
+ ${P(T.stop)}%{transform:rotate(${b.toFixed(1)}deg);animation-timing-function:linear}
+ ${P(T.l3)}%{transform:rotate(${b.toFixed(1)}deg);animation-timing-function:cubic-bezier(.45,0,.62,.58)}
+ 100%{transform:rotate(${c.toFixed(1)}deg)}}`;};
+
+  /* 색 — 파랑으로 돌다가 멎으며 잿빛, 역주행과 함께 초록으로 튄다 */
+  const tintKF=`@keyframes tzTint{
+ 0%,${P(T.l2)}%{color:#bfe0ff}
+ ${P(T.stop)}%,${P(T.l3)}%{color:#848b94}
+ ${P(T.l3+.3)}%,100%{color:#5effa6}}`;
+  /* 분위기 — 배경 비네팅도 같은 색을 따라간다 */
+  const moodKF=`@keyframes tzMood{
+ 0%,${P(T.l2)}%{box-shadow:inset 0 0 38vmin 12vmin rgba(6,14,30,.82)}
+ ${P(T.stop)}%,${P(T.l3)}%{box-shadow:inset 0 0 38vmin 12vmin rgba(12,13,16,.86)}
+ ${P(T.l3+.4)}%,100%{box-shadow:inset 0 0 40vmin 10vmin rgba(4,26,16,.8)}}`;
+
+  const css=handKF("tzHh",9,62)+handKF("tzHm",30,190)+handKF("tzHs",150,900)+tintKF+moodKF;
+
+  /* ── 본 시계 ── */
+  const NT=QLV<=1?60:QLV===2?36:12,ts=NT/12;
   let tick="";
-  for(let i=0,N=QC(60);i<N;i++){const a=i*(360/N),big=(i%5===0);
-   tick+=`<line x1="200" y1="${big?32:39}" x2="200" y2="${big?54:49}" stroke="#d6ecff"
-     stroke-width="${big?2.4:1}" opacity="${big?.5:.22}" transform="rotate(${a.toFixed(1)} 200 200)"/>`;}
-  const hand=(len,w,dur,op)=>`<g><line x1="200" y1="200" x2="200" y2="${200-len}" stroke="var(--acc)"
-    stroke-width="${w}" stroke-linecap="round" opacity="${op}"/>
-    <animateTransform attributeName="transform" type="rotate" from="360 200 200" to="0 200 200"
-      dur="${dur}s" repeatCount="indefinite"/></g>`;
-  const dial=`<svg viewBox="0 0 400 400">
-    <circle cx="200" cy="200" r="178" fill="none" stroke="#9cc8f0" stroke-width="1.4" opacity=".26"/>
-    <circle cx="200" cy="200" r="152" fill="none" stroke="#9cc8f0" stroke-width=".7" opacity=".15"/>
-    ${tick}${hand(94,5,3.4,.85)}${hand(138,2.6,1.05,.6)}${hand(160,1.1,.3,.38)}
-    <circle cx="200" cy="200" r="6" fill="#eaf6ff" opacity=".9"/></svg>`;
-  /* 바깥 궤도 — 서로 반대로 돈다 */
-  let orb="";
-  for(let i=0,N=QC(3);i<N;i++)
-   orb+=`<i class="orb" style="--os:${118+i*34}%;--od:${26-i*7}s;--osg:${i%2?-1:1}"></i>`;
+  for(let i=0;i<NT;i++){const big=i%ts===0;
+   tick+=`<line x1="200" y1="${big?30:38}" x2="200" y2="${big?54:48}" stroke="currentColor"
+     stroke-width="${big?2.6:1}" opacity="${big?.62:.26}" transform="rotate(${(i*360/NT).toFixed(1)} 200 200)"/>`;}
+
+  /* 역주행 잔상 — 지나온 시간이 뒤로 쓸려 간다 */
+  let rev="";
+  for(let i=0,N=QC(4);i<N;i++)
+   rev+=`<i class="rv" style="--rvs:${52+i*15}%;--rvd:${(1.5+i*.45).toFixed(2)}s;--rvl:${(T.l3+i*.3).toFixed(2)}s"></i>`;
+
+  /* ── 다른 차원의 시계들 ──
+     "FOR" 부터 차례로 열린다. 저마다 다른 색·속도·방향·기울기 —
+     같은 시간을 공유하지 않는다는 뜻이다. 이름이 뜰 때 일제히 잦아든다. */
+  const DC=["#5effa6","#8fb4ff","#ff8fd8","#ffd76e","#a78bff","#5fe0e8","#ff9a7a","#9dff6e"];
+  let dims="";
+  for(let i=0,N=QC(8);i<N;i++){
+   const ang=(i*(360/N)+22)*Math.PI/180,rad=31+(i%3)*10;
+   dims+=`<div class="dim" style="left:${(50+Math.cos(ang)*rad).toFixed(1)}%;top:${(50+Math.sin(ang)*rad*.9).toFixed(1)}%;
+     --dc:${DC[i%DC.length]};--dsc:${(.15+((i*37)%12)/46).toFixed(3)};--dl:${(T.f+i*.22).toFixed(2)}s;
+     --drx:${-30+(i*23)%60}deg;--dry:${-36+(i*41)%72}deg;--dz:${-40+(i*29)%80}deg;
+     --dhd:${(1.0+(i%4)*.55).toFixed(2)}s;--dmd:${(3.2+(i%3)*1.5).toFixed(2)}s">
+     <svg viewBox="0 0 100 100">
+       <circle cx="50" cy="50" r="46" fill="none" stroke="currentColor" stroke-width="2.2" opacity=".6"/>
+       <circle cx="50" cy="50" r="37" fill="none" stroke="currentColor" stroke-width=".8" opacity=".28"/>
+       ${[0,1,2,3,4,5,6,7,8,9,10,11].map(k=>`<line x1="50" y1="6" x2="50" y2="13" stroke="currentColor"
+         stroke-width="1.7" opacity=".5" transform="rotate(${k*30} 50 50)"/>`).join("")}
+     </svg><i class="dh"></i><i class="dm"></i><i class="dp"></i></div>`;}
+
   /* 부서진 시간 조각 */
   let shard="";
   for(let i=0,N=QC(18);i<N;i++)
    shard+=`<i class="sh" style="left:${(Math.random()*100).toFixed(1)}%;top:${(Math.random()*100).toFixed(1)}%;
      --sr:${(Math.random()*360).toFixed(0)}deg;--sd2:${(2.6+Math.random()*3).toFixed(1)}s;--sl2:${(Math.random()*4.5).toFixed(1)}s"></i>`;
-  return `<div class="pl"><div class="th th-tdz"
-    style="--tdo:${T.open}s;--tdt:${T.title}s;--tdc:${T.close}s;--tdf:${T.fade}s">
+
+  return `<div class="pl"><style>${css}</style><div class="th th-tdz"
+    style="--tdo:${T.open}s;--tdt:${T.title}s;--tdc:${T.close}s;--tdf:${T.fade}s;--tql:${T.l3}s;--tot:${TOT}s">
     <div class="tz-veil"></div>
     <div class="tz-scene">
-      <div class="tz-dial">${dial}</div>${orb}
+      <div class="tz-mood"></div>
+      <div class="tz-dims">${dims}</div>
+      <div class="tz-wrap">
+        <div class="tz-clock">
+          <div class="tz-dial">
+            <svg viewBox="0 0 400 400">
+              <circle cx="200" cy="200" r="178" fill="none" stroke="currentColor" stroke-width="1.6" opacity=".34"/>
+              <circle cx="200" cy="200" r="152" fill="none" stroke="currentColor" stroke-width=".8" opacity=".18"/>
+              ${tick}
+            </svg>
+            <i class="hand h"></i><i class="hand m"></i><i class="hand s"></i><i class="pin"></i>
+          </div>
+          <div class="tz-rev">${rev}</div>
+        </div>
+      </div>
+      <i class="tz-hum"></i>
       <div class="tz-shards">${shard}</div>
-      <div class="tz-vig"></div>
     </div>
     <i class="tz-pop op"></i><i class="tz-pop op b"></i>
     <div class="tz-title">
@@ -966,6 +1021,7 @@ function playCutscene(s,R){
  cs.classList.toggle("eyec",s.th==="eye");
  cs.classList.toggle("inkc",s.th==="ink");
  cs.classList.toggle("tdzc",bare);      // 배경을 투명하게 — 게임 화면이 비쳐야 어두워지는 게 보인다
+ if($("app"))$("app").classList.toggle("csbare",bare);   // 어두워지는 동안 뽑은 검이 먼저 보이면 안 된다
  cs.classList.toggle("safe1",S.safe===1);
  cs.classList.toggle("safe2",S.safe===2);
  cs.classList.add("on");
@@ -983,4 +1039,5 @@ function endCut(){
  clearTimeout(csT);clearCsTimers();eqStopBGM();const cs=$("cs");
  if(!cs.classList.contains("on"))return;
  cs.classList.remove("on");cs.innerHTML="";cancelAnimationFrame(fpsRaf);
+ if($("app"))$("app").classList.remove("csbare");
  afterResult();}
