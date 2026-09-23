@@ -26,6 +26,7 @@ function sfxCut(s,R){
  if(s.th==="oppress")return sfxOppress(pd);
  if(s.th==="recur")return sfxRecur(pd);
  if(s.th==="scale")return sfxScale(pd);
+ if(s.th==="tdz")return sfxTdz();
  tone(70,780,pd*0.92,"sawtooth",.045);
  if(tier>=8)tone(140,1400,pd*0.8,"triangle",.025,.3);
  noise(.6,.34,pd-.12);
@@ -129,8 +130,8 @@ function eqPad(f,t,dur,vol){
   o.frequency.value=f;o.detune.value=dt;o.connect(flt);o.start(T);o.stop(T+dur+.1);});
  flt.connect(g);g.connect(c.destination);}
 
-function sfxType(){tone(1400+Math.random()*800,760,.018,"square",.02);}
-function sfxTypeHead(){tone(340,170,.17,"triangle",.055);noise(.05,.04);}
+function sfxType(){tone(520+Math.random()*250,300,.026,"square",.022);}
+function sfxTypeHead(){tone(165,88,.2,"triangle",.062);noise(.06,.045);}
 let csTimers=[];
 function clearCsTimers(){csTimers.forEach(clearTimeout);csTimers=[];}
 function csType(){
@@ -585,3 +586,26 @@ function sfxEquinox(pd){
  eqPad(D2,pd,4.2,.062);
  [D5/2,Fs5/2,A5/2,D5,Fs5,A5].forEach((f,i)=>eqVoice("sine",f,pd+.05+i*.04,3.2,.05));
  eqPluck(D6,pd+.08,1.5,.06);}
+
+/* ───── T I M E  D E S T R O Y E R ─────
+   거꾸로 가는 초침이 점점 빨라지다 이름 앞에서 끊기고,
+   선언 세 번(FOR·I·AM) 뒤에 저음이 한 번 크게 떨어진다.
+   타이밍은 TDZ_T 하나만 본다 — 화면과 어긋나지 않게. */
+function sfxTdz(){
+ if(!S.sound)return;
+ const T=TDZ_T;
+ tone(150,34,T.open+.4,"sine",.17,0);              // 빨려 들어가는 저음
+ noise(1.15,.10,0);
+ let t=T.open+.25,step=.54;                         // 초침 — 점점 빨라진다
+ while(t<T.title-.15){
+  tone(430,250,.045,"square",.017,t);
+  t+=step;step=Math.max(.1,step*.955);
+ }
+ tone(49,46,T.title-T.open+.6,"sawtooth",.05,T.open);            // 바닥에 깔리는 지속음
+ [T.f,T.i,T.a].forEach((tt,k)=>{                                  // FOR · I · AM
+  tone(146-k*20,40,.46,"triangle",.13,tt);noise(.2,.085,tt);});
+ tone(92,28,2.8,"sawtooth",.17,T.title);                          // 이름 — 한 방
+ noise(.75,.15,T.title);
+ [73.4,110,146.8].forEach((f,i)=>tone(f,f,3.4,"sine",.055,T.title+.06+i*.05));
+ tone(190,860,T.fade,"sine",.085,T.close);                        // 마감 — 밝아지며 올라간다
+ noise(1.0,.075,T.close);}

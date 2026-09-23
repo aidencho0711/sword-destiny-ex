@@ -66,7 +66,7 @@ const SWORDS=[
  {t:16,n:"영겁 永劫",b:"rift",g:"halo",c:["#eaf2ff","#9aa8c0"],e:"#ffffff",gem:"#cfe0ff",gr:"#2a3550",th:"ascend",d:"처음도 끝도 이 검 안에서 한 점이 된다. 뽑는 것 자체가 있을 수 없는 일이다."},
  /* ── ABSOLUTE ── */
  {t:17,n:"T I M E  D E S T R O Y E R",b:"rift",g:"halo",c:["#dff0ff","#2f6fc4"],e:"#ffffff",gem:"#8fd0ff",gr:"#16294a",
-  th:"ascend",vb:"-72 0 344 560",acc:"#bfe0ff",
+  th:"tdz",pd:TDZ_PD,end:TDZ_END,vb:"-72 0 344 560",acc:"#bfe0ff",
   d:"시간을 베는 검이 아니다. 시간이 있었다는 사실을 지우는 검이다. 이 검이 지나간 자리에는 전과 후가 없다."},
 ];
 SWORDS.forEach(s=>{if(s.gem==="#f濃")s.gem="#ff8fb8";});

@@ -867,6 +867,58 @@ function themeHTML(s,R){
     <i class="blade"></i><div class="bflash"></div><i class="seam"></i>${ember}
     <span class="glyph">結</span>${shard}${mote}
   </div></div>`;}
+ case "tdz":{                                    // 시간 파괴자 — 검이 끝내 등장하지 않는 유일한 컷신
+  const E=v=>String(v).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/"/g,"&quot;");
+  const T=TDZ_T;
+  /* 대사 — 순서는 고정. [뜨는 시각, 머무는 시간, 세로 위치, 문장, 추가 class] */
+  const say=[
+   [T.l1,4.10,"25%","Why do you think time always goes only one way?",""],
+   [T.l2,2.30,"29%","I don't follow time.",""],
+   [T.l3,2.20,"62%","Time follows me.",""],
+   [T.f ,0.86,"44%","FOR","big"],
+   [T.i ,0.74,"44%","I","big"],
+   [T.a ,0.94,"44%","AM","big"],
+  ].map(([d,l,top,tx,cl])=>`<div class="csay ${cl}" data-t="${E(tx)}" data-d="${d}"
+    style="top:${top};--sd:${d}s;--sl:${l}s"></div>`).join("");
+  /* 거꾸로 도는 시계 — 초침이 시침보다 먼저 미친다 */
+  let tick="";
+  for(let i=0,N=QC(60);i<N;i++){const a=i*(360/N),big=(i%5===0);
+   tick+=`<line x1="200" y1="${big?32:39}" x2="200" y2="${big?54:49}" stroke="#d6ecff"
+     stroke-width="${big?2.4:1}" opacity="${big?.5:.22}" transform="rotate(${a.toFixed(1)} 200 200)"/>`;}
+  const hand=(len,w,dur,op)=>`<g><line x1="200" y1="200" x2="200" y2="${200-len}" stroke="var(--acc)"
+    stroke-width="${w}" stroke-linecap="round" opacity="${op}"/>
+    <animateTransform attributeName="transform" type="rotate" from="360 200 200" to="0 200 200"
+      dur="${dur}s" repeatCount="indefinite"/></g>`;
+  const dial=`<svg viewBox="0 0 400 400">
+    <circle cx="200" cy="200" r="178" fill="none" stroke="#9cc8f0" stroke-width="1.4" opacity=".26"/>
+    <circle cx="200" cy="200" r="152" fill="none" stroke="#9cc8f0" stroke-width=".7" opacity=".15"/>
+    ${tick}${hand(94,5,3.4,.85)}${hand(138,2.6,1.05,.6)}${hand(160,1.1,.3,.38)}
+    <circle cx="200" cy="200" r="6" fill="#eaf6ff" opacity=".9"/></svg>`;
+  /* 바깥 궤도 — 서로 반대로 돈다 */
+  let orb="";
+  for(let i=0,N=QC(3);i<N;i++)
+   orb+=`<i class="orb" style="--os:${118+i*34}%;--od:${26-i*7}s;--osg:${i%2?-1:1}"></i>`;
+  /* 부서진 시간 조각 */
+  let shard="";
+  for(let i=0,N=QC(18);i<N;i++)
+   shard+=`<i class="sh" style="left:${(Math.random()*100).toFixed(1)}%;top:${(Math.random()*100).toFixed(1)}%;
+     --sr:${(Math.random()*360).toFixed(0)}deg;--sd2:${(2.6+Math.random()*3).toFixed(1)}s;--sl2:${(Math.random()*4.5).toFixed(1)}s"></i>`;
+  return `<div class="pl"><div class="th th-tdz"
+    style="--tdo:${T.open}s;--tdt:${T.title}s;--tdc:${T.close}s;--tdf:${T.fade}s">
+    <div class="tz-veil"></div>
+    <div class="tz-scene">
+      <div class="tz-dial">${dial}</div>${orb}
+      <div class="tz-shards">${shard}</div>
+      <div class="tz-vig"></div>
+    </div>
+    <i class="tz-pop op"></i><i class="tz-pop op b"></i>
+    <div class="tz-title">
+      <div class="tl">${gradText(R,"T I M E")}</div>
+      <div class="tl">${gradText(R,"D E S T R O Y E R")}</div>
+    </div>
+    <i class="tz-pop cl"></i><i class="tz-pop cl b"></i>
+    <div class="tz-white"></div>
+  </div>${say}</div>`;}
  case "ascend":{                                 // 운명 이상 공용 — 색이 흐르는 승천
   const cg=(R.cg&&R.cg.length?R.cg:[R.c,"#ffffff"]);
   const grad=cg.concat(cg[0]).join(",");
@@ -885,8 +937,11 @@ function themeHTML(s,R){
 let csT=null;
 function playCutscene(s,R){
  const cs=$("cs"),pd=s.pd||R.pd;
- const pc=R.mode==="theme"?70:34+(s.t-6)*10;
- const motes=s.t>=8?26+(s.t-8)*10:0;
+ /* 검이 등장하지 않는 컷신 — 무대·검·이름표·섬광·입자를 전부 붙이지 않는다.
+    이런 컷신은 스스로 끝맺음까지 연출하므로 공용 마감 연출이 끼어들면 안 된다. */
+ const bare=s.th==="tdz";
+ const pc=bare?0:(R.mode==="theme"?70:34+(s.t-6)*10);
+ const motes=bare?0:(s.t>=8?26+(s.t-8)*10:0);
  let parts="";
  for(let i=0;i<pc;i++){const a=Math.random()*6.283,d=90+Math.random()*300;
   parts+=`<i class="p" style="--tx:${(Math.cos(a)*d).toFixed(0)}px;--ty:${(Math.sin(a)*d).toFixed(0)}px;
@@ -898,25 +953,26 @@ function playCutscene(s,R){
  cs.style.setProperty("--pd",pd+"s");
  cs.style.setProperty("--esw",EYE_T.swordRevealDuration+"s");
  cs.style.setProperty("--isw",INK_T.swordFormDuration+"s");
- cs.innerHTML=preludeHTML(s,R)+`
-  <div class="cs-dim"></div><div class="cs-after"></div>${parts}${mh}
+ cs.innerHTML=preludeHTML(s,R)+`<div class="cs-dim"></div>`+(bare?"":`
+  <div class="cs-after"></div>${parts}${mh}
   <div class="cs-stage">
     ${s.t>=14?`<div class="cs-sig"><b>${sigFor(s)}</b></div>`:""}
     <div class="cs-sword ${s.t>=8?"float":""}">${swordSVG(s)}</div>
     <div class="cs-cap"><div class="cs-rarity">${gradText(R,R.n)}</div><div class="cs-name">${gradText(R,s.n)}</div>
       <div class="cs-odds">1 / ${R.one.toLocaleString()}</div></div>
-  </div><div class="cs-flash"></div>`;
+  </div><div class="cs-flash"></div>`);
  resolveQ();
  cs.classList.remove("q1","q2","q3");cs.classList.add("q"+QLV);
  cs.classList.toggle("eyec",s.th==="eye");
  cs.classList.toggle("inkc",s.th==="ink");
+ cs.classList.toggle("tdzc",bare);      // 배경을 투명하게 — 게임 화면이 비쳐야 어두워지는 게 보인다
  cs.classList.toggle("safe1",S.safe===1);
  cs.classList.toggle("safe2",S.safe===2);
  cs.classList.add("on");
  clearCsTimers();
  sfxCut(s,R);
  // 심장박동 두 번 (쿵 쿵) — 무극 이상 등급에서만, 세 번째 박동에 검이 강림한다
- if(s.t>=14&&S.sound&&typeof AC!=="undefined"&&AC){
+ if(!bare&&s.t>=14&&S.sound&&typeof AC!=="undefined"&&AC){
   const beat=d=>{try{tone(66,40,.26,"sine",.11,d);noise(.16,.05,d);}catch(e){}};
   beat(Math.max(0,pd-1.6));beat(Math.max(0,pd-0.85));
  }

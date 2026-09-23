@@ -1163,3 +1163,73 @@ nav button.on{color:var(--paper);border-top-color:var(--ember)}
 @keyframes ftZoomLite{0%,64.4%{transform:scale(1)}82.2%{transform:scale(1.1)}100%{transform:scale(2.2)}}
 #cs.q3 .cs-flash{animation-name:flashSoft}
 @media(prefers-reduced-motion:reduce)@media(prefers-reduced-motion:reduce){.shake{animation:none}}
+
+/* ═══ T I M E  D E S T R O Y E R 컷신 (th:tdz) ═══
+   검이 등장하지 않는다. 어두워지며 시작해 선언만 남기고 밝아지며 끝난다.
+   배경을 투명하게 둬야 "화면이 어두워지는" 것이 실제로 보인다. */
+#cs.tdzc{background:transparent}
+.th-tdz{position:absolute;inset:0;overflow:hidden}
+
+/* ① 암전 — 서서히 시작해 빠르게 덮는다 (ease-in) */
+.tz-veil{position:absolute;inset:0;background:#05070c;opacity:0;z-index:1;
+  animation:tzDark var(--tdo) cubic-bezier(.7,0,.9,.3) forwards}
+@keyframes tzDark{from{opacity:0}to{opacity:1}}
+
+/* ② 장면 — 암전이 끝날 무렵 떠오른다 */
+.tz-scene{position:absolute;inset:0;z-index:2;opacity:0;
+  animation:softIn 1.6s calc(var(--tdo) - .35s) forwards}
+.tz-dial{position:absolute;left:50%;top:50%;width:min(82vw,78vh);aspect-ratio:1;
+  transform:translate(-50%,-50%);opacity:.74;will-change:transform;
+  animation:tzDrift 24s linear infinite}
+.tz-dial svg{width:100%;height:100%}
+@keyframes tzDrift{to{transform:translate(-50%,-50%) rotate(-360deg)}}
+.th-tdz .orb{position:absolute;left:50%;top:50%;width:var(--os);aspect-ratio:1;border-radius:50%;
+  transform:translate(-50%,-50%);border:1px solid var(--acc);opacity:.2;will-change:transform;
+  animation:tzOrb var(--od) linear infinite}
+@keyframes tzOrb{to{transform:translate(-50%,-50%) rotate(360deg)}}
+.th-tdz .orb[style*="--osg:-1"]{animation-name:tzOrbR}
+@keyframes tzOrbR{to{transform:translate(-50%,-50%) rotate(-360deg)}}
+.tz-shards{position:absolute;inset:0}
+.th-tdz .sh{position:absolute;width:9px;height:9px;background:var(--acc);opacity:0;
+  transform:rotate(var(--sr));box-shadow:0 0 10px var(--acc);
+  clip-path:polygon(50% 0,100% 62%,38% 100%,0 44%);
+  animation:tzShard var(--sd2) var(--sl2) ease-in-out infinite}
+@keyframes tzShard{0%,100%{opacity:0}50%{opacity:.5}}
+.tz-vig{position:absolute;inset:0;
+  background:radial-gradient(circle at 50% 48%,transparent 34%,rgba(3,5,10,.74) 84%)}
+
+/* ③ 아우라 — 시작과 끝, 중앙에서 약하게 팡 */
+.th-tdz .tz-pop{position:absolute;left:50%;top:50%;width:18vmin;aspect-ratio:1;border-radius:50%;
+  border:2px solid var(--acc);opacity:0;pointer-events:none;will-change:transform,opacity;
+  box-shadow:0 0 30px var(--acc),inset 0 0 22px var(--acc)}
+.th-tdz .tz-pop.op{z-index:5;animation:tzPop 1.25s 0s ease-out forwards}
+.th-tdz .tz-pop.cl{z-index:21;animation:tzPop 1.25s var(--tdc) ease-out forwards}
+.th-tdz .tz-pop.b{animation-duration:1.7s;opacity:0}
+.th-tdz .tz-pop.op.b{animation-delay:.16s}
+.th-tdz .tz-pop.cl.b{animation-delay:calc(var(--tdc) + .16s)}
+@keyframes tzPop{
+  0%{opacity:0;transform:translate(-50%,-50%) scale(.12)}
+  16%{opacity:.5}
+  100%{opacity:0;transform:translate(-50%,-50%) scale(5.2)}}
+
+/* ④ 이름 — 떨리며 화면을 채운다. 배경은 건드리지 않는다 */
+.tz-title{position:absolute;inset:0;z-index:12;display:flex;flex-direction:column;
+  align-items:center;justify-content:center;gap:.06em;pointer-events:none;
+  opacity:0;animation:tzTitle 1s var(--tdt) cubic-bezier(.16,.9,.3,1) forwards}
+@keyframes tzTitle{0%{opacity:0;transform:scale(1.5)}56%{opacity:1}100%{opacity:1;transform:scale(1)}}
+.tz-title .tl{line-height:1.02;white-space:nowrap}
+.tz-title .rfont{font-size:clamp(21px,9.4vw,78px)}
+.tz-title .rjit .rj-sp{width:.26em}
+
+/* ⑤ 백아웃 — 암전과 같은 곡선으로, 이번에는 밝아진다 */
+.tz-white{position:absolute;inset:0;background:#f2f8ff;opacity:0;z-index:20;pointer-events:none;
+  animation:tzLight var(--tdf) var(--tdc) cubic-bezier(.7,0,.9,.3) forwards}
+@keyframes tzLight{from{opacity:0}to{opacity:.94}}
+
+/* 짧은 외침(FOR · I · AM)은 크게 */
+.pl .csay.big{font-family:var(--serif);font-size:clamp(30px,10vw,66px);letter-spacing:.2em;
+  text-indent:.2em;color:#eaf4ff;text-shadow:0 0 26px var(--acc),0 2px 16px rgba(0,0,0,.9)}
+
+@media (prefers-reduced-motion:reduce){
+  .tz-dial,.th-tdz .orb{animation:none}}
+#cs.q3 .tz-shards,#cs.safe2 .tz-shards{display:none}

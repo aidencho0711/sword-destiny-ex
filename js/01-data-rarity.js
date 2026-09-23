@@ -92,3 +92,22 @@ const inkQuad=(()=>{
    return {back:[M,A,P0],fwd:[M,B,P2]};};
  const d=q=>`M${q[0][0].toFixed(2)} ${q[0][1].toFixed(2)} Q${q[1][0].toFixed(2)} ${q[1][1].toFixed(2)} ${q[2][0].toFixed(2)} ${q[2][1].toFixed(2)}`;
  return {P0,P2,C,at,split,d};})();
+
+/* ═════════ 「T I M E  D E S T R O Y E R」 연출 타이밍 (초) ═════════
+   검이 등장하지 않는 유일한 컷신. 대사 순서는 고정이고, 시각만 여기서 조정한다.
+   l1~a 는 자막이 뜨는 시각, title 은 이름이 화면을 채우는 시각,
+   open/close 는 어두워지고 다시 밝아지는 두 번의 아우라 시점이다. */
+const TDZ_T={
+ open:  1.50,   // ① 중앙에서 아우라가 퍼지며 화면이 서서히 → 빠르게 어두워진다
+ l1:    2.00,   // ② "Why do you think time always goes only one way?"
+ l2:    6.20,   // ③ "I don't follow time."
+ l3:    8.60,   // ④ "Time follows me."
+ f:    10.90,   // ⑤ "FOR"
+ i:    11.75,   // ⑥ "I"
+ a:    12.50,   // ⑦ "AM"
+ title:13.40,   // ⑧ 이름이 떨리며 화면을 채운다 (배경은 그대로)
+ close:16.00,   // ⑨ 다시 아우라가 퍼지며 화면이 서서히 → 빠르게 밝아진다
+ fade:  1.40,   // 밝아지는 데 걸리는 시간
+};
+const TDZ_PD=TDZ_T.close;
+const TDZ_END=Math.round((TDZ_T.close+TDZ_T.fade)*1000);
