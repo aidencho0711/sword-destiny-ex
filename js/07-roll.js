@@ -21,7 +21,7 @@ function showCard(){
  el.innerHTML=`<div class="rc">
    <div class="rc-art">${swordSVG(d.s)}</div>
    <div class="rc-r">${gradText(d.R,d.R.n)}</div>
-   <div class="rc-n">${gradText(d.R,d.s.n)}</div>
+   <div class="rc-n">${gradText(d.R,d.s.n,d.s)}</div>
    ${d.isNew?'<div class="rc-new"><span>신 규 획 득</span></div>':""}
    <div class="rc-g">
      <div><b>1 / ${d.R.one.toLocaleString()}</b><span>기본 확률</span></div>
@@ -88,7 +88,7 @@ function showResult(s,R,g,isNew,gem){
  slot.innerHTML=swordSVG(s);slot.classList.add("drop");
  const ro=$("r-rarity");ro.style.color=R.grad?"":R.c;
  ro.innerHTML=gradText(R,R.n)+(isNew?" · 신규":"");
- $("r-name").innerHTML=gradText(R,s.n);
+ $("r-name").innerHTML=gradText(R,s.n,s);
  $("r-odds").textContent="1 / "+R.one.toLocaleString()+"　·　+"+fmt(g)+" 주화"+(gem?"　·　💎 +"+gem:"");
  sfxClink(s.t);
  if(s.t>=CUT_FROM){$("app").classList.add("shake");setTimeout(()=>$("app").classList.remove("shake"),450);}}

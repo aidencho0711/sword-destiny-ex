@@ -1258,14 +1258,14 @@ nav button.on{color:var(--paper);border-top-color:var(--ember)}
 @keyframes tzShard{0%,100%{opacity:0}50%{opacity:.45}}
 
 /* ⑧ 아우라 — 시작과 끝, 중앙에서 약하게 팡 */
-.th-tdz .tz-pop{position:absolute;left:50%;top:50%;width:18vmin;aspect-ratio:1;border-radius:50%;
+.tzfx .tz-pop{position:absolute;left:50%;top:50%;width:18vmin;aspect-ratio:1;border-radius:50%;
   border:2px solid var(--acc);opacity:0;pointer-events:none;will-change:transform,opacity;
   box-shadow:0 0 30px var(--acc),inset 0 0 22px var(--acc)}
-.th-tdz .tz-pop.op{z-index:5;animation:tzPop 1.2s 0s ease-out forwards}
-.th-tdz .tz-pop.cl{z-index:21;animation:tzPop 1.25s var(--tdc) ease-out forwards}
-.th-tdz .tz-pop.b{animation-duration:1.7s}
-.th-tdz .tz-pop.op.b{animation-delay:.16s}
-.th-tdz .tz-pop.cl.b{animation-delay:calc(var(--tdc) + .16s)}
+.tzfx .tz-pop.op{z-index:5;animation:tzPop 1.2s 0s ease-out forwards}
+.tzfx .tz-pop.cl{z-index:21;animation:tzPop 1.25s var(--tdc) ease-out forwards}
+.tzfx .tz-pop.b{animation-duration:1.7s}
+.tzfx .tz-pop.op.b{animation-delay:.16s}
+.tzfx .tz-pop.cl.b{animation-delay:calc(var(--tdc) + .16s)}
 @keyframes tzPop{0%{opacity:0;transform:translate(-50%,-50%) scale(.12)}
   16%{opacity:.5}100%{opacity:0;transform:translate(-50%,-50%) scale(5.2)}}
 
@@ -1292,3 +1292,109 @@ nav button.on{color:var(--paper);border-top-color:var(--ember)}
 
 @media (prefers-reduced-motion:reduce){.tz-dial,.tz-clock,.th-tdz .rv{animation-name:tzTint}}
 #cs.q3 .tz-shards,#cs.safe2 .tz-shards,#cs.q3 .tz-rev{display:none}
+
+/* ═══ G L I T C H — 이름 표기 ═══
+   등급 그라데이션 대신 쓴다. 빨강·청록 사본이 어긋나 겹치고, 글자가 제멋대로 튄다.
+   사본은 ::before/::after 가 data-c 를 읽어 그린다. */
+.gjit{display:inline-flex;align-items:baseline;justify-content:center;flex-wrap:nowrap;
+  max-width:100%;vertical-align:baseline;text-indent:0;
+  font-family:"Share Tech Mono","Nova Mono",ui-monospace,SFMono-Regular,Menlo,monospace;
+  font-size:.74em;letter-spacing:.02em}
+.gjit .gj{position:relative;display:inline-block;font-style:normal;color:#eef2f7;
+  animation:gjBase var(--gjt,2s) steps(1,end) infinite var(--gjd,0s)}
+.gjit .gj::before,.gjit .gj::after{content:attr(data-c);position:absolute;left:0;top:0;
+  width:100%;pointer-events:none}
+.gjit .gj::before{color:#ff2d4d;animation:gjR var(--gjt,2s) steps(1,end) infinite var(--gjd,0s)}
+.gjit .gj::after{color:#31e8ff;animation:gjC var(--gjt,2s) steps(1,end) infinite calc(var(--gjd,0s) - .05s)}
+.gjit .gj-sp{display:inline-block;width:.34em}
+@keyframes gjBase{
+  0%,62%{transform:translate(0,0);color:#eef2f7}
+  64%{transform:translate(2px,-1px);color:#ff5c7a}
+  67%{transform:translate(-2px,1px);color:#31e8ff}
+  70%,88%{transform:translate(0,0);color:#eef2f7}
+  90%{transform:translate(1px,1px);color:#ff4df0}
+  93%,100%{transform:translate(0,0);color:#eef2f7}}
+@keyframes gjR{
+  0%,62%{transform:translate(-1.2px,0);opacity:.85}
+  64%{transform:translate(-5px,1px);opacity:1}
+  68%{transform:translate(3px,-1px)}
+  71%,100%{transform:translate(-1.2px,0);opacity:.85}}
+@keyframes gjC{
+  0%,62%{transform:translate(1.2px,0);opacity:.85}
+  65%{transform:translate(5px,-1px);opacity:1}
+  69%{transform:translate(-3px,1px)}
+  72%,100%{transform:translate(1.2px,0);opacity:.85}}
+@media (prefers-reduced-motion:reduce){
+  .gjit .gj,.gjit .gj::before,.gjit .gj::after{animation:none}}
+
+/* ═══ G L I T C H 컷신 (th:glx) ═══
+   여는/닫는 연출(tz-veil · tz-pop · tz-white)은 TIME DESTROYER 와 같은 것을 쓴다. */
+.th-glx{position:absolute;inset:0;overflow:hidden;
+  animation:gxShake .16s var(--gcr) linear infinite}
+@keyframes gxShake{0%,100%{transform:translate(0,0)}
+  20%{transform:translate(-5px,2px)}40%{transform:translate(4px,-3px)}
+  60%{transform:translate(-3px,-2px)}80%{transform:translate(5px,3px)}}
+
+/* 콘솔 — 코드가 주르륵 내려가며 찍힌다 */
+.gx-screen{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;
+  padding:0 18px;overflow:hidden}
+.gx-code{width:min(92vw,620px);font-family:"Share Tech Mono",ui-monospace,Menlo,monospace;
+  font-size:clamp(11px,3.3vw,17px);line-height:1.62;color:#9fe8b4;
+  text-shadow:0 0 9px rgba(80,255,150,.4)}
+.gx-l{white-space:pre;overflow:hidden;width:0;opacity:0;
+  animation:gxType .42s var(--gd2) steps(24,end) forwards}
+.gx-l.bad{color:#ff3b52;text-shadow:0 0 12px rgba(255,60,80,.7)}
+@keyframes gxType{from{width:0;opacity:1}to{width:var(--gw);opacity:1}}
+/* 색이 어긋난 사본 두 장 — 무너진 뒤부터 좌우로 벌어진다 */
+.gx-gh{position:absolute;left:50%;transform:translateX(-50%);opacity:0;pointer-events:none}
+.gx-gh.r{color:#ff2d4d;text-shadow:none;animation:gxGhR .3s var(--gcr) steps(1,end) infinite}
+.gx-gh.c{color:#31e8ff;text-shadow:none;animation:gxGhC .26s var(--gcr) steps(1,end) infinite}
+@keyframes gxGhR{0%{opacity:.5;transform:translateX(calc(-50% - 6px))}
+  50%{opacity:.28;transform:translateX(calc(-50% - 13px))}
+  100%{opacity:.5;transform:translateX(calc(-50% - 3px))}}
+@keyframes gxGhC{0%{opacity:.5;transform:translateX(calc(-50% + 6px))}
+  50%{opacity:.28;transform:translateX(calc(-50% + 13px))}
+  100%{opacity:.5;transform:translateX(calc(-50% + 3px))}}
+
+/* 노이즈 — feTurbulence 를 한 번 래스터해 둔 그림이다. transform 으로만 움직인다 */
+.gx-noise{position:absolute;inset:-40%;opacity:0;pointer-events:none;
+  background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='180' height='180'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='3'/></filter><rect width='180' height='180' filter='url(%23n)' opacity='.6'/></svg>");
+  animation:gxNoise .22s var(--gcr) steps(1,end) infinite}
+@keyframes gxNoise{0%{opacity:.16;transform:translate(0,0)}
+  33%{opacity:.26;transform:translate(-6%,4%)}
+  66%{opacity:.12;transform:translate(5%,-5%)}
+  100%{opacity:.2;transform:translate(-3%,-2%)}}
+.gx-scan{position:absolute;inset:0;pointer-events:none;opacity:.22;
+  background:repeating-linear-gradient(0deg,rgba(0,0,0,.55) 0 1px,transparent 1px 3px)}
+
+/* 찢어진 가로 띠 */
+.gx-tears{position:absolute;inset:0;pointer-events:none}
+.gx-tear{position:absolute;left:0;width:100%;opacity:0;
+  background:rgba(180,230,255,.12);backdrop-filter:none;
+  animation:gxTear var(--td2) var(--tl2) steps(1,end) infinite}
+@keyframes gxTear{0%{opacity:0;transform:translateX(0)}
+  30%{opacity:.85;transform:translateX(-7%)}
+  60%{opacity:.5;transform:translateX(6%)}
+  100%{opacity:0;transform:translateX(0)}}
+
+/* 사각형 오류 파티클 */
+.gx-sqs{position:absolute;inset:0;pointer-events:none}
+.gx-sq{position:absolute;width:var(--sw2);height:var(--sh2);background:var(--sc);opacity:0;
+  animation:gxSq var(--sd3) var(--sl3) steps(1,end) infinite}
+@keyframes gxSq{0%{opacity:0}25%{opacity:.9}50%{opacity:0}70%{opacity:.6}100%{opacity:0}}
+
+/* 붉은 경고막 */
+.gx-red{position:absolute;inset:0;pointer-events:none;opacity:0;background:#ff1030;
+  animation:gxRed .5s var(--gcr) steps(1,end) infinite}
+@keyframes gxRed{0%,64%{opacity:0}68%{opacity:.16}72%,100%{opacity:0}}
+
+/* E`R%RO^R — 이름 대신 이것만 남는다 */
+.gx-word{position:absolute;inset:0;z-index:14;display:flex;align-items:center;justify-content:center;
+  pointer-events:none;opacity:0;animation:gxWord .5s var(--gwd) steps(1,end) forwards}
+.gx-word .gjit{font-size:clamp(34px,17vw,132px);letter-spacing:.01em}
+.gx-word .gjit .gj{text-shadow:0 0 16px rgba(0,0,0,.9),0 0 44px rgba(255,40,70,.5)}
+@keyframes gxWord{0%{opacity:0}20%{opacity:1}30%{opacity:.2}40%,100%{opacity:1}}
+
+#cs.q3 .gx-noise,#cs.q3 .gx-tears,#cs.safe2 .gx-noise{display:none}
+#cs.safe1 .th-glx,#cs.safe2 .th-glx{animation:none}
+@media (prefers-reduced-motion:reduce){.th-glx,.gx-noise{animation:none}}

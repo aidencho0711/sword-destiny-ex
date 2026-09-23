@@ -16,7 +16,7 @@ function variantCount(name,lv){ return lv===0?(S.owned[name]||0):((S.ench[name]&
 function renderArmory(){
  const eqS=S.equipped&&SWORDS.find(x=>x.n===S.equipped.n);
  const eqName=!S.equipped?"없음"
-  :(eqS?gradText(RARITY[eqS.t],eqS.n):S.equipped.n)+(S.equipped.e>0?" ✦"+ROMAN[S.equipped.e]:"");
+  :(eqS?gradText(RARITY[eqS.t],eqS.n,eqS):S.equipped.n)+(S.equipped.e>0?" ✦"+ROMAN[S.equipped.e]:"");
  const cloudOn=S.cloud&&typeof cloudReady==="function"&&cloudReady();
  $("arm-head").innerHTML=`
   <div class="arm-top">
@@ -42,7 +42,7 @@ function renderArmory(){
    items+=`<div class="tile ${eqd?"equipped":""} ${v.e>0?"ench":""}" style="--acc:${acc}" data-vn="${encodeURIComponent(s.n)}" data-ve="${v.e}">
      ${v.c>1?`<span class="cnt">×${v.c>999?"999+":v.c}</span>`:""}
      <div class="art">${swordSVG(s,v.e)}</div>
-     <div class="tn">${gradText(R,s.n)}</div>
+     <div class="tn">${gradText(R,s.n,s)}</div>
      <div class="tr">${v.e>0?enchLabel(s,v.e):gradText(R,R.n)}</div>
    </div>`;
   });});
@@ -77,7 +77,7 @@ function openArmSheet(name,level){
 
  sh.innerHTML=`<div class="sheet-art">${swordSVG(s,level)}</div>
   <div class="sheet-r">${gradText(R,R.n)}${level>0?" · "+enchLabel(s,level):""}</div>
-  <div class="sheet-n">${gradText(R,s.n)}</div>
+  <div class="sheet-n">${gradText(R,s.n,s)}</div>
   <div class="sheet-d">보유 ${cnt}자루</div>
   <div class="rc-fx" style="--acc:${acc};max-width:30em;margin:14px auto 0"><i>효과</i><p>${fxText(enchFx(s,level))}</p></div>
   ${enchBlock}

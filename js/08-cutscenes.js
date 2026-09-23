@@ -73,7 +73,7 @@ const SIG={
  "무한의 나선":"螺","경계 밖의 관측":"界","무극 無極":"極",
  "혼돈의 이빨":"牙","뒤틀린 인과":"因","혼돈 混沌":"混",
  "영겁의 파수꾼":"守","시간의 종착":"時","영겁 永劫":"永",
- "T I M E  D E S T R O Y E R":"滅"};
+ "T I M E  D E S T R O Y E R":"滅","G L I T C H":"誤"};
 /* 지정 기호가 없으면 대표 효과로 대체 */
 const SIG_FX={luck:"運",gold:"富",speed:"迅",pity:"保",dupe:"重",pdur:"藥",gem:"寶",ench:"錬",twin:"雙",rer:"再"};
 function sigFor(s){
@@ -867,6 +867,72 @@ function themeHTML(s,R){
     <i class="blade"></i><div class="bflash"></div><i class="seam"></i>${ember}
     <span class="glyph">結</span>${shard}${mote}
   </div></div>`;}
+ case "glx":{                                    // G L I T C H — 코드가 흐르다 무너진다. 검은 등장하지 않는다
+  const T=GLX_T,TOT=GLX_END/1000,P=t=>+(t/TOT*100).toFixed(3);
+  const ERRW='E`R%RO^R';                         // 깨진 ERROR — 백틱이 있으므로 작은따옴표로 둔다
+
+  /* 흐르는 코드 — 앞쪽은 정상, 뒤로 갈수록 오류가 섞인다 */
+  const CODE=[
+   [0 ,"$ ./reality --boot --seed=0"],
+   [0 ,"loading world.core ......... ok"],
+   [0 ,"class Law extends Axiom {"],
+   [0 ,"  bind(realm) { realm.lock(this); }"],
+   [0 ,"  tick(t) { return t + 1; }"],
+   [0 ,"}"],
+   [0 ,"for (let t = 0; t < INF; t++) {"],
+   [0 ,"  world.tick(t);"],
+   [0 ,"  if (observer.sees(t)) commit(t);"],
+   [0 ,"}"],
+   [0 ,"sys.grant(self, PRIVILEGE.ROOT);"],
+   [0 ,"memory.write(0x0000, SELF);"],
+   [1 ,"!! integrity check failed at 0x0000"],
+   [1 ,"!! Law.bind is not a function"],
+   [1 ,"!! realm[7] unbound outside of Axiom"],
+   [1 ,"!! stack overflow in realms[INF]"],
+   [1 ,"!! FATAL: world.core corrupted"],
+   [1 ,"!! cannot recover -- halting"],
+  ];
+  const per=(T.err-T.code)/12;                   // 정상 코드 12줄이 err 까지 고르게 찍힌다
+  const lines=CODE.map(([bad,tx],i)=>{
+   const d=bad?T.err+(i-12)*0.16:T.code+i*per;
+   return `<div class="gx-l${bad?" bad":""}" style="--gd2:${d.toFixed(2)}s;--gw:${tx.length}ch">${attrEsc(tx)}</div>`;
+  }).join("");
+
+  /* 사각형 오류 파티클 — 무너진 뒤부터 사방에서 튄다 */
+  const GC=["#ff2d4d","#31e8ff","#ff4df0","#5eff7a","#ffe14d","#ffffff"];
+  let sq="";
+  for(let i=0,N=QC(34);i<N;i++)
+   sq+=`<i class="gx-sq" style="left:${(Math.random()*100).toFixed(1)}%;top:${(Math.random()*100).toFixed(1)}%;
+     --sw2:${(5+Math.random()*34).toFixed(0)}px;--sh2:${(3+Math.random()*13).toFixed(0)}px;
+     --sc:${GC[i%GC.length]};--sd3:${(.28+Math.random()*.5).toFixed(2)}s;
+     --sl3:${(T.crash+Math.random()*3.4).toFixed(2)}s"></i>`;
+
+  /* 찢어진 가로 띠 — 화면이 조각나 옆으로 밀린다 */
+  let tear="";
+  for(let i=0,N=QC(7);i<N;i++)
+   tear+=`<i class="gx-tear" style="top:${(6+i*(88/N)).toFixed(1)}%;height:${(2+Math.random()*7).toFixed(1)}%;
+     --td2:${(.2+Math.random()*.34).toFixed(2)}s;--tl2:${(T.crash+Math.random()*3.6).toFixed(2)}s"></i>`;
+
+  return `<div class="pl"><div class="th th-glx tzfx"
+    style="--tdo:${T.open}s;--tdc:${T.close}s;--tdf:${T.fade}s;--gcr:${T.crash}s;--gwd:${T.word}s;--tot:${TOT}s">
+    <div class="tz-veil"></div>
+    <div class="tz-scene">
+      <div class="gx-screen">
+        <div class="gx-code">${lines}</div>
+        <div class="gx-code gx-gh r">${lines}</div>
+        <div class="gx-code gx-gh c">${lines}</div>
+      </div>
+      <div class="gx-noise"></div>
+      <div class="gx-scan"></div>
+      <div class="gx-tears">${tear}</div>
+      <div class="gx-sqs">${sq}</div>
+      <div class="gx-red"></div>
+    </div>
+    <i class="tz-pop op"></i><i class="tz-pop op b"></i>
+    <div class="gx-word"><span class="gjit">${glitchChars(ERRW)}</span></div>
+    <i class="tz-pop cl"></i><i class="tz-pop cl b"></i>
+    <div class="tz-white"></div>
+  </div></div>`;}
  case "tdz":{                                    // 시간 파괴자 — 검이 끝내 등장하지 않는 유일한 컷신
   const E=v=>String(v).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/"/g,"&quot;");
   const T=TDZ_T,TOT=TDZ_END/1000,P=t=>+(t/TOT*100).toFixed(3);
@@ -960,7 +1026,7 @@ function themeHTML(s,R){
    shard+=`<i class="sh" style="left:${(Math.random()*100).toFixed(1)}%;top:${(Math.random()*100).toFixed(1)}%;
      --sr:${(Math.random()*360).toFixed(0)}deg;--sd2:${(2.6+Math.random()*3).toFixed(1)}s;--sl2:${(Math.random()*4.5).toFixed(1)}s"></i>`;
 
-  return `<div class="pl"><style>${css}</style><div class="th th-tdz"
+  return `<div class="pl"><style>${css}</style><div class="th th-tdz tzfx"
     style="--tdo:${T.open}s;--tdt:${T.title}s;--tdc:${T.close}s;--tdf:${T.fade}s;--tql:${T.l3}s;--tot:${TOT}s">
     <div class="tz-veil"></div>
     <div class="tz-scene">
@@ -1045,7 +1111,7 @@ function playCutscene(s,R){
  const cs=$("cs"),pd=s.pd||R.pd;
  /* 검이 등장하지 않는 컷신 — 무대·검·이름표·섬광·입자를 전부 붙이지 않는다.
     이런 컷신은 스스로 끝맺음까지 연출하므로 공용 마감 연출이 끼어들면 안 된다. */
- const bare=s.th==="tdz";
+ const bare=!!s.bare;
  const pc=bare?0:(R.mode==="theme"?70:34+(s.t-6)*10);
  const motes=bare?0:(s.t>=8?26+(s.t-8)*10:0);
  let parts="";
@@ -1064,7 +1130,7 @@ function playCutscene(s,R){
   <div class="cs-stage">
     ${s.t>=14?`<div class="cs-sig"><b>${sigFor(s)}</b></div>`:""}
     <div class="cs-sword ${s.t>=8?"float":""}">${swordSVG(s)}</div>
-    <div class="cs-cap"><div class="cs-rarity">${gradText(R,R.n)}</div><div class="cs-name">${gradText(R,s.n)}</div>
+    <div class="cs-cap"><div class="cs-rarity">${gradText(R,R.n)}</div><div class="cs-name">${gradText(R,s.n,s)}</div>
       <div class="cs-odds">1 / ${R.one.toLocaleString()}</div></div>
   </div><div class="cs-flash"></div>`);
  resolveQ();

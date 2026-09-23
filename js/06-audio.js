@@ -27,6 +27,7 @@ function sfxCut(s,R){
  if(s.th==="recur")return sfxRecur(pd);
  if(s.th==="scale")return sfxScale(pd);
  if(s.th==="tdz")return sfxTdz();
+ if(s.th==="glx")return sfxGlx();
  tone(70,780,pd*0.92,"sawtooth",.045);
  if(tier>=8)tone(140,1400,pd*0.8,"triangle",.025,.3);
  noise(.6,.34,pd-.12);
@@ -639,5 +640,37 @@ function sfxTdz(){
  bellFall(T.title+.04,150,62,4.2,.075);                     // 모든 차원의 종이 한꺼번에 내려앉는다
 
  /* ⑦ 마감 — 밝아지며 올라간다 */
+ tone(190,860,T.fade,"sine",.085,T.close);
+ noise(1.0,.075,T.close);}
+
+/* ───── G L I T C H ─────
+   ① 키보드 타건이 또각또각 → ② 첫 오류에 경보 → ③ 신호가 찢어진다
+   → ④ E`R%RO^R 에 저음 한 방 → ⑤ 밝아지며 끝.
+   타이밍은 GLX_T 하나만 본다. */
+function sfxGlx(){
+ if(!S.sound)return;
+ const T=GLX_T;
+ tone(150,34,T.open+.4,"sine",.17,0);                        // 빨려 들어가는 저음 (여는 연출 공통)
+ noise(1.15,.10,0);
+ tone(58,55,T.err-T.code+.6,"sawtooth",.04,T.code);          // 콘솔이 도는 낮은 웅웅거림
+ /* 타건 — 코드가 찍히는 동안 고르게 */
+ for(let t=T.code+.1;t<T.err-.1;t+=.085)
+  tone(1500+Math.random()*900,700,.012,"square",.012,t);
+ /* 첫 오류 — 경보가 두 번 */
+ [0,.34].forEach(o=>{tone(880,440,.22,"square",.075,T.err+o);noise(.1,.05,T.err+o);});
+ tone(220,60,1.2,"sawtooth",.1,T.err);
+ /* 무너짐 — 찢어지는 잡음이 불규칙하게 */
+ let t=T.crash;
+ while(t<T.word){
+  noise(.06+Math.random()*.1,.07+Math.random()*.06,t);
+  tone(90+Math.random()*1600,60+Math.random()*400,.05,"square",.03,t);
+  t+=.07+Math.random()*.2;
+ }
+ tone(41,39,T.close-T.crash,"sawtooth",.055,T.crash);        // 바닥에 깔리는 고장 난 저음
+ /* E`R%RO^R — 저음 한 방과 깨진 배음 */
+ tone(86,26,2.6,"sawtooth",.17,T.word);
+ noise(.8,.16,T.word);
+ [58,97,131,173].forEach((f,i)=>tone(f,f*.97,2.4,"square",.035,T.word+.04+i*.05));
+ /* 마감 — 밝아지며 올라간다 (여는 연출과 짝) */
  tone(190,860,T.fade,"sine",.085,T.close);
  noise(1.0,.075,T.close);}

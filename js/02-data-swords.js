@@ -64,10 +64,13 @@ const SWORDS=[
  {t:16,n:"영겁의 파수꾼",b:"great",g:"crown",c:["#ffffff","#8a8a9a"],e:"#ffffff",gem:"#e8ecf5",gr:"#3a3f4a",th:"ascend",d:"셀 수 없는 시간을 서 있었다. 무엇을 지키는지는 잊은 지 오래다."},
  {t:16,n:"시간의 종착",b:"crystal",g:"halo",c:["#ffe89a","#8a6f20"],e:"#fffbe0",gem:"#ffd45e",gr:"#4a3708",th:"ascend",d:"모든 시곗바늘이 여기서 멈춘다. 다음은 없다."},
  {t:16,n:"영겁 永劫",b:"rift",g:"halo",c:["#eaf2ff","#9aa8c0"],e:"#ffffff",gem:"#cfe0ff",gr:"#2a3550",th:"ascend",d:"처음도 끝도 이 검 안에서 한 점이 된다. 뽑는 것 자체가 있을 수 없는 일이다."},
- /* ── ABSOLUTE ── */
+ /* ── ABSOLUTE ── 둘 다 컷신에 검이 등장하지 않는다(bare) ── */
  {t:17,n:"T I M E  D E S T R O Y E R",b:"rift",g:"halo",c:["#dff0ff","#2f6fc4"],e:"#ffffff",gem:"#8fd0ff",gr:"#16294a",
-  th:"tdz",pd:TDZ_PD,end:TDZ_END,vb:"-72 0 344 560",acc:"#bfe0ff",
+  th:"tdz",pd:TDZ_PD,end:TDZ_END,bare:1,vb:"-72 0 344 560",acc:"#bfe0ff",
   d:"시간을 베는 검이 아니다. 시간이 있었다는 사실을 지우는 검이다. 이 검이 지나간 자리에는 전과 후가 없다."},
+ {t:17,n:"G L I T C H",b:"rift",g:"none",c:["#d2d2da","#2c2c34"],e:"#e6e6ee",gem:"#b4b4c0",gr:"#1e1e24",
+  th:"glx",pd:GLX_PD,end:GLX_END,bare:1,nfx:"glitch",vb:"-60 0 320 560",acc:"#d8d8e0",
+  d:"세계의 규칙에 난 흠집. 이 검은 베어서 상처를 내지 않는다. 베였다는 판정이 잘못 기록될 뿐이다."},
 ];
 SWORDS.forEach(s=>{if(s.gem==="#f濃")s.gem="#ff8fb8";});
 
@@ -115,6 +118,7 @@ const FX={
  "영겁 永劫":{luck:2.0,gem:1.0,ench:.2},
  /* ABSOLUTE — 시간을 부수는 검. 주조 속도와 쌍 판정을 동시에 가진다 */
  "T I M E  D E S T R O Y E R":{luck:2.6,speed:.72,gem:1.6,pdur:.8,twin:1},
+ "G L I T C H":{dupe:3.2,luck:2.4,gem:1.4,rer:12},
 };
 SWORDS.forEach(x=>{x.fx=FX[x.n]||{gold:x.t*.02};});
 

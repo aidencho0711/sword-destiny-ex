@@ -35,7 +35,19 @@ const POTION_COL={p1:"#5fbf7e",p2:"#4aa8e8",p3:"#b44dff",p4:"#ffd45e",
 
 /* ═════════ 그라데이션 텍스트 ═════════
    운명 이상(grad) 등급의 이름·등급명을 계속 변하는 그라데이션으로 표시한다. */
-function gradText(R,text){
+const attrEsc=v=>String(v).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;");
+/* 글자마다 RGB 가 어긋나고 제멋대로 튀는 조각 — 검 이름과 컷신 오류 문구가 함께 쓴다.
+   빨강·청록 사본은 ::before/::after 가 data-c 를 읽어 그린다. */
+function glitchChars(text){
+ return Array.from(text).map((ch,i)=>{
+  if(ch===" ")return `<i class="gj-sp"></i>`;
+  const r=(i*2654435761)%1013/1013;
+  return `<i class="gj" data-c="${attrEsc(ch)}" style="--gjt:${(1.7+r*1.9).toFixed(2)}s;`+
+   `--gjd:${(-r*3.1).toFixed(2)}s">${attrEsc(ch)}</i>`;}).join("");}
+
+function gradText(R,text,sw){
+ /* 검마다 이름 표기를 따로 가질 수 있다(nfx). 등급 그라데이션보다 우선한다. */
+ if(sw&&sw.nfx==="glitch")return `<span class="gjit">${glitchChars(text)}</span>`;
  if(!R||!R.grad)return text;
  const cg=(R.cg&&R.cg.length?R.cg:[R.c,"#ffffff"]);
  const bg="linear-gradient(90deg,"+cg.concat(cg[0]).join(",")+")";

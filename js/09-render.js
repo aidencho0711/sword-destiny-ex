@@ -136,7 +136,7 @@ function renderCodex(){
   return `<div class="tile ${c?"":"locked"} ${S.equipped&&S.equipped.n===s.n?"equipped":""}" style="--acc:${R.c}" data-s="${encodeURIComponent(s.n)}">
    ${c?`<span class="cnt">${c>999?"999+":c}</span>`:""}
    <div class="art">${swordSVG(s)}</div>
-   <div class="tn">${c?gradText(R,s.n):"???"}</div><div class="tr">${gradText(R,R.n)}</div></div>`;}).join("");
+   <div class="tn">${c?gradText(R,s.n,s):"???"}</div><div class="tr">${gradText(R,R.n)}</div></div>`;}).join("");
  $("codex-badge").style.display="none";
  $("codex-count").textContent=`수집 ${coll()} / ${SWORDS.length}`;
  $("ach-cnt").textContent=`도전 과제 ${ACH.filter(a=>S.ach[a.id]).length} / ${ACH.length}`;}
@@ -192,7 +192,7 @@ function openSheet(name){
  const s=SWORDS.find(x=>x.n===name),R=RARITY[s.t],c=swordTotal(s.n),sh=$("sheet");
  sh.style.setProperty("--acc",R.c);
  sh.innerHTML=`<div class="sheet-art">${c?swordSVG(s):""}</div>
-  <div class="sheet-r">${gradText(R,R.n)}</div><div class="sheet-n">${c?gradText(R,s.n):"미발견"}</div>
+  <div class="sheet-r">${gradText(R,R.n)}</div><div class="sheet-n">${c?gradText(R,s.n,s):"미발견"}</div>
   <div class="sheet-d">${c?s.d:"아직 이 검을 뽑지 못했습니다."}</div>
   <div class="sheet-meta">
     <div><b>1 / ${R.one.toLocaleString()}</b><span>기본 확률</span></div>

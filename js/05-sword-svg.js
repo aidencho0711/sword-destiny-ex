@@ -214,6 +214,40 @@ function swordSVG(s,ench){
      <line x1="100" y1="250" x2="100" y2="196" stroke="${s.gem}" stroke-width="2" opacity=".7"/>
      <line x1="100" y1="250" x2="140" y2="250" stroke="${s.gem}" stroke-width="2" opacity=".7"/>`;
    break;}
+  case "G L I T C H":{                        // 흑백 + 노이즈. 주변엔 색색의 사각형이 튄다
+   const D=`calcMode="discrete"`;             // 부드럽게 말고 뚝뚝 끊기게
+   /* 색이 어긋난 잔상 — 날 모양을 빨강·청록으로 좌우로 밀어 겹친다 */
+   const ghost=(col,dx,dur,bg)=>`<path d="${BLADE[s.b]}" fill="${col}" opacity=".55">
+     <animateTransform attributeName="transform" type="translate" ${D}
+       values="${dx} 0;${(dx*3.2).toFixed(0)} -4;${(-dx*.7).toFixed(0)} 3;${dx} 0;${(dx*2.2).toFixed(0)} 5"
+       dur="${dur}s" begin="${bg}s" repeatCount="indefinite"/>
+     <animate attributeName="opacity" ${D} values=".55;.2;.72;.34;.55" dur="${dur}s" begin="${bg}s" repeatCount="indefinite"/></path>`;
+   dcB=ghost("#ff2d4d",-11,.86,0)+ghost("#31e8ff",11,.74,.13);
+   /* 날 위를 지나가는 주사선 — 날 모양으로 잘라 낸다 */
+   let scan="";
+   for(let i=0,N=QC(7);i<N;i++){const y=30+i*(340/N);
+    scan+=`<rect x="40" y="${y.toFixed(0)}" width="120" height="${2+(i%2)*2}" fill="#ffffff" opacity=".22">
+      <animate attributeName="opacity" ${D} values="0;.3;0;.16;0" dur="${(.5+i*.11).toFixed(2)}s" repeatCount="indefinite"/>
+      <animate attributeName="x" ${D} values="40;28;52;36;40" dur="${(.42+i*.09).toFixed(2)}s" repeatCount="indefinite"/></rect>`;}
+   /* 가로로 어긋나 잘려 나간 조각 — 날의 일부가 옆으로 밀린다 */
+   let slice="";
+   for(let i=0,N=QC(3);i<N;i++){const y=90+i*105;
+    slice+=`<clipPath id="gc${id}${i}"><rect x="0" y="${y}" width="200" height="26"/></clipPath>
+      <g clip-path="url(#gc${id}${i})"><path d="${BLADE[s.b]}" fill="${s.c[0]}" opacity=".9">
+      <animateTransform attributeName="transform" type="translate" ${D}
+        values="0 0;${18-i*7} 0;0 0;${-14+i*5} 0;0 0" dur="${(1.1+i*.3).toFixed(2)}s" repeatCount="indefinite"/></path></g>`;}
+   /* 색색의 사각형 노이즈 — 검 주변에 파티클처럼 떴다 사라진다 */
+   const GC=["#ff2d4d","#31e8ff","#ff4df0","#5eff7a","#ffe14d","#ffffff"];
+   let sq="";
+   for(let i=0,N=QC(26);i<N;i++){
+    const a=i*(6.283/N)+(i%3),rr=88+((i*41)%110);
+    const w=4+((i*17)%13);
+    sq+=`<rect x="${(100+Math.cos(a)*rr).toFixed(0)}" y="${(250+Math.sin(a)*rr*1.5).toFixed(0)}"
+      width="${w}" height="${(3+((i*29)%11))}" fill="${GC[i%GC.length]}" opacity="0">
+      <animate attributeName="opacity" ${D} values="0;.85;0;.5;0" dur="${(.6+(i%5)*.28).toFixed(2)}s"
+        begin="${(i*.13).toFixed(2)}s" repeatCount="indefinite"/></rect>`;}
+   dcF=scan+slice+sq;
+   break;}
   case "T I M E  D E S T R O Y E R":{        // 부서진 시계들이 검을 둘러싸고 제멋대로 돈다
    defs+=`<radialGradient id="ta${id}" cx="50%" cy="50%" r="50%">
      <stop offset="0%" stop-color="${s.e}" stop-opacity=".26"/>

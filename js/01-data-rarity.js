@@ -112,3 +112,18 @@ const TDZ_T={
 };
 const TDZ_PD=TDZ_T.close;
 const TDZ_END=Math.round((TDZ_T.close+TDZ_T.fade)*1000);
+
+/* ═════════ 「G L I T C H」 연출 타이밍 (초) ═════════
+   코드가 흐르다 무너지는 컷신. 이름은 끝내 등장하지 않고, 오류 문구만 남는다.
+   여는 연출(아우라+암전)과 닫는 연출(아우라+백아웃)은 TIME DESTROYER 와 같은 것을 쓴다. */
+const GLX_T={
+ open:  1.25,   // ① 아우라가 퍼지며 화면이 서서히 → 빠르게 어두워진다
+ code:  1.40,   // ② 콘솔이 열리고 코드가 주르륵 내려가며 작성된다
+ err:   7.60,   // ③ 첫 빨간 오류
+ crash: 8.20,   // ④ 화면이 흔들리고 노이즈·사각형 파티클이 덮친다
+ word: 10.60,   // ⑤ E`R%RO^R
+ close:12.90,   // ⑥ 아우라가 퍼지며 화면이 서서히 → 빠르게 밝아진다
+ fade:  1.40,
+};
+const GLX_PD=GLX_T.close;
+const GLX_END=Math.round((GLX_T.close+GLX_T.fade)*1000);
