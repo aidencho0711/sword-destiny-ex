@@ -908,12 +908,28 @@ function themeHTML(s,R){
 
   const css=handKF("tzHh",9,62)+handKF("tzHm",30,190)+handKF("tzHs",150,900)+tintKF+moodKF;
 
-  /* ── 본 시계 ── */
-  const NT=QLV<=1?60:QLV===2?36:12,ts=NT/12;
-  let tick="";
-  for(let i=0;i<NT;i++){const big=i%ts===0;
-   tick+=`<line x1="200" y1="${big?30:38}" x2="200" y2="${big?54:48}" stroke="currentColor"
-     stroke-width="${big?2.6:1}" opacity="${big?.62:.26}" transform="rotate(${(i*360/NT).toFixed(1)} 200 200)"/>`;}
+  /* ── 본 시계 ──
+     실제 시계의 구조를 그대로 따른다: 케이스 테 → 분 트랙 → 시 눈금 →
+     로마 숫자 → 기요셰 → 유리 반사 → 6시 보조 다이얼.
+     색은 전부 currentColor 를 타므로 국면(파랑→잿빛→초록)이 한꺼번에 먹는다. */
+  const R2=176,R3=152;                               // 분 트랙 바깥 / 시 눈금 안쪽
+  const NT=QLV>=3?12:60;                             // 저사양이면 시 눈금만
+  let track="";
+  for(let i=0;i<NT;i++){const big=i%(NT/12)===0;
+   track+=`<line x1="200" y1="${200-R2}" x2="200" y2="${200-(big?R3:R2-11)}" stroke="currentColor"
+     stroke-width="${big?3.6:1.1}" opacity="${big?.74:.3}" stroke-linecap="${big?"butt":"round"}"
+     transform="rotate(${(i*360/NT).toFixed(1)} 200 200)"/>`;}
+  /* 로마 숫자 — 읽히도록 전부 똑바로 세운다 */
+  const RNM=["XII","I","II","III","IV","V","VI","VII","VIII","IX","X","XI"];
+  const nums=RNM.map((n,i)=>{const a=(i*30-90)*Math.PI/180;
+   return `<text class="num" x="${(200+Math.cos(a)*130).toFixed(1)}" y="${(200+Math.sin(a)*130).toFixed(1)}">${n}</text>`;}).join("");
+  /* 기요셰 — 문자판에 얕게 새긴 동심원 */
+  let guil="";
+  for(let i=0,N=QC(6);i<N;i++)guil+=`<circle cx="200" cy="200" r="${30+i*17}" fill="none" stroke="currentColor" stroke-width=".6" opacity=".07"/>`;
+  /* 보조 다이얼 눈금 */
+  const subTick=[0,1,2,3,4,5,6,7,8,9,10,11].map(k=>
+   `<line x1="50" y1="6" x2="50" y2="${k%3===0?14:11}" stroke="currentColor"
+     stroke-width="${k%3===0?2:1}" opacity="${k%3===0?.6:.32}" transform="rotate(${k*30} 50 50)"/>`).join("");
 
   /* 역주행 잔상 — 지나온 시간이 뒤로 쓸려 간다 */
   let rev="";
@@ -953,13 +969,48 @@ function themeHTML(s,R){
       <div class="tz-wrap">
         <div class="tz-clock">
           <div class="tz-dial">
-            <svg viewBox="0 0 400 400">
-              <circle cx="200" cy="200" r="178" fill="none" stroke="currentColor" stroke-width="1.6" opacity=".34"/>
-              <circle cx="200" cy="200" r="152" fill="none" stroke="currentColor" stroke-width=".8" opacity=".18"/>
-              ${tick}
+            <svg class="face" viewBox="0 0 400 400">
+              <defs>
+                <radialGradient id="tzFace" cx="50%" cy="42%" r="62%">
+                  <stop offset="0%" stop-color="#0a1826" stop-opacity=".72"/>
+                  <stop offset="70%" stop-color="#050c15" stop-opacity=".82"/>
+                  <stop offset="100%" stop-color="#02060b" stop-opacity=".9"/></radialGradient>
+                <linearGradient id="tzGlass" x1="0" y1="0" x2=".7" y2="1">
+                  <stop offset="0%" stop-color="#ffffff" stop-opacity=".085"/>
+                  <stop offset="46%" stop-color="#ffffff" stop-opacity=".014"/>
+                  <stop offset="100%" stop-color="#ffffff" stop-opacity="0"/></linearGradient>
+              </defs>
+              <circle cx="200" cy="200" r="186" fill="url(#tzFace)"/>
+              <circle cx="200" cy="200" r="192" fill="none" stroke="currentColor" stroke-width="4" opacity=".5"/>
+              <circle cx="200" cy="200" r="184" fill="none" stroke="currentColor" stroke-width="1" opacity=".26"/>
+              ${guil}
+              <circle cx="200" cy="200" r="${R3}" fill="none" stroke="currentColor" stroke-width=".9" opacity=".2"/>
+              ${track}${nums}
+              <path d="M200 14 A186 186 0 0 0 46 292 A210 210 0 0 1 200 14 Z" fill="url(#tzGlass)"/>
             </svg>
-            <i class="hand h"></i><i class="hand m"></i><i class="hand s"></i><i class="pin"></i>
+            <div class="tz-sub">
+              <svg viewBox="0 0 100 100">
+                <circle cx="50" cy="50" r="47" fill="none" stroke="currentColor" stroke-width="1.6" opacity=".42"/>
+                <circle cx="50" cy="50" r="40" fill="none" stroke="currentColor" stroke-width=".6" opacity=".16"/>
+                ${subTick}
+              </svg>
+              <svg class="sub-h" viewBox="0 0 100 100">
+                <path d="M50 10 L51.5 54 L48.5 54 Z"/><circle cx="50" cy="50" r="3.2"/></svg>
+            </div>
+            <svg class="hand h" viewBox="0 0 400 400">
+              <path d="M200 84 L215 150 L207 208 L200 217 L193 208 L185 150 Z"/>
+              <path d="M200 100 L207 152 L200 204 L193 152 Z" fill="#04101c" opacity=".42"/></svg>
+            <svg class="hand m" viewBox="0 0 400 400">
+              <path d="M200 32 L211 114 L205 210 L200 221 L195 210 L189 114 Z"/>
+              <path d="M200 50 L206 116 L200 206 L194 116 Z" fill="#04101c" opacity=".42"/></svg>
+            <svg class="hand s" viewBox="0 0 400 400">
+              <path d="M200 20 L202.4 206 L197.6 206 Z"/>
+              <rect x="198.7" y="198" width="2.6" height="48" rx="1.3"/>
+              <circle cx="200" cy="250" r="10.5"/><circle cx="200" cy="250" r="4.6" fill="#06131f"/></svg>
+            <svg class="cap" viewBox="0 0 400 400">
+              <circle cx="200" cy="200" r="12.5"/><circle cx="200" cy="200" r="4.8" fill="#06131f"/></svg>
           </div>
+          <i class="tz-orbit"></i>
           <div class="tz-rev">${rev}</div>
         </div>
       </div>

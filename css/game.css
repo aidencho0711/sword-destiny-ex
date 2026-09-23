@@ -1183,22 +1183,33 @@ nav button.on{color:var(--paper);border-top-color:var(--ember)}
   animation:softIn 1.5s calc(var(--tdo) - .3s) forwards}
 .tz-mood{position:absolute;inset:0;animation:tzMood var(--tot) linear both}
 
-/* ③ 본 시계 — 색(tzTint)과 떨림(tzQuake)은 시계 전체에 건다 */
+/* ③ 본 시계 — 실제 시계 구조. 색(tzTint)과 떨림(tzQuake)은 시계 전체에 건다 */
 .tz-wrap{position:absolute;inset:0;display:flex;align-items:center;justify-content:center}
 .tz-clock{position:relative;width:min(80vw,74vh);aspect-ratio:1;color:#bfe0ff;
   animation:tzTint var(--tot) linear both,tzQuake .19s var(--tql) linear infinite}
-.tz-dial{position:absolute;inset:0;animation:tzDrift 54s linear infinite}
+.tz-dial{position:absolute;inset:0}
 .tz-dial svg{position:absolute;inset:0;width:100%;height:100%}
-.th-tdz .hand{position:absolute;left:50%;bottom:50%;transform-origin:50% 100%;
-  background:currentColor;border-radius:3px;box-shadow:0 0 12px currentColor}
-.th-tdz .hand.h{width:5px;margin-left:-2.5px;height:23%;animation:tzHh var(--tot) linear both}
-.th-tdz .hand.m{width:2.8px;margin-left:-1.4px;height:34%;animation:tzHm var(--tot) linear both}
-.th-tdz .hand.s{width:1.5px;margin-left:-.75px;height:40%;opacity:.7;animation:tzHs var(--tot) linear both}
-.th-tdz .pin{position:absolute;left:50%;top:50%;width:13px;height:13px;margin:-6.5px 0 0 -6.5px;
-  border-radius:50%;background:currentColor;box-shadow:0 0 16px currentColor}
-@keyframes tzDrift{to{transform:rotate(-360deg)}}
+.tz-dial .num{font-family:var(--serif);font-size:25px;font-weight:500;letter-spacing:.04em;
+  fill:currentColor;opacity:.76;text-anchor:middle;dominant-baseline:central}
+/* 바늘 — 문자판과 같은 크기의 판을 통째로 돌린다. 판의 중심이 곧 회전축이 된다 */
+.th-tdz .hand{fill:currentColor;transform-origin:50% 50%;filter:drop-shadow(0 0 7px currentColor)}
+.th-tdz .hand.h{animation:tzHh var(--tot) linear both}
+.th-tdz .hand.m{animation:tzHm var(--tot) linear both}
+.th-tdz .hand.s{opacity:.85;animation:tzHs var(--tot) linear both}
+.tz-dial .cap{fill:currentColor;filter:drop-shadow(0 0 10px currentColor)}
+/* 6시 보조 다이얼 — 본 시계와 같은 국면을 탄다 */
+.tz-sub{position:absolute;left:50%;top:68%;width:17%;aspect-ratio:1;margin:-8.5% 0 0 -8.5%}
+.tz-sub svg{position:absolute;inset:0;width:100%;height:100%}
+.tz-sub .sub-h{fill:currentColor;transform-origin:50% 50%;
+  animation:tzHm var(--tot) linear both;filter:drop-shadow(0 0 5px currentColor)}
+/* 케이스 바깥 궤도만 돈다 — 시계 자체가 돌면 숫자가 읽히지 않는다 */
+.tz-orbit{position:absolute;left:50%;top:50%;width:113%;aspect-ratio:1;border-radius:50%;
+  border:1px dashed currentColor;opacity:.15;animation:tzDrift 54s linear infinite}
+@keyframes tzDrift{from{transform:translate(-50%,-50%) rotate(0)}
+  to{transform:translate(-50%,-50%) rotate(-360deg)}}
 @keyframes tzQuake{0%,100%{transform:translate(0,0)}25%{transform:translate(1.5px,-1.1px)}
   50%{transform:translate(-1.3px,1.4px)}75%{transform:translate(1px,1.1px)}}
+#cs.q3 .th-tdz .hand,#cs.q3 .tz-dial .cap,#cs.q3 .tz-sub .sub-h,#cs.q3 .tz-dial .face{filter:none}
 
 /* ④ 역주행 잔상 — 지나온 시간이 뒤로 쓸려 간다 */
 .tz-rev{position:absolute;inset:0;pointer-events:none}
@@ -1266,6 +1277,8 @@ nav button.on{color:var(--paper);border-top-color:var(--ember)}
 .tz-title .tl{line-height:1.02;white-space:nowrap}
 .tz-title .rfont{font-size:clamp(21px,9.4vw,78px)}
 .tz-title .rjit .rj-sp{width:.26em}
+/* 문자판이 촘촘해져서 이름이 묻힌다 — 배경은 그대로 두고 글자 쪽에만 그림자를 준다 */
+.tz-title .rjit .rj{text-shadow:0 2px 12px rgba(0,0,0,.92),0 0 26px rgba(0,0,0,.75)}
 
 /* ⑩ 백아웃 — 암전과 같은 곡선으로, 이번에는 밝아진다 */
 .tz-white{position:absolute;inset:0;background:#f2f8ff;opacity:0;z-index:20;pointer-events:none;
