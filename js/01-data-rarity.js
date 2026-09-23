@@ -127,3 +127,20 @@ const GLX_T={
 };
 const GLX_PD=GLX_T.close;
 const GLX_END=Math.round((GLX_T.close+GLX_T.fade)*1000);
+
+/* ═════════ 「OBLIVION」 연출 타이밍 (초) ═════════
+   지나온 검들이 촤르륵 흘러간 뒤, 상위 검들의 상징만 차례로 떠오른다.
+   마지막에 화면이 부들거리다 깨지고 끝난다. 검은 등장하지 않는다. */
+const OBL_T={
+ open:  1.25,   // ① 아우라 + 암전 (다른 ABSOLUTE 와 같은 연출)
+ rush:  1.40,   // ② 평범~천상 검들이 빠르게 지나간다
+ ask1:  1.90,   // ③ "Do you remember these swords exist?"
+ sig:   5.90,   // ④ 신성~영겁 검의 상징이 차례로
+ ask2:  6.10,   // ⑤ "How about this?"
+ quake:11.70,   // ⑥ 화면이 부들거린다
+ crack:12.60,   // ⑦ 쩅그랑 — 화면이 깨진다
+ close:13.40,   // ⑧ 아우라 + 백아웃
+ fade:  1.40,
+};
+const OBL_PD=OBL_T.close;
+const OBL_END=Math.round((OBL_T.close+OBL_T.fade)*1000);

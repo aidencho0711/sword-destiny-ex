@@ -28,6 +28,7 @@ function sfxCut(s,R){
  if(s.th==="scale")return sfxScale(pd);
  if(s.th==="tdz")return sfxTdz();
  if(s.th==="glx")return sfxGlx();
+ if(s.th==="obl")return sfxObl();
  tone(70,780,pd*0.92,"sawtooth",.045);
  if(tier>=8)tone(140,1400,pd*0.8,"triangle",.025,.3);
  noise(.6,.34,pd-.12);
@@ -672,5 +673,33 @@ function sfxGlx(){
  noise(.8,.16,T.word);
  [58,97,131,173].forEach((f,i)=>tone(f,f*.97,2.4,"square",.035,T.word+.04+i*.05));
  /* 마감 — 밝아지며 올라간다 (여는 연출과 짝) */
+ tone(190,860,T.fade,"sine",.085,T.close);
+ noise(1.0,.075,T.close);}
+
+/* ───── O B L I V I O N ─────
+   ① 검들이 스쳐 갈 때 잔물결 같은 울림 → ② 상징마다 낮은 종 →
+   ③ 부들거림과 함께 고음이 차오르다 → ④ 쩅그랑 → ⑤ 밝아지며 끝. */
+function sfxObl(){
+ if(!S.sound)return;
+ const T=OBL_T;
+ tone(150,34,T.open+.4,"sine",.17,0);                        // 여는 연출 공통
+ noise(1.15,.10,0);
+ tone(47,44,T.quake-T.rush,"sawtooth",.05,T.rush);           // 바닥에 깔리는 보랏빛 저음
+ /* 지나가는 검 — 스칠 때마다 짧게 울린다 */
+ const n1=Math.round((T.sig-T.rush)/.12);
+ for(let i=0;i<n1;i++)
+  tone(520+((i*97)%420),300,.05,"triangle",.016,T.rush+i*.12);
+ /* 상징 — 하나씩 낮은 종으로 떨어진다 */
+ const N=(typeof OBL_ORDER!=="undefined"?OBL_ORDER.length:19);
+ const sp=(T.quake-.3-T.sig)/N;
+ for(let i=0;i<N;i++)
+  bellFall(T.sig+i*sp,330-i*9,168-i*5,Math.min(2.4,sp*3),.045);
+ /* 부들거림 — 고음이 차오른다 */
+ tone(240,1500,T.crack-T.quake,"sine",.07,T.quake);
+ noise(T.crack-T.quake,.05,T.quake);
+ /* 쩅그랑 — 이미 있는 유리 깨짐 합성음을 쓴다 */
+ if(typeof glassBreak==="function"){glassBreak(T.crack,1.25);glassBreak(T.crack+.11,.7);}
+ tone(90,26,2.2,"sawtooth",.15,T.crack);
+ /* 마감 */
  tone(190,860,T.fade,"sine",.085,T.close);
  noise(1.0,.075,T.close);}

@@ -71,6 +71,9 @@ const SWORDS=[
  {t:17,n:"G L I T C H",b:"rift",g:"none",c:["#d2d2da","#2c2c34"],e:"#e6e6ee",gem:"#b4b4c0",gr:"#1e1e24",
   th:"glx",pd:GLX_PD,end:GLX_END,bare:1,nfx:"glitch",vb:"-60 0 320 560",acc:"#d8d8e0",
   d:"세계의 규칙에 난 흠집. 이 검은 베어서 상처를 내지 않는다. 베였다는 판정이 잘못 기록될 뿐이다."},
+ {t:17,n:"O B L I V I O N",b:"crystal",g:"halo",c:["#c9a8ff","#3a1f6e"],e:"#eddcff",gem:"#a06aff",gr:"#241238",
+  th:"obl",pd:OBL_PD,end:OBL_END,bare:1,nfx:"oblivion",vb:"-64 0 328 560",acc:"#c9a8ff",
+  d:"베인 것은 사라지지 않는다. 사라졌다는 것조차 아무도 기억하지 못하게 될 뿐이다."},
 ];
 SWORDS.forEach(s=>{if(s.gem==="#f濃")s.gem="#ff8fb8";});
 
@@ -119,6 +122,7 @@ const FX={
  /* ABSOLUTE — 시간을 부수는 검. 주조 속도와 쌍 판정을 동시에 가진다 */
  "T I M E  D E S T R O Y E R":{luck:2.6,speed:.72,gem:1.6,pdur:.8,twin:1},
  "G L I T C H":{dupe:3.2,luck:2.4,gem:1.4,rer:12},
+ "O B L I V I O N":{luck:3.0,pdur:1.4,gem:1.2},
 };
 SWORDS.forEach(x=>{x.fx=FX[x.n]||{gold:x.t*.02};});
 

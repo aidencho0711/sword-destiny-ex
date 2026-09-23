@@ -48,6 +48,12 @@ function glitchChars(text){
 function gradText(R,text,sw){
  /* 검마다 이름 표기를 따로 가질 수 있다(nfx). 등급 그라데이션보다 우선한다. */
  if(sw&&sw.nfx==="glitch")return `<span class="gjit">${glitchChars(text)}</span>`;
+ /* 망각 — 글자가 저마다 다른 박자로 옅어졌다 돌아온다. 잊혀 가는 비문처럼. */
+ if(sw&&sw.nfx==="oblivion")return `<span class="ojit">`+Array.from(text).map((ch,i)=>{
+  if(ch===" ")return `<i class="oj-sp"></i>`;
+  const r=(i*2654435761)%1013/1013;
+  return `<i class="oj" style="--ot:${(3.4+r*2.6).toFixed(2)}s;--od2:${(-r*5.2).toFixed(2)}s">${attrEsc(ch)}</i>`;
+ }).join("")+`</span>`;
  if(!R||!R.grad)return text;
  const cg=(R.cg&&R.cg.length?R.cg:[R.c,"#ffffff"]);
  const bg="linear-gradient(90deg,"+cg.concat(cg[0]).join(",")+")";

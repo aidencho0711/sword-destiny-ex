@@ -214,6 +214,46 @@ function swordSVG(s,ench){
      <line x1="100" y1="250" x2="100" y2="196" stroke="${s.gem}" stroke-width="2" opacity=".7"/>
      <line x1="100" y1="250" x2="140" y2="250" stroke="${s.gem}" stroke-width="2" opacity=".7"/>`;
    break;}
+  case "O B L I V I O N":{                    // 보랏빛 망각 — 날이 조금씩 지워지고 흩어진다
+   defs+=`<radialGradient id="ob${id}" cx="50%" cy="46%" r="52%">
+     <stop offset="0%" stop-color="${s.gem}" stop-opacity=".34"/>
+     <stop offset="58%" stop-color="${s.c[1]}" stop-opacity=".16"/>
+     <stop offset="100%" stop-color="${s.c[1]}" stop-opacity="0"/></radialGradient>
+    <linearGradient id="of${id}" x1="0" y1="0" x2="0" y2="1">
+     <stop offset="0%" stop-color="${s.e}" stop-opacity="1"/>
+     <stop offset="46%" stop-color="${s.c[0]}" stop-opacity=".82"/>
+     <stop offset="100%" stop-color="${s.c[1]}" stop-opacity=".22"/></linearGradient>`;
+   /* 뒤에 깔리는 보랏빛 성운과 천천히 도는 고리 */
+   dcB=`<ellipse cx="100" cy="240" rx="150" ry="210" fill="url(#ob${id})"/>`;
+   for(let i=0,N=QC(3);i<N;i++)
+    dcB+=`<circle cx="100" cy="250" r="${74+i*38}" fill="none" stroke="${s.gem}" stroke-width=".9" opacity="${(.3-i*.07).toFixed(2)}">
+      <animateTransform attributeName="transform" type="rotate" from="${i*40} 100 250" to="${i*40+(i%2?-360:360)} 100 250"
+        dur="${28+i*11}s" repeatCount="indefinite"/></circle>`;
+   /* 날이 지워지는 자리 — 어둠이 번졌다 옅어지며 형체를 갉아먹는다 */
+   let erase="";
+   for(let i=0,N=QC(6);i<N;i++){const y=70+i*(300/N);
+    erase+=`<ellipse cx="${88+((i*29)%26)}" cy="${y.toFixed(0)}" rx="${13+((i*17)%12)}" ry="${5+((i*11)%7)}"
+      fill="#0b0518" opacity="0">
+      <animate attributeName="opacity" values="0;.82;0" dur="${(3.4+i*.7).toFixed(1)}s"
+        begin="${(i*.9).toFixed(1)}s" repeatCount="indefinite"/></ellipse>`;}
+   /* 흩어져 사라지는 조각 — 위로 떠오르며 옅어진다 */
+   let ash="";
+   for(let i=0,N=QC(20);i<N;i++){
+    const x=(58+((i*37)%86)).toFixed(0),y=(110+((i*53)%250)).toFixed(0);
+    ash+=`<rect x="${x}" y="${y}" width="${2+(i%3)}" height="${2+(i%2)}" fill="${i%3?s.c[0]:s.gem}" opacity="0"
+      transform="rotate(${(i*47)%90} ${x} ${y})">
+      <animate attributeName="opacity" values="0;.85;0" dur="${(2.8+(i%5)*.6).toFixed(1)}s"
+        begin="${(i*.27).toFixed(2)}s" repeatCount="indefinite"/>
+      <animateTransform attributeName="transform" type="translate" additive="sum"
+        values="0 0;${-14+(i%7)*4} -46" dur="${(2.8+(i%5)*.6).toFixed(1)}s"
+        begin="${(i*.27).toFixed(2)}s" repeatCount="indefinite"/></rect>`;}
+   /* 날 위를 덮는 옅은 장막 — 기억이 바래듯 */
+   dcF=`<clipPath id="oc${id}"><path d="${BLADE[s.b]}"/></clipPath>
+     <g clip-path="url(#oc${id})">${erase}
+       <rect x="0" y="0" width="200" height="560" fill="url(#of${id})" opacity=".3">
+         <animate attributeName="opacity" values=".16;.42;.16" dur="5.2s" repeatCount="indefinite"/></rect>
+     </g>${ash}`;
+   break;}
   case "G L I T C H":{                        // 흑백 + 노이즈. 주변엔 색색의 사각형이 튄다
    const D=`calcMode="discrete"`;             // 부드럽게 말고 뚝뚝 끊기게
    /* 색이 어긋난 잔상 — 날 모양을 빨강·청록으로 좌우로 밀어 겹친다 */

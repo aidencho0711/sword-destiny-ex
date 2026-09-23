@@ -75,6 +75,44 @@ const SIG={
  "영겁의 파수꾼":"守","시간의 종착":"時","영겁 永劫":"永",
  "T I M E  D E S T R O Y E R":"滅","G L I T C H":"誤"};
 /* 지정 기호가 없으면 대표 효과로 대체 */
+/* ═════════ OBLIVION 컷신용 상징 ═════════
+   신성(11) 이상 검을 한자가 아닌 그림 하나로 압축했다.
+   viewBox 0 0 100 100, 기본은 선으로만 그린다(stroke=currentColor, fill=none). */
+const OBL_SIG={
+ /* 신성 */
+ "만상의 눈":`<path d="M6 50 Q50 14 94 50 Q50 86 6 50 Z"/><circle cx="50" cy="50" r="17"/><circle cx="50" cy="50" r="6.5" fill="currentColor" stroke="none"/>`,
+ "창세의 첫 획":`<path d="M12 88 Q40 34 88 14" stroke-width="8"/><circle cx="50" cy="50" r="4" fill="currentColor" stroke="none"/>`,
+ /* 태초 */
+ "EQUINOX":`<circle cx="50" cy="50" r="32"/><path d="M50 18 A32 32 0 0 1 50 82 Z" fill="currentColor" stroke="none"/><circle cx="50" cy="34" r="4" fill="none"/><circle cx="50" cy="66" r="4" fill="currentColor" stroke="none"/>`,
+ "적요 寂寥":`<circle cx="50" cy="50" r="13"/><circle cx="50" cy="50" r="25" opacity=".62"/><circle cx="50" cy="50" r="37" opacity=".32"/><path d="M24 24 L76 76" stroke-width="5.5"/>`,
+ "태동 胎動":`<ellipse cx="50" cy="53" rx="27" ry="33"/><path d="M50 80 Q33 64 42 48 Q51 34 50 22"/>`,
+ "관측자 觀測者":`<circle cx="50" cy="50" r="27"/><path d="M50 4 V24 M50 76 V96 M4 50 H24 M76 50 H96"/><path d="M38 38 L38 30 M62 38 L62 30 M38 62 L38 70 M62 62 L62 70" opacity=".6"/><circle cx="50" cy="50" r="4.5" fill="currentColor" stroke="none"/>`,
+ /* 운명 */
+ "O P P R E S S I O N":`<path d="M50 86 C24 63 13 51 13 38 C13 26 22 17 33 17 C41 17 47 21 50 29 C53 21 59 17 67 17 C78 17 87 26 87 38 C87 51 76 63 50 86 Z"/>`+
+   [0,1,2,3,4].map(k=>`<ellipse cx="${20+k*15}" cy="${74-k*13}" rx="8" ry="4.6" transform="rotate(-38 ${20+k*15} ${74-k*13})" opacity=".85"/>`).join("")+
+   `<path d="M50 6 V92" stroke-width="4.6" opacity=".9"/>`,
+ "회귀 回歸":`<path d="M50 16 A34 34 0 1 1 20 34"/><path d="M10 20 L20 36 L36 31"/>`,
+ "심판 審判":`<path d="M50 12 V78 M28 78 H72 M14 32 H86"/><path d="M14 32 L2 58 H26 Z"/><path d="M86 32 L74 58 H98 Z"/><circle cx="50" cy="32" r="4.5" fill="currentColor" stroke="none"/>`,
+ "천기 天機":`<circle cx="50" cy="50" r="30"/>`+[0,1,2,3,4,5,6,7].map(k=>`<path d="M50 20 V8" transform="rotate(${k*45} 50 50)"/>`).join("")+
+   `<path d="M50 34 L56 47 L70 50 L56 53 L50 66 L44 53 L30 50 L44 47 Z" fill="currentColor" stroke="none"/>`,
+ /* 무극 */
+ "무한의 나선":`<path d="${(()=>{let d="M50 50";for(let i=0;i<58;i++){const a=i*.42,r=1.6+i*.72;d+=` L${(50+Math.cos(a)*r).toFixed(1)} ${(50+Math.sin(a)*r).toFixed(1)}`;}return d;})()}"/>`,
+ "경계 밖의 관측":`<rect x="22" y="22" width="56" height="56"/><rect x="34" y="34" width="32" height="32" opacity=".6"/><rect x="44" y="44" width="12" height="12" opacity=".35"/><circle cx="89" cy="11" r="5.5" fill="currentColor" stroke="none"/><path d="M78 22 L86 14" opacity=".7"/>`,
+ "무극 無極":`<circle cx="50" cy="50" r="31"/>`+[0,1,2,3,4,5].map(k=>`<path d="M50 19 V2" transform="rotate(${k*60} 50 50)"/>`).join("")+`<circle cx="50" cy="50" r="10" fill="#08040f" stroke="none"/>`,
+ /* 혼돈 */
+ "혼돈의 이빨":[0,1,2,3].map(k=>`<path d="M${16+k*20} 22 L${26+k*20} 62 L${36+k*20} 22"/>`).join("")+
+   [0,1,2].map(k=>`<path d="M${26+k*20} 84 L${36+k*20} 46 L${46+k*20} 84"/>`).join(""),
+ "뒤틀린 인과":`<path d="M10 16 Q52 40 22 56 Q4 66 30 78 Q60 92 90 70"/><path d="M90 16 Q48 40 78 56 Q96 66 70 78 Q40 92 10 70" opacity=".7"/>`,
+ "혼돈 混沌":`<path d="${(()=>{let d="M50 50";for(let i=0;i<46;i++){const a=i*.58,r=2+i*.9*(i%2?1:.62);d+=` L${(50+Math.cos(a)*r).toFixed(1)} ${(50+Math.sin(a)*r).toFixed(1)}`;}return d;})()}"/>`,
+ /* 영겁 */
+ "영겁의 파수꾼":`<path d="M50 6 L86 20 V50 C86 72 70 86 50 94 C30 86 14 72 14 50 V20 Z"/><circle cx="50" cy="50" r="18" opacity=".7"/><circle cx="50" cy="50" r="8" opacity=".45"/>`,
+ "시간의 종착":`<circle cx="50" cy="50" r="33"/>`+[0,1,2,3,4,5,6,7,8,9,10,11].map(k=>`<path d="M50 17 V${k%3===0?8:12}" transform="rotate(${k*30} 50 50)" opacity="${k%3===0?1:.5}"/>`).join("")+
+   `<path d="M50 50 V26" stroke-width="4.4"/><path d="M50 50 H74" stroke-width="4.4"/><circle cx="50" cy="50" r="4" fill="currentColor" stroke="none"/>`,
+ "영겁 永劫":`<path d="M50 50 C50 32 30 32 22 42 C14 52 22 68 34 66 C46 64 50 50 50 50 C50 50 54 36 66 34 C78 32 86 48 78 58 C70 68 50 68 50 50 Z"/>`,
+};
+/* 컷신에서 보여 줄 순서 — 등급 오름차순, 데이터 순서를 그대로 따른다 */
+const OBL_ORDER=SWORDS.filter(x=>x.t>=11&&x.t<=16).map(x=>x.n).filter(n=>OBL_SIG[n]);
+
 const SIG_FX={luck:"運",gold:"富",speed:"迅",pity:"保",dupe:"重",pdur:"藥",gem:"寶",ench:"錬",twin:"雙",rer:"再"};
 function sigFor(s){
  if(SIG[s.n])return SIG[s.n];
@@ -867,6 +905,62 @@ function themeHTML(s,R){
     <i class="blade"></i><div class="bflash"></div><i class="seam"></i>${ember}
     <span class="glyph">結</span>${shard}${mote}
   </div></div>`;}
+ case "obl":{                                    // OBLIVION — 지나온 것들이 흘러가고, 상징만 남았다 깨진다
+  const T=OBL_T,TOT=OBL_END/1000;
+  /* ① 평범~천상 검이 촤르륵 지나간다 */
+  const all=SWORDS.filter(x=>x.t<=10);
+  const step=QLV<=1?1:(QLV===2?2:3);
+  const list=all.filter((_,i)=>i%step===0);
+  const per=(T.sig-.35-T.rush)/list.length;
+  const rush=list.map((sw,i)=>`<div class="ob-sw" style="--od3:${(T.rush+i*per).toFixed(3)}s;--ol:${(per*1.9).toFixed(3)}s">${swordSVG(sw)}</div>`).join("");
+  /* ② 신성~영겁 — 검을 나타내는 상징 하나씩 */
+  const sper=(T.quake-.3-T.sig)/OBL_ORDER.length;
+  /* 마지막 상징은 사라지지 않고 남는다 — 부들거리다 그대로 깨지도록 */
+  const sigs=OBL_ORDER.map((nm,i)=>{const last=i===OBL_ORDER.length-1,st=T.sig+i*sper;
+   return `<div class="ob-sig${last?" hold":""}" style="--od3:${st.toFixed(3)}s;--ol:${(last?T.crack+.25-st:sper*1.75).toFixed(3)}s">
+    <svg viewBox="0 0 100 100" fill="none" stroke="currentColor" stroke-width="3.4"
+      stroke-linecap="round" stroke-linejoin="round">${OBL_SIG[nm]}</svg></div>`;}).join("");
+  /* ③ 깨짐 — 금이 먼저 뻗고, 그 다음 조각이 흩어진다 */
+  let crack="";
+  /* 깨짐은 컷신의 마지막 한 방이다. 저사양에서도 조각이 너무 적으면 안 깨져 보인다 */
+  for(let i=0,N=Math.max(7,QC(9));i<N;i++){
+   const a=i*(360/N)+12,rad=a*Math.PI/180;
+   let d=`M50 50`,x=50,y=50;
+   for(let k=1;k<=4;k++){const r=k*16,j=(((i*37+k*53)%21)-10)*.85;
+    x=50+Math.cos(rad+j*.02)*r;y=50+Math.sin(rad+j*.02)*r*1.6;
+    d+=` L${x.toFixed(1)} ${(y+j*.4).toFixed(1)}`;}
+   crack+=`<path d="${d}" pathLength="100" stroke-dasharray="100" stroke-dashoffset="100"
+     style="animation:obCrack .34s calc(var(--ocr) + ${(i*.022).toFixed(3)}s) forwards"/>`;}
+  let shard="";
+  for(let i=0,N=Math.max(11,QC(16));i<N;i++){
+   const a=i*(360/N)+8,rad=a*Math.PI/180;
+   const p=[[50,50],
+     [50+Math.cos(rad-.22)*90,50+Math.sin(rad-.22)*130],
+     [50+Math.cos(rad+.1)*105,50+Math.sin(rad+.1)*150],
+     [50+Math.cos(rad+.34)*88,50+Math.sin(rad+.34)*128]]
+    .map(([x,y])=>`${x.toFixed(1)}% ${y.toFixed(1)}%`).join(",");
+   shard+=`<i class="ob-shard" style="clip-path:polygon(${p});--sx:${(Math.cos(rad)*62).toFixed(0)}vw;`+
+     `--sy:${(Math.sin(rad)*54+22).toFixed(0)}vh;--sr:${(-50+(i*67)%100)}deg;--sdl:${(i*.012).toFixed(3)}s"></i>`;}
+
+  return `<div class="pl"><div class="th th-obl tzfx"
+    style="--tdo:${T.open}s;--tdc:${T.close}s;--tdf:${T.fade}s;--oqk:${T.quake}s;--ocr:${T.crack}s;--tot:${TOT}s">
+    <div class="tz-veil"></div>
+    <div class="tz-scene">
+      <div class="ob-haze"></div>
+      <div class="ob-stage">${rush}${sigs}</div>
+      <div class="ob-vig"></div>
+    </div>
+    <i class="tz-pop op"></i><i class="tz-pop op b"></i>
+    <div class="ob-crack"><svg viewBox="0 0 100 100" fill="none" stroke="#f2e8ff"
+      stroke-width=".7" stroke-linecap="round" preserveAspectRatio="none">${crack}</svg></div>
+    <div class="ob-shards">${shard}</div>
+    <i class="tz-pop cl"></i><i class="tz-pop cl b"></i>
+    <div class="tz-white"></div>
+  </div>
+  <div class="csay obl" data-t="Do you remember these swords exist?" data-d="${T.ask1}"
+    style="top:76%;--sd:${T.ask1}s;--sl:3.4s"></div>
+  <div class="csay obl" data-t="How about this?" data-d="${T.ask2}"
+    style="top:76%;--sd:${T.ask2}s;--sl:${(T.quake-T.ask2-.4).toFixed(2)}s"></div></div>`;}
  case "glx":{                                    // G L I T C H — 코드가 흐르다 무너진다. 검은 등장하지 않는다
   const T=GLX_T,TOT=GLX_END/1000,P=t=>+(t/TOT*100).toFixed(3);
   const ERRW='E`R%RO^R';                         // 깨진 ERROR — 백틱이 있으므로 작은따옴표로 둔다
