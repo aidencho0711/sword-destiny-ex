@@ -45,6 +45,7 @@ function arSpawnBoss(w){
    st:2,t:0,hit:0,ph:0,tele:null,copies:null,slow:0};
  BA.mobs.push(o);
  BA.boss=o;
+ btBgmStart("boss");sfxBossIn();
  BA.fx.push({k:"bossIn",t:0,d:1.8,n:B.n,c:B.c});
 }
 
@@ -311,7 +312,7 @@ function arOpenPick(){
    <div class="arp-row">${BA.pick.map((u,i)=>`
      <button class="arp-c" data-up="${i}">
        <b>${u.n}</b><span>${u.d}</span></button>`).join("")}</div></div>`;
- el.classList.add("on");
+ el.classList.add("on");sfxPickShow();
  el.querySelectorAll("[data-up]").forEach(b=>b.onclick=()=>arTakeUp(+b.dataset.up));
 }
 function arTakeUp(i){
@@ -323,6 +324,7 @@ function arTakeUp(i){
   BA.p.hpMax+=add;BA.p.hp+=add;}
  if(U.heal)BA.p.hp=Math.min(BA.p.hpMax,BA.p.hp+Math.round(BA.p.hpMax*U.heal));
  U.hpUp=0;U.heal=0;
+ sfxPickTake();
  (BA.taken=BA.taken||[]).push(u.n.replace(/ /g,""));
  BA.pick=null;
  $("ar-pick").classList.remove("on");$("ar-pick").innerHTML="";

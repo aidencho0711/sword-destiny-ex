@@ -46,6 +46,7 @@ function openArena(mode){
  addEventListener("keydown",arKey);
  addEventListener("keyup",arKey);
  $("ar-quit").onclick=()=>arEnd(true);
+ btBgmStart("wave");
  BA.last=performance.now();
  BA.raf=requestAnimationFrame(arLoop);
 }
@@ -55,6 +56,7 @@ function closeArena(){
  removeEventListener("resize",arResize);
  removeEventListener("keydown",arKey);
  removeEventListener("keyup",arKey);
+ btBgmStop();
  BA=null;$("arena").classList.remove("on");$("arena").innerHTML="";
 }
 function arResize(){
@@ -168,6 +170,7 @@ function arStep(dt){
   if(BA.spawnLeft<=0&&!BA.mobs.length){
    BA.wave++;BA.restT=1.5;BA.rage=0;
    const w=$("ar-wave"); if(w)w.textContent=BA.wave;
+   sfxWaveStart(BA.wave);
    BA.fx.push({k:"wave",t:0,d:1.2,n:BA.wave});}
  }
  /* 플레이어 */
@@ -253,22 +256,24 @@ function arMobStep(o,dt){
 function arHurt(d){
  const P=BA.p;
  P.hp-=Math.max(1,Math.round(d*BA.up.dr));P.inv=.7*BA.up.inv;
- BA.fx.push({k:"hurt",t:0,d:.32});
+ BA.fx.push({k:"hurt",t:0,d:.32});sfxHurt();
  if(P.hp<=0){P.hp=0;arEnd(false);}
 }
 function arHit(o,dmg,tr){
  let d=dmg;
  if((tr==="crit"&&Math.random()<.16)||Math.random()<BA.up.crit)d*=2;
  d=Math.max(1,Math.round(d));
- o.hp-=d;o.hit=.12;
+ o.hp-=d;o.hit=.12;sfxHit();
  BA.num.push({x:o.x,y:o.y-o.r,v:d,t:0,c:d>dmg*1.5?"#ffd45e":"#fff"});
 }
 function arKill(o,i){
  BA.mobs.splice(i,1);BA.kills++;
+ if(o.boss)sfxBossKill(); else sfxKill();
  BA.fx.push({k:"pop",x:o.x,y:o.y,r:o.r,t:0,d:.32,c:o.m.c});
  const heal=(arCur().st.trait.id==="drain"?.012:0)+BA.up.drain;
  if(heal)BA.p.hp=Math.min(BA.p.hpMax,BA.p.hp+Math.round(BA.p.hpMax*heal));
  if(o.boss){BA.boss=null;
+  btBgmStart("wave");                            // 보스곡에서 평상곡으로
   arOpenPick();                                  // 강화 셋 중 하나
   for(let i=0;i<14;i++)BA.fx.push({k:"pop",x:o.x+(Math.random()-.5)*o.r*2,
     y:o.y+(Math.random()-.5)*o.r*2,r:o.r*.3,t:-i*.03,d:.5,c:o.B.c});
@@ -283,6 +288,7 @@ function arSwing(){
  const P=BA.p,c=arCur(),mo=c.st.arch.mo,tr=c.st.trait.id,dir=P.dir;
  const dmg=c.st.dmg*BA.up.dmg;
  BA.swing={t:0,d:.26,dir,mo};                          // 칼이 실제로 휘둘러지게
+ sfxSwing(mo);
  arMotion(mo,dmg,tr,dir);
  if(tr==="twin")setTimeout(()=>{if(BA&&!BA.over)arMotion(mo,dmg,null,BA.p.dir);},110);
  if(tr==="echo")setTimeout(()=>{if(BA&&!BA.over)arMotion(mo,dmg*.6,null,BA.p.dir);},240);
@@ -366,6 +372,9 @@ function arEnd(quit){
  if(rw.gems){S.gems=(S.gems||0)+rw.gems;S.gemTot=(S.gemTot||0)+rw.gems;}
  if(drop){S.owned[drop.n]=(S.owned[drop.n]||0)+1;if(drop.t>S.best)S.best=drop.t;}
  save();checkAch();renderHUD();
+ btBgmStop();
+ if(!quit)sfxDeath();
+ if(rw.gold)setTimeout(()=>sfxReward(),quit?120:900);
  $("ar-over").innerHTML=`<div class="ar-res">
    <div class="ar-rt">${quit?"중 단":"패 배"}</div>
    <div class="ar-rw"><b>${reached}</b><span>도달 웨이브</span></div>
