@@ -1429,13 +1429,14 @@ nav button.on{color:var(--paper);border-top-color:var(--ember)}
 .ob-stage{position:absolute;inset:0}
 
 /* ① 지나가는 검들 — 한 자루씩 스쳐 간다 */
+/* will-change 를 걸지 않는다 — 스쳐 가는 검 수십 장을 전부 합성 레이어로 올리면
+   모바일에서 GPU 메모리와 합성 비용이 그대로 프레임에 쌓인다. */
 .ob-sw{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;
-  opacity:0;will-change:transform,opacity;
+  opacity:0;
   animation:obPass var(--ol) var(--od3) ease-out both}
 /* 인라인 SVG 는 width:auto 여도 기본 너비가 100% 라 컨테이너에 늘어난다.
    높이와 비율을 직접 못박아야 한 자루 크기로 보인다. */
-.ob-sw svg{height:min(56vh,calc(38vw * 2.8));aspect-ratio:200 / 560;width:auto;
-  filter:drop-shadow(0 0 18px rgba(160,106,255,.5))}
+.ob-sw svg{height:min(56vh,calc(38vw * 2.8));aspect-ratio:200 / 560;width:auto}
 @keyframes obPass{
   0%{opacity:0;transform:translateX(34px) scale(.92)}
   22%{opacity:1;transform:translateX(0) scale(1)}
@@ -1445,10 +1446,12 @@ nav button.on{color:var(--paper);border-top-color:var(--ember)}
 /* ② 상징 — 선으로만 그려 하나씩 떠오른다 */
 .ob-sig{position:absolute;left:50%;top:44%;width:min(52vw,40vh);aspect-ratio:1;
   margin:0 0 0 calc(min(52vw,40vh) / -2);transform:translateY(-50%);
-  opacity:0;will-change:transform,opacity;
+  opacity:0;
   animation:obSig var(--ol) var(--od3) ease-out both}
-.ob-sig svg{width:100%;height:100%;
-  filter:drop-shadow(0 0 16px rgba(170,116,255,.7))}
+.ob-sig svg{width:100%;height:100%}
+/* 글로우는 필터 대신 굵은 선 사본으로 만든다. CSS 는 SVG 표현 속성을 이기므로
+   상징마다 제각각인 stroke-width 도 여기서 한 번에 덮어쓴다. */
+.ob-sig .gl *{stroke-width:11px;opacity:.3}
 .ob-sig.hold{animation-name:obSigHold}
 @keyframes obSigHold{
   0%{opacity:0;transform:translateY(-50%) scale(1.22)}
@@ -1467,7 +1470,9 @@ nav button.on{color:var(--paper);border-top-color:var(--ember)}
 
 /* ④ 조각 — 금이 다 뻗은 뒤 흩어진다 */
 .ob-shards{position:absolute;inset:0;z-index:17;pointer-events:none}
-.ob-shard{position:absolute;inset:0;opacity:0;will-change:transform,opacity;
+/* 조각에도 will-change 를 걸지 않는다 — 화면 크기 레이어 열여섯 장을 컷신 내내
+   들고 있게 된다. 실제로 움직이는 0.9초 동안은 브라우저가 알아서 올려 준다. */
+.ob-shard{position:absolute;inset:0;opacity:0;
   background:linear-gradient(140deg,rgba(214,192,255,.32),rgba(120,70,200,.1) 46%,rgba(255,255,255,.2));
   box-shadow:inset 0 0 0 1px rgba(236,224,255,.5);
   animation:obShard .9s calc(var(--ocr) + .3s + var(--sdl)) cubic-bezier(.2,.6,.4,1) forwards}

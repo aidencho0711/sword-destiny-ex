@@ -75,6 +75,25 @@ function enchGlint(s,lv,id){
   <path d="${BLADE[s.b]}" fill="none" stroke="${col}" stroke-width="${(1.4+lv*.7).toFixed(1)}"
     opacity="${Math.min(.62,.18+lv*.07).toFixed(3)}"/>`;
 }
+/* 가벼운 검 — 컷신에서 빠르게 스쳐 갈 때만 쓴다.
+   필터·SMIL·아우라·장식을 전부 뺀다. 0.1초 스쳐 가는 데엔 실루엣과 색이면 충분한데,
+   수십 자루를 한꺼번에 DOM 에 두면 안 보이는 동안에도 그 비용이 프레임에 그대로 쌓인다. */
+function swordLite(s){
+ const id="l"+(uid++);
+ return `<svg viewBox="0 0 200 560" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="xMidYMid meet">
+  <defs><linearGradient id="lb${id}" x1="0" y1="0" x2="1" y2=".3">
+    <stop offset="0%" stop-color="${s.c[0]}"/><stop offset="46%" stop-color="${s.e}"/>
+    <stop offset="100%" stop-color="${s.c[1]}"/></linearGradient>
+   <linearGradient id="lg${id}" x1="0" y1="0" x2="1" y2="0">
+    <stop offset="0%" stop-color="${s.c[1]}"/><stop offset="50%" stop-color="${s.c[0]}"/>
+    <stop offset="100%" stop-color="${s.c[1]}"/></linearGradient></defs>
+  <path d="${BLADE[s.b]}" fill="url(#lb${id})" stroke="${s.e}" stroke-width="1.2"/>
+  <g fill="url(#lg${id})" stroke="${s.c[1]}" stroke-width="1">${GUARD[s.g]}</g>
+  <rect x="91" y="386" width="18" height="104" rx="7" fill="${s.gr}"/>
+  <circle cx="100" cy="502" r="15" fill="url(#lg${id})" stroke="${s.c[1]}"/>
+  <circle cx="100" cy="502" r="7" fill="${s.gem}"/>
+ </svg>`;}
+
 /* ench: 인첸트 레벨(0=기본). 인첸트본이면 전용 글린트 레이어를 덧입힌다. */
 function swordSVG(s,ench){
  const elv=(typeof ench==="number"?ench:(ench&&ench.e)||0);

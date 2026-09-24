@@ -912,14 +912,15 @@ function themeHTML(s,R){
   const step=QLV<=1?1:(QLV===2?2:3);
   const list=all.filter((_,i)=>i%step===0);
   const per=(T.sig-.35-T.rush)/list.length;
-  const rush=list.map((sw,i)=>`<div class="ob-sw" style="--od3:${(T.rush+i*per).toFixed(3)}s;--ol:${(per*1.9).toFixed(3)}s">${swordSVG(sw)}</div>`).join("");
+  const rush=list.map((sw,i)=>`<div class="ob-sw" style="--od3:${(T.rush+i*per).toFixed(3)}s;--ol:${(per*1.9).toFixed(3)}s">${swordLite(sw)}</div>`).join("");
   /* ② 신성~영겁 — 검을 나타내는 상징 하나씩 */
   const sper=(T.quake-.3-T.sig)/OBL_ORDER.length;
   /* 마지막 상징은 사라지지 않고 남는다 — 부들거리다 그대로 깨지도록 */
   const sigs=OBL_ORDER.map((nm,i)=>{const last=i===OBL_ORDER.length-1,st=T.sig+i*sper;
    return `<div class="ob-sig${last?" hold":""}" style="--od3:${st.toFixed(3)}s;--ol:${(last?T.crack+.25-st:sper*1.75).toFixed(3)}s">
     <svg viewBox="0 0 100 100" fill="none" stroke="currentColor" stroke-width="3.4"
-      stroke-linecap="round" stroke-linejoin="round">${OBL_SIG[nm]}</svg></div>`;}).join("");
+      stroke-linecap="round" stroke-linejoin="round">
+      ${QLV>=3?"":`<g class="gl">${OBL_SIG[nm]}</g>`}<g>${OBL_SIG[nm]}</g></svg></div>`;}).join("");
   /* ③ 깨짐 — 금이 먼저 뻗고, 그 다음 조각이 흩어진다 */
   let crack="";
   /* 깨짐은 컷신의 마지막 한 방이다. 저사양에서도 조각이 너무 적으면 안 깨져 보인다 */
