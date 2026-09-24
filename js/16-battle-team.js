@@ -79,5 +79,7 @@ $("v-battle").addEventListener("click",e=>{
   if(!c.ok){toast(c.why);return;}
   S.team.push(n);save();renderBattle();return;}
  const m=e.target.closest("[data-mode]");
- if(m){toast("전투는 다음 단계에서 붙습니다 · "+m.dataset.mode);return;}
+ if(m){const md=m.dataset.mode;
+  if(md!=="solo"){toast("듀얼·1vs1 은 다음 단계입니다");return;}
+  openArena(md);return;}
 });

@@ -77,3 +77,56 @@ function teamSummary(team){
  return {dmg:Math.max(...st.map(x=>x.dmg)),
          def:Math.round(st.reduce((a,b)=>a+b.def,0)/st.length),
          spd:+(st.reduce((a,b)=>a+b.spd,0)/st.length).toFixed(2)};}
+
+/* ═════════ 보상 ═════════
+   웨이브 10 미만은 아무것도 주지 않는다 — 첫 보스는 넘겨야 한다.
+   주화 = 웨이브 × 환생배수 × 기본상수. 환생배수(1.75^n)는 환생 요구치보다
+   천천히 오르므로, 후반에 보상이 시들해지면 BT_GOLD 만 올리면 된다. */
+const BT_MINWAVE=10;
+const BT_GOLD=5000;
+function battleReward(wave){
+ if(wave<BT_MINWAVE)return {gold:0,gems:0,wave};
+ const gold=Math.floor(wave*rbGold()*BT_GOLD);
+ /* 보석은 잡은 보스 수만큼 — 10웨이브마다 하나씩 */
+ let gems=0;
+ for(let b=1;b*10<=wave;b++)gems+=2+b;
+ return {gold,gems,wave};}
+/* 보스가 드물게 검을 떨군다. 깊이 갈수록 등급대가 올라가되 상한을 둔다. */
+function battleDrop(wave){
+ if(wave<BT_MINWAVE||Math.random()>=0.08)return null;
+ const top=Math.min(13,4+Math.floor(wave/10));
+ const lo=Math.max(2,top-3);
+ const t=lo+Math.floor(Math.random()*(top-lo+1));
+ const pool=SWORDS.filter(s=>s.t===t);
+ return pool.length?pool[Math.floor(Math.random()*pool.length)]:null;}
+
+/* ═════════ 몬스터 8종 ═════════
+   hp·dmg 는 기준값이고 웨이브에 따라 배율이 붙는다. */
+const MOBS=[
+ {id:"chaser", n:"추적자",   c:"#c96a6a", r:15, hp:34, dmg:9,  spd:62,  d:"곧장 걸어온다"},
+ {id:"swarm",  n:"군체",     c:"#d8a24a", r:10, hp:16, dmg:6,  spd:104, d:"빠르고 약하다. 여럿이 온다"},
+ {id:"charger",n:"돌진체",   c:"#e0724a", r:17, hp:46, dmg:16, spd:52,  d:"멈췄다가 한 번에 달려든다"},
+ {id:"shooter",n:"사수",     c:"#7a9fe0", r:14, hp:28, dmg:8,  spd:44,  d:"거리를 두고 쏜다"},
+ {id:"shield", n:"방패병",   c:"#8f96a8", r:20, hp:120,dmg:13, spd:34,  d:"단단하다. 뒤를 쳐야 빠르다"},
+ {id:"splitter",n:"분열체",  c:"#8fd08a", r:18, hp:52, dmg:10, spd:56,  d:"죽으면 둘로 갈라진다"},
+ {id:"bomber", n:"폭발체",   c:"#e05a8a", r:16, hp:30, dmg:26, spd:82,  d:"달려와 터진다"},
+ {id:"drifter",n:"부유체",   c:"#b48cff", r:14, hp:40, dmg:11, spd:50,  d:"제멋대로 떠다닌다"},
+];
+const MOBM=Object.fromEntries(MOBS.map(m=>[m.id,m]));
+/* 웨이브 배율 — 체력은 빠르게, 공격력은 천천히 오른다.
+   둘 다 빠르면 어느 순간 손쓸 수 없이 죽는다. */
+const waveHp =w=>Math.pow(1.13,w-1);
+const waveDmg=w=>Math.pow(1.05,w-1);
+/* 웨이브마다 나오는 종류 — 뒤로 갈수록 종류가 늘어난다 */
+function waveMobs(w){
+ const pool=["chaser"];
+ if(w>=2)pool.push("swarm");
+ if(w>=4)pool.push("charger");
+ if(w>=6)pool.push("shooter");
+ if(w>=9)pool.push("drifter");
+ if(w>=12)pool.push("splitter");
+ if(w>=15)pool.push("bomber");
+ if(w>=18)pool.push("shield");
+ return pool;}
+const waveCount=w=>Math.min(22,4+Math.floor(w*0.9));
+const isBossWave=w=>w%10===0;

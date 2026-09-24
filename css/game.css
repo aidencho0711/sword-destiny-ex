@@ -1584,3 +1584,35 @@ nav button.on{color:var(--paper);border-top-color:var(--ember)}
 .bt-rs{flex:0 0 auto;display:flex;gap:7px}
 .bt-rs b{font-size:11px;font-variant-numeric:tabular-nums;min-width:24px;text-align:right}
 .bt-tag{flex:0 0 auto;font-size:9px;letter-spacing:.06em;color:var(--acc);min-width:44px;text-align:right}
+
+/* ═══ 배틀 아레나 ═══ */
+#arena{position:fixed;inset:0;z-index:90;display:none;background:#0a0b10;touch-action:none}
+#arena.on{display:block}
+#ar-cv{position:absolute;inset:0;display:block;touch-action:none}
+.ar-hud{position:absolute;left:0;right:0;top:0;padding:calc(env(safe-area-inset-top) + 10px) 14px 0;
+  display:flex;align-items:center;gap:12px;pointer-events:none}
+.ar-bar{flex:1;height:9px;background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.16);
+  overflow:hidden}
+.ar-bar i{display:block;height:100%;width:100%;background:linear-gradient(90deg,#4ce08a,#9cf0b4);
+  transition:width .12s linear}
+.ar-wv{text-align:center;color:#dbe4f2;font-variant-numeric:tabular-nums}
+.ar-wv b{display:block;font-size:17px;line-height:1}
+.ar-wv span{font-size:8px;letter-spacing:.14em;color:#7d8798}
+.ar-quit{pointer-events:auto;background:transparent;border:1px solid rgba(255,255,255,.2);
+  color:#9aa4b4;font-size:11px;padding:5px 11px;cursor:pointer;font-family:var(--sans)}
+/* 결과 */
+.ar-over{position:absolute;inset:0;display:none;align-items:center;justify-content:center;
+  background:rgba(6,7,12,.86);padding:24px}
+.ar-over.on{display:flex;animation:fade .3s}
+.ar-res{text-align:center;max-width:320px;width:100%}
+.ar-rt{font-family:var(--serif);font-size:20px;letter-spacing:.42em;text-indent:.42em;color:#e8ecf4}
+.ar-rw{margin:20px 0 6px}
+.ar-rw b{display:block;font-size:52px;line-height:1;color:#eaf2ff;font-variant-numeric:tabular-nums}
+.ar-rw span{font-size:10px;letter-spacing:.24em;color:#7d8798}
+.ar-rk{font-size:12px;color:#8a94a6;margin-bottom:18px}
+.ar-gain{display:flex;gap:8px;justify-content:center;margin-bottom:14px}
+.ar-gain div{flex:1;border:1px solid rgba(255,255,255,.14);padding:9px 4px}
+.ar-gain b{display:block;font-size:15px;color:#ffd45e}
+.ar-gain span{font-size:9px;letter-spacing:.1em;color:#7d8798}
+.ar-no{font-size:12px;color:#8a94a6;margin-bottom:16px;line-height:1.8}
+.ar-drop{font-size:13px;margin-bottom:14px}
