@@ -170,7 +170,7 @@ function arDrawBoss(g,o){
   g.restore();g.globalAlpha=1;}
  g.save();g.translate(o.x,o.y);
  g.lineJoin="round";g.strokeStyle=flash?"#fff":"rgba(0,0,0,.5)";g.lineWidth=2.5;
- g.shadowColor=B.c;g.shadowBlur=16;
+ arGlow(g,B.c,16);
  const id=B.id;
  if(id==="crush"){                       // 주먹 두 개 달린 덩치
   g.rotate(face);g.fillStyle=col;
@@ -192,7 +192,7 @@ function arDrawBoss(g,o){
    g.beginPath();g.arc(Math.cos(a)*r*.5,Math.sin(a)*r*.5,r*.19,0,6.283);g.fill();}
  }else if(id==="stalk"){                 // 날 선 화살촉
   g.rotate(o.ch?o.ca:face);
-  if(o.ch)g.shadowBlur=28;
+  if(o.ch)arGlow(g,B.c,28);
   g.fillStyle=col;g.beginPath();
   g.moveTo(r*1.5,0);g.lineTo(0,-r*.8);g.lineTo(-r*.6,0);g.lineTo(0,r*.8);
   g.closePath();g.fill();g.stroke();
@@ -206,7 +206,7 @@ function arDrawBoss(g,o){
   g.fillStyle=col;g.beginPath();g.arc(0,0,r,0,6.283);g.fill();g.stroke();
   g.restore();
   g.save();g.translate(o.x,o.y);
-  g.fillStyle=B.c;g.shadowColor=B.c;g.shadowBlur=12;
+  g.fillStyle=B.c;arGlow(g,B.c,12);
   for(let i=0;i<6;i++){const a=(o.spin||0)+i*1.047,rr=r+52;
    g.save();g.translate(Math.cos(a)*rr,Math.sin(a)*rr);g.rotate(a);
    g.beginPath();g.moveTo(12,0);g.lineTo(-6,7);g.lineTo(-6,-7);g.closePath();g.fill();

@@ -95,9 +95,12 @@ const store={
   if(window.storage&&window.storage.delete)return window.storage.delete(k);
   localStorage.removeItem(k);}};
 let saveT=null;
+/* 서버가 내 저장을 고치는 중에는(대전 정산 등) 이쪽에서 밀어 올리면 안 된다.
+   내 화면의 옛 주화가 그대로 덮어써져서 주고받은 보상이 되돌아간다. */
+let CLOUD_HOLD=0;
 function save(){clearTimeout(saveT);saveT=setTimeout(async()=>{
   try{await store.set(saveKey(),JSON.stringify(S));}catch(e){}                 // 로컬 캐시(오프라인 대비)
-  if(S.cloud&&S.uid&&typeof cloudReady==="function"&&cloudReady()){            // 서버 동기화(최선 노력)
+  if(!CLOUD_HOLD&&S.cloud&&S.uid&&typeof cloudReady==="function"&&cloudReady()){ // 서버 동기화(최선 노력)
    try{await cloudPutSave(S.uid,S.acctName||"",S);}catch(e){}}
  },700);}
 async function load(){try{

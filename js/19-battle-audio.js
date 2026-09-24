@@ -125,8 +125,10 @@ function sfxHit(){
  bNoise(t,.055,.045,3000);
  bNote(t,420+Math.random()*180,.05,"square",.028,2600);
 }
+let bKillT=0;
 function sfxKill(){
  if(!S.sound)return;const t=bNow();
+ if(t-bKillT<.04)return; bKillT=t;        // 무리가 한꺼번에 죽으면 소리가 겹쳐 터진다
  bNoise(t,.09,.11,1800);
  bNote(t,300,.12,"triangle",.05,1800);
  bNote(t+.03,180,.14,"sine",.04);

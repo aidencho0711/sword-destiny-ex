@@ -8,3 +8,4 @@ deploy.ps1
 .netlify-token
 .netlify-site
 _deploy.zip
+sql

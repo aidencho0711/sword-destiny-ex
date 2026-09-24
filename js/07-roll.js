@@ -91,4 +91,12 @@ function showResult(s,R,g,isNew,gem){
  $("r-name").innerHTML=gradText(R,s.n,s);
  $("r-odds").textContent="1 / "+R.one.toLocaleString()+"　·　+"+fmt(g)+" 주화"+(gem?"　·　💎 +"+gem:"");
  sfxClink(s.t);
- if(s.t>=CUT_FROM){$("app").classList.add("shake");setTimeout(()=>$("app").classList.remove("shake"),450);}}
+ /* 흔들림은 뒤따라 나올 연출의 예고다. 카드도 컷신도 꺼 둔 채 자동 주조를 돌리면
+    예고할 것이 없는데도 매 판 떨려서 화면이 계속 부들거린다.
+    그래서 둘 중 하나라도 뜨는 등급에서만 흔든다. */
+ if(s.t>=Math.min(S.cardMin,S.cutMin))shakeApp();}
+let shakeT=null;
+function shakeApp(){
+ const a=$("app"); if(!a||a.classList.contains("shake"))return;   // 겹쳐 걸면 안 멈춘다
+ a.classList.add("shake");
+ clearTimeout(shakeT);shakeT=setTimeout(()=>a.classList.remove("shake"),450);}

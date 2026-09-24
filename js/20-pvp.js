@@ -124,6 +124,14 @@ function pvpTick(dt){
     t:BA.team.map(v=>v.s.n)});
  }
  if(PV.foe.seen>0)PV.foe.seen-=dt;
+ const s=PV.foe.sw; if(s){s.t+=dt; if(s.t>=s.d)PV.foe.sw=null;}   // 상대의 칼도 실제로 휘둘러진다
+}
+/* 상대가 지금 들고 있는 검 — 색·모션·서명이 전부 여기서 나온다 */
+function pvpFoeSword(){
+ const f=PV&&PV.foe;
+ const e=f&&f.team&&f.team[f.slot];
+ return e?{col:RARITY[e.s.t].c,mo:e.st.arch.mo,tr:e.st.trait.id,sig:e.st.sig}
+        :{col:"#ff7a6a",mo:"slash",tr:"crit",sig:null};
 }
 function pvpOnState(p){
  if(!PV||!p)return;
@@ -139,7 +147,17 @@ function pvpOnSwing(mo,dmg,tr,dir,sig){
 }
 /* 상대의 공격이 나에게 닿았는지 내 화면 기준으로 판정한다 */
 function pvpOnAtk(a){
- if(!PV||!BA||PV.done||BA.p.inv>0)return;
+ if(!PV||!BA||PV.done)return;
+ /* 먼저 보이게 한다 — 판정과 무관하게 상대가 뭘 했는지는 화면에 나와야 한다.
+    이게 없어서 상대는 가만히 서 있는데 체력만 깎이는 것처럼 보였다. */
+ const sw=pvpFoeSword(), col=sw.col;
+ PV.foe.sw={t:0,d:.26,mo:a.mo};
+ arFxOnly(a.mo,a.dir,a.x,a.y,col,a.sig);
+ /* 조각을 쏘는 검은 탄이 실제로 날아온다 — 닿으면 그때 내가 맞았다고 본다 */
+ if(a.mo==="shard")arFoeBullet(a.x,a.y,a.dir,a.dmg*.55,col,0);
+ if(a.sig==="glx")for(let i=0;i<3;i++)
+  arFoeBullet(a.x,a.y,a.dir+(i-1)*.34,a.dmg*.22,col,1,380);
+ if(BA.p.inv>0)return;
  const P=BA.p;
  const REACH={slash:80,sweep:112,thrust:140,cone:92,lunge:74,double:78,blink:86,shard:0};
  const HALF={slash:.62,sweep:1.15,thrust:.2,cone:.85,lunge:.7,double:.5,blink:.8};
@@ -172,21 +190,51 @@ function pvpOnDie(p){
 function pvpFinish(winner){
  if(!PV||PV.done)return;
  PV.done=true;PV.winner=winner;
- pvpReport(PV.mid,winner).catch(()=>{});
  const win=winner===S.uid;
  if(BA){BA.over=true;
-  $("ar-over").innerHTML=`<div class="ar-res">
-    <div class="ar-rt">${win?"승 리":"패 배"}</div>
-    <div class="ar-rw"><b>${esc2(PV.oppName)}</b><span>상대</span></div>
-    <p class="ar-no">정산은 양쪽 보고가 맞아떨어질 때 처리됩니다.<br>
-      주화·보석은 잠시 뒤 반영됩니다.</p>
-    <button class="buy" id="ar-close">돌아가기</button></div>`;
+  pvpResultCard(win,null);
   $("ar-over").classList.add("on");
-  $("ar-close").onclick=()=>{pvpEndSession();closeArena();renderBattle();};
  }
  if(win)sfxReward(); else sfxDeath();
- /* 잠시 뒤 서버 정산 결과를 받아 온다 */
- setTimeout(async()=>{ try{ await pullCloud(); renderHUD(); }catch(e){} },2500);
+ pvpSettle(PV.mid,winner,win);
+}
+/* 정산 — 양쪽 보고가 모일 때까지 기다렸다가 결과를 받아 온다.
+   pvp_report 는 (판, 보고자) 가 기본키라 몇 번을 다시 불러도 한 번만 센다.
+   그래서 "아직 상대 보고가 없다(waiting)"면 그냥 다시 부르면 된다. */
+async function pvpSettle(mid,winner,win){
+ CLOUD_HOLD++;                                   // 정산 끝나기 전에 옛 저장을 올리면 되돌아간다
+ let res=null;
+ try{
+  for(let i=0;i<12;i++){
+   const r=await pvpReport(mid,winner);
+   if(r&&r.error){res={ok:false,why:cloudErr(r.error)};break;}
+   res=(r&&r.data)||null;
+   if(!res){res={ok:false,why:"응답 없음"};break;}
+   if(res.ok||res.why!=="waiting")break;
+   await new Promise(s=>setTimeout(s,i<4?700:1500));
+  }
+ }catch(e){ res={ok:false,why:"통신 오류"}; }
+ try{ await pullCloud(); }catch(e){}
+ CLOUD_HOLD--;
+ renderHUD();
+ if(PV&&BA&&BA.over)pvpResultCard(win,res);
+}
+const PV_WHY={waiting:"상대의 결과가 오지 않았습니다. 상대가 보내는 대로 서버가 정산하며, 다음에 접속할 때 반영됩니다.",
+ mismatch:"양쪽 보고가 어긋나 무효 처리했습니다.",
+ void:"무효가 된 판입니다.", "not live":"이미 끝난 판입니다.", "no match":"판을 찾지 못했습니다."};
+function pvpResultCard(win,res){
+ const done=res&&res.ok;
+ const amt=done?`<div class="ar-gain">
+     <div><b>${win?"+":"−"}${fmt(res.gold||0)}</b><span>주화</span></div>
+     <div><b>💎 ${win?"+":"−"}${res.gems||0}</b><span>보석</span></div></div>`
+   : `<p class="ar-no">${res?(PV_WHY[res.why]||res.why||"정산하지 못했습니다"):"정산 중…"}</p>`;
+ $("ar-over").innerHTML=`<div class="ar-res">
+   <div class="ar-rt">${win?"승 리":"패 배"}</div>
+   <div class="ar-rw"><b>${esc2(PV?PV.oppName:"")}</b><span>상대</span></div>
+   ${amt}
+   <button class="buy" id="ar-close">돌아가기</button></div>`;
+ const b=$("ar-close");
+ if(b)b.onclick=()=>{pvpEndSession();closeArena();renderBattle();};
 }
 function pvpEndSession(){
  if(!PV)return;
@@ -199,36 +247,16 @@ function pvpOnMyDeath(){
  pvpSend2("die",{});
  pvpFinish(PV.oppUid);
 }
-/* ── 상대 그리기 ── */
+/* ── 상대 그리기 ── 주인공과 같은 함수를 쓴다. 아우라도 검도 그대로 따라온다 */
 function pvpDrawFoe(g){
  if(!PV||!BA)return;
  const f=PV.foe;
  if(f.seen<=0||!f.alive)return;
- const col=f.team&&f.team[f.slot]?RARITY[f.team[f.slot].s.t].c:"#ff7a6a";
- g.save();
+ const sw=pvpFoeSword();
+ arAuraAt(g,f.x,f.y,f.dir,sw.tr,sw.col,sw.sig);
  g.fillStyle="rgba(0,0,0,.34)";
  g.beginPath();g.ellipse(f.x,f.y+13,15,5.5,0,0,6.283);g.fill();
- g.translate(f.x,f.y);g.rotate(f.dir+Math.PI/2);
- g.fillStyle="rgba(46,22,26,.9)";
- g.beginPath();g.moveTo(-12,2);g.quadraticCurveTo(0,20,12,2);
- g.quadraticCurveTo(0,10,-12,2);g.closePath();g.fill();
- const bg=g.createLinearGradient(0,-12,0,12);
- bg.addColorStop(0,"#ffd9d4");bg.addColorStop(1,"#b06a68");
- g.fillStyle=bg;g.strokeStyle="rgba(10,14,24,.8)";g.lineWidth=2;
- g.beginPath();g.ellipse(0,0,11,12.5,0,0,6.283);g.fill();g.stroke();
- g.fillStyle=col;
- g.beginPath();g.ellipse(-10,1,4.2,5.4,-.3,0,6.283);g.fill();
- g.beginPath();g.ellipse(10,1,4.2,5.4,.3,0,6.283);g.fill();
- g.fillStyle="#f7e6e4";
- g.beginPath();g.arc(0,-3,6.4,0,6.283);g.fill();g.stroke();
- g.save();g.translate(9,0);g.rotate(-0.42);
- g.shadowColor=col;g.shadowBlur=6;
- const mo=f.team&&f.team[f.slot]?f.team[f.slot].st.arch.mo:"slash";
- const gl=g.createLinearGradient(0,-42,0,0);
- gl.addColorStop(0,"#ffffff");gl.addColorStop(.5,col);gl.addColorStop(1,"#6d7689");
- g.fillStyle=gl;g.strokeStyle="rgba(8,12,20,.85)";g.lineWidth=1.4;
- arBladePath(g,mo,42);g.fill();g.stroke();g.shadowBlur=0;
- g.restore();g.restore();
+ arDrawFighter(g,f.x,f.y,f.dir,sw.col,sw.mo,f.sw,"foe",0);
  /* 머리 위 이름과 체력 */
  g.textAlign="center";g.font="500 10px system-ui";
  g.fillStyle="#ffd0cc";g.fillText(f.name,f.x,f.y-30);

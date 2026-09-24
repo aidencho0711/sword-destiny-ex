@@ -6,7 +6,7 @@
         오른쪽 아래 버튼을 누르고 있으면 검의 속도대로 계속 벤다. */
 let BA=null;
 
-function openArena(mode){
+function openArena(mode,opt){
  if(!battleOpen()||((S.team||[]).length<TEAM_SIZE))return;
  const el=$("arena");
  el.innerHTML=`<canvas id="ar-cv"></canvas>
@@ -50,6 +50,8 @@ function openArena(mode){
  $("ar-quit").onclick=()=>arEnd(true);
  btBgmStart(mode==="pvp"?"boss":"wave");   // 대전은 보스곡으로
  if(mode!=="duo")BA.duo=null;
+ BA.bot=null;
+ if(opt&&opt.bot)botInit();                // 함께할 사람이 없을 때의 AI 동료
  BA.last=performance.now();
  BA.raf=requestAnimationFrame(arLoop);
 }
@@ -65,14 +67,48 @@ function closeArena(){
 function arResize(){
  if(!BA)return;
  const r=$("arena").getBoundingClientRect();
- BA.dpr=Math.min(2,devicePixelRatio||1);
+ /* 화소 배율은 품질 설정을 따른다 — 2배로 잡으면 칠할 화소가 네 배가 되어
+    저사양 기기에서는 이것만으로 프레임이 반토막 난다. */
+ BA.dpr=Math.min(QLV>=3?1:(QLV===2?1.5:2),devicePixelRatio||1);
  BA.w=r.width;BA.h=r.height;
  BA.cv.width=Math.round(r.width*BA.dpr);BA.cv.height=Math.round(r.height*BA.dpr);
  BA.cv.style.width=r.width+"px";BA.cv.style.height=r.height+"px";
  BA.ctx.setTransform(BA.dpr,0,0,BA.dpr,0,0);
  if(!BA.p.x){BA.p.x=BA.w/2;BA.p.y=BA.h/2;}
+ BA.vig=null;BA.grad=null;
+ arBakeBg();
  arLayout();
 }
+/* 바닥은 매 프레임 다시 그릴 이유가 없다. 그라디언트를 새로 만들고 격자를 수십 줄
+   긋는 일이 프레임마다 반복되면 저사양 기기에서는 이것만으로 한참을 잡아먹는다.
+   크기가 바뀔 때 한 번만 구워 두고 그 뒤로는 통째로 붙인다. */
+function arBakeBg(){
+ const W=BA.w,H=BA.h,d=BA.dpr;
+ if(W<1||H<1)return;
+ const c=BA.bg||(BA.bg=document.createElement("canvas"));
+ c.width=Math.round(W*d);c.height=Math.round(H*d);
+ const g=c.getContext("2d");g.setTransform(d,0,0,d,0,0);
+ const bg=g.createRadialGradient(W/2,H*.44,40,W/2,H*.44,Math.max(W,H)*.78);
+ bg.addColorStop(0,"#131726");bg.addColorStop(1,"#080910");
+ g.fillStyle=bg;g.fillRect(0,0,W,H);
+ g.strokeStyle="rgba(130,150,190,.055)";g.lineWidth=1;g.beginPath();
+ for(let x=(W/2)%56;x<W;x+=56){g.moveTo(x,0);g.lineTo(x,H);}
+ for(let y=(H/2)%56;y<H;y+=56){g.moveTo(0,y);g.lineTo(W,y);}
+ g.stroke();
+}
+/* 칼날 그라디언트는 색과 길이가 같으면 늘 같은 물건이다 — 매 프레임 새로 만들지 않는다.
+   그라디언트 좌표는 그릴 때의 좌표계로 풀리므로 회전·이동해도 그대로 쓸 수 있다. */
+function arBladeGrad(g,col,L){
+ const k=col+"|"+Math.round(L);
+ const m=BA.grad||(BA.grad={});
+ if(m[k])return m[k];
+ const gl=g.createLinearGradient(0,-L,0,0);
+ gl.addColorStop(0,"#ffffff");gl.addColorStop(.5,col);gl.addColorStop(1,"#6d7689");
+ return m[k]=gl;
+}
+/* 캔버스 그림자는 그릴 때마다 따로 흐림 패스를 돌린다 — 가장 비싼 축이라
+   품질을 낮췄을 때는 아예 걸지 않는다. */
+function arGlow(g,c,b){ if(QLV<=1){g.shadowColor=c;g.shadowBlur=b;} }
 /* 조작부 위치 — 화면이 바뀌어도 손가락 자리가 유지되도록 따로 잡는다 */
 function arLayout(){
  const b=Math.max(74,Math.min(106,BA.w*0.25));
@@ -218,10 +254,12 @@ function arStep(dt){
   b.x+=b.vx*dt;b.y+=b.vy*dt;b.t+=dt;
   if(b.t>3||b.x<-40||b.y<-40||b.x>BA.w+40||b.y>BA.h+40){BA.bul.splice(i,1);continue;}
   if(b.foe){ if(arDist(b,P)<P.r+b.r&&P.inv<=0){arHurt(b.dmg);BA.bul.splice(i,1);} }
+  else if(b.ghost){}                       // 동료의 탄은 그림일 뿐 — 적을 깎지 않는다
   else{ let hitOne=false;
         for(const o of BA.mobs) if(arDist(b,o)<o.r+b.r){arHit(o,b.dmg,b.tr,1);hitOne=true;break;}
         if(hitOne&&b.tr!=="pierce")BA.bul.splice(i,1); }
  }
+ if(BA.bot)botStep(dt);
  arHazStep(dt);
  /* 잔존 장판 */
  for(const f of BA.fx) if(f.k==="pool"){
@@ -232,7 +270,11 @@ function arStep(dt){
  for(let i=BA.num.length-1;i>=0;i--){const n=BA.num[i];n.t+=dt;n.y-=26*dt;if(n.t>.8)BA.num.splice(i,1);}
  if(BA.swing){BA.swing.t+=dt;if(BA.swing.t>=BA.swing.d)BA.swing=null;}
  BA.time=(BA.time||0)+dt;
- const hb=$("ar-hp"); if(hb)hb.style.width=Math.max(0,P.hp/P.hpMax*100)+"%";
+ /* 체력 막대는 DOM 이다 — 매 프레임 style 을 건드리면 그때마다 스타일 재계산이 붙는다.
+    값이 실제로 달라졌을 때만 쓴다. */
+ const pc=Math.max(0,Math.round(P.hp/P.hpMax*200));
+ if(pc!==BA.hpShown){BA.hpShown=pc;
+  const hb=BA.hpEl||(BA.hpEl=$("ar-hp")); if(hb)hb.style.width=(pc/2)+"%";}
 }
 function arNearest(){
  let b=null,bd=1e9;
@@ -269,7 +311,7 @@ function arHurt(d){
  BA.fx.push({k:"hurt",t:0,d:.32});sfxHurt();
  if(P.hp<=0){P.hp=0;
   if(BA.mode==="pvp")pvpOnMyDeath();
-  else if(BA.mode==="duo")duoOnMyDown();      // 듀얼은 한 명 누워도 안 끝난다
+  else if(BA.mode==="duo"&&!BA.bot)duoOnMyDown();   // 둘 중 하나가 누우면 거기서 끝난다
   else arEnd(false);}
 }
 function arHit(o,dmg,tr,report){
@@ -311,7 +353,7 @@ function arSwing(){
  BA.swing={t:0,d:.26,dir,mo};                          // 칼이 실제로 휘둘러지게
  sfxSwing(mo);
  if(BA.mode==="pvp")pvpOnSwing(mo,dmg,tr,dir,c.st.sig);
- if(BA.mode==="duo")duoOnSwing(mo,dmg,tr,dir);
+ if(BA.mode==="duo")duoOnSwing(mo,dmg,tr,dir,c.st.sig);
  arMotion(mo,dmg,tr,dir);
  if(tr==="twin")setTimeout(()=>{if(BA&&!BA.over)arMotion(mo,dmg,null,BA.p.dir);},110);
  if(tr==="echo")setTimeout(()=>{if(BA&&!BA.over)arMotion(mo,dmg*.6,null,BA.p.dir);},240);
@@ -342,8 +384,48 @@ function arPath(x0,y0,x1,y1,rad,dmg,tr){
 }
 const arClampX=x=>Math.max(BA.p.r,Math.min(BA.w-BA.p.r,x));
 const arClampY=y=>Math.max(BA.p.r,Math.min(BA.h-BA.p.r,y));
+/* 남의 공격을 대신 재생할 때 쓰는 대역 — 자국의 색과 서명을 그 사람 것으로 바꾼다.
+   이게 없으면 동료가 휘둘러도 내 검 색으로 자국이 남아 누가 쳤는지 알 수 없다.
+
+   ghost 를 켜면 이 대역이 만드는 탄·장판은 아무것도 깎지 않는다 —
+   호스트가 손님의 공격을 재생할 때가 그렇다. 손님 쪽 탄은 이미 제 손으로
+   맞은 지점을 보고하므로, 여기서 또 쏘면 같은 공격이 두 번 들어간다. */
+function arStandIn(col,sig,ghost){ if(BA)BA.as={col,sig:sig||null,ghost:ghost?1:0}; }
+function arStandOut(){ if(BA)BA.as=null; }
+const arAsGhost=()=>(BA&&BA.as&&BA.as.ghost)?1:0;
+/* 눈에 보이는 부분만 — 판정 없이 자국만 남긴다.
+   1vs1 상대와 듀얼 동료의 공격을 내 화면에 그리는 데 쓴다.
+   (맞았는지는 각자 제 화면에서 따로 본다.) */
+function arFxOnly(mo,dir,x,y,c,sig){
+ if(!BA)return;
+ const F=BA.fx;
+ if(mo==="slash")       F.push({k:"slash",x,y,a:dir,R:80,t:0,d:.24,c});
+ else if(mo==="sweep")  F.push({k:"crescent",x,y,a:dir,R:112,half:1.15,t:0,d:.32,c});
+ else if(mo==="thrust") F.push({k:"lance",x,y,a:dir,R:140,t:0,d:.26,c});
+ else if(mo==="cone")   F.push({k:"flame",x,y,a:dir,R:92,half:.85,t:0,d:.34,c});
+ else if(mo==="double") F.push({k:"cross",x,y,a:dir,R:78,t:0,d:.3,c});
+ else if(mo==="lunge")  F.push({k:"dash",x0:x,y0:y,x1:x+Math.cos(dir)*42,y1:y+Math.sin(dir)*42,t:0,d:.28,c});
+ else if(mo==="blink")  F.push({k:"rift",x0:x,y0:y,x1:x+Math.cos(dir)*78,y1:y+Math.sin(dir)*78,t:0,d:.34,c});
+ else if(mo==="shard")  F.push({k:"muzzle",x,y,a:dir,t:0,d:.2,c});
+ if(sig==="tdz")      F.push({k:"tdzEcho",x,y,a:dir,t:0,d:.5,c});
+ else if(sig==="glx") F.push({k:"glxTear",x,y,a:dir,t:0,d:.3,c});
+ else if(sig==="obl") F.push({k:"oblErase",x:x+Math.cos(dir)*58,y:y+Math.sin(dir)*58,t:0,d:.55,c});
+}
+/* 상대가 쏜 조각 — 내 화면에서 실제로 날아오고, 나에게 닿으면 내가 맞았다고 본다.
+   지금까지 1vs1 에는 이게 없어서 수정검(shard)은 판정도 그림도 아예 없었다. */
+function arFoeBullet(x,y,dir,dmg,c,gl,sp){
+ if(!BA)return;
+ BA.bul.push({x,y,vx:Math.cos(dir)*(sp||450),vy:Math.sin(dir)*(sp||450),
+   r:gl?7:8,dmg,foe:1,t:0,c,gl:gl||0});
+}
+/* 동료의 탄 — 보이기만 하고 아무것도 깎지 않는다 (적의 주인은 호스트 하나다) */
+function arGhostBullet(x,y,dir,c,gl,sp){
+ if(!BA)return;
+ BA.bul.push({x,y,vx:Math.cos(dir)*(sp||450),vy:Math.sin(dir)*(sp||450),
+   r:gl?7:8,dmg:0,foe:0,ghost:1,t:0,c,gl:gl||0});
+}
 function arMotion(mo,dmg,tr,dir){
- const P=BA.p,c=arCol();
+ const P=BA.p,c=(BA.as&&BA.as.col)||arCol();
  if(mo==="slash"){
   arCone(80,.62,1,dmg,tr,dir);
   BA.fx.push({k:"slash",x:P.x,y:P.y,a:dir,R:80,t:0,d:.24,c});
@@ -374,15 +456,15 @@ function arMotion(mo,dmg,tr,dir){
   arCone(86,.8,1.05,dmg,tr,dir);
   BA.fx.push({k:"rift",x0,y0,x1:P.x,y1:P.y,t:0,d:.34,c});
  }else if(mo==="shard"){
-  BA.bul.push({x:P.x,y:P.y,vx:Math.cos(dir)*450,vy:Math.sin(dir)*450,r:8,dmg,tr,foe:0,t:0,c});
+  BA.bul.push({x:P.x,y:P.y,vx:Math.cos(dir)*450,vy:Math.sin(dir)*450,r:8,dmg,tr,foe:0,t:0,c,ghost:arAsGhost()});
   BA.fx.push({k:"muzzle",x:P.x,y:P.y,a:dir,t:0,d:.2,c});
  }
  if(tr==="linger")BA.fx.push({k:"pool",x:P.x+Math.cos(dir)*52,y:P.y+Math.sin(dir)*52,
-   r:42,t:0,d:1.6,dmg:dmg*.18,c});
+   r:42,t:0,d:1.6,dmg:arAsGhost()?0:dmg*.18,c});
  if(BA.up.shock){                                // 파편 — 벤 자리 주변까지
   for(const o of BA.mobs) if(arDist(o,P)<64+o.r)arHit(o,dmg*BA.up.shock,null);
   BA.fx.push({k:"pop",x:P.x,y:P.y,r:22,t:0,d:.26,c});}
- const sig=arCur().st.sig; if(sig)arAbsAttack(sig,dmg,tr,dir);
+ const sig=BA.as?BA.as.sig:arCur().st.sig; if(sig)arAbsAttack(sig,dmg,tr,dir);
 }
 /* ── 종료 ── */
 function arEnd(quit){
@@ -421,15 +503,9 @@ function arEnd(quit){
    주인공은 들고 있는 검의 날 모양을 실제로 들고 휘두른다. */
 function arDraw(){
  const g=BA.ctx,W=BA.w,H=BA.h,P=BA.p;
- g.clearRect(0,0,W,H);
- /* 바닥 — 가운데가 살짝 밝은 판 */
- const bg=g.createRadialGradient(W/2,H*.44,40,W/2,H*.44,Math.max(W,H)*.78);
- bg.addColorStop(0,"#131726");bg.addColorStop(1,"#080910");
- g.fillStyle=bg;g.fillRect(0,0,W,H);
- g.strokeStyle="rgba(130,150,190,.055)";g.lineWidth=1;g.beginPath();
- for(let x=(W/2)%56;x<W;x+=56){g.moveTo(x,0);g.lineTo(x,H);}
- for(let y=(H/2)%56;y<H;y+=56){g.moveTo(0,y);g.lineTo(W,y);}
- g.stroke();
+ /* 구워 둔 바닥을 통째로 붙인다 — 불투명하므로 지울 필요도 없다 */
+ if(BA.bg)g.drawImage(BA.bg,0,0,W,H);
+ else g.clearRect(0,0,W,H);
  /* 장판 */
  for(const f of BA.fx) if(f.k==="pool"){
   const k=1-f.t/f.d;
@@ -472,7 +548,8 @@ function arDraw(){
   g.beginPath();g.arc(P.x,P.y,20+k*46,0,6.283);g.stroke();g.globalAlpha=1;}
  arDrawAura(g);
  if(BA.mode==="pvp")pvpDrawFoe(g);
- if(BA.mode==="duo")duoDrawMate(g);
+ else if(BA.bot)botDraw(g);
+ else if(BA.mode==="duo")duoDrawMate(g);
  arDrawPlayer(g);
  /* 피해 숫자 */
  g.textAlign="center";g.font="700 13px system-ui,sans-serif";
@@ -481,12 +558,14 @@ function arDraw(){
   g.lineWidth=3;g.strokeStyle="rgba(0,0,0,.75)";g.strokeText(n.v,n.x,n.y);
   g.fillStyle=n.c;g.fillText(n.v,n.x,n.y);}
  g.globalAlpha=1;
- /* 피격 붉은 테 */
+ /* 피격 붉은 테 — 그라디언트는 한 번만 만들고 진하기는 알파로 준다 */
  for(const f of BA.fx) if(f.k==="hurt"){
-  const k=1-f.t/f.d;
-  const vg=g.createRadialGradient(W/2,H/2,Math.min(W,H)*.3,W/2,H/2,Math.max(W,H)*.62);
-  vg.addColorStop(0,"rgba(255,45,77,0)");vg.addColorStop(1,"rgba(255,45,77,"+(k*.5).toFixed(3)+")");
-  g.fillStyle=vg;g.fillRect(0,0,W,H);}
+  if(!BA.vig){
+   const vg=g.createRadialGradient(W/2,H/2,Math.min(W,H)*.3,W/2,H/2,Math.max(W,H)*.62);
+   vg.addColorStop(0,"rgba(255,45,77,0)");vg.addColorStop(1,"rgba(255,45,77,1)");
+   BA.vig=vg;}
+  g.globalAlpha=(1-f.t/f.d)*.5;
+  g.fillStyle=BA.vig;g.fillRect(0,0,W,H);g.globalAlpha=1;}
  /* 웨이브 알림 */
  for(const f of BA.fx) if(f.k==="wave"){
   const k=f.t/f.d;
@@ -525,7 +604,7 @@ function arDrawMob(g,o){
   g.closePath();g.fill();g.stroke();
  }else if(id==="charger"){              // 뿔 달린 덩치. 돌진 중엔 빛난다
   g.rotate(face);
-  if(o.ch){g.shadowColor=o.m.c;g.shadowBlur=18;}
+  if(o.ch)arGlow(g,o.m.c,18);
   g.fillStyle=col;g.beginPath();
   g.moveTo(r*.9,-r*.5);g.lineTo(r*1.45,-r*.16);g.lineTo(r*.95,0);
   g.lineTo(r*1.45,r*.16);g.lineTo(r*.9,r*.5);
@@ -569,7 +648,7 @@ function arDrawMob(g,o){
   for(let i=0;i<10;i++){const a=i*.628,rr=r*(i%2?.6:1.15);
    i?g.lineTo(Math.cos(a)*rr,Math.sin(a)*rr):g.moveTo(Math.cos(a)*rr,Math.sin(a)*rr);}
   g.closePath();g.fill();g.stroke();
-  g.shadowColor="#ffd45e";g.shadowBlur=12*pulse;
+  arGlow(g,"#ffd45e",12*pulse);
   g.fillStyle=flash?"#fff":"#ffe08a";
   g.beginPath();g.arc(0,0,r*.34*pulse,0,6.283);g.fill();g.shadowBlur=0;
  }else{                                 // 부유체 — 촉수 달린 해파리
@@ -629,50 +708,68 @@ function arBladePath(g,mo,L){
  g.closePath();
 }
 /* 주인공 — 몸통·머리·어깨, 그리고 실제로 휘둘러지는 검 */
-function arDrawPlayer(g){
- const P=BA.p,c=arCur(),col=arCol(),mo=c.st.arch.mo;
- g.save();g.translate(P.x,P.y);
- if(P.inv>0&&Math.floor(P.inv*14)%2)g.globalAlpha=.45;
- g.rotate(P.dir+Math.PI/2);            // 위쪽을 정면으로 둔다
- /* 망토 */
- g.fillStyle="rgba(24,30,46,.9)";
+/* 휘두르는 중의 칼 각도와 길이 — 주인공·상대·동료가 같은 식을 쓴다 */
+function arBladePose(sw){
+ if(!sw)return {ang:-0.42,L:42};                // 검을 크게 — 손에 든 게 보여야 한다
+ const k=Math.min(1,sw.t/sw.d), e=k<.28?k/.28:1-(k-.28)/.72;
+ if(sw.mo==="thrust")    return {ang:-0.05,        L:42+34*e};
+ if(sw.mo==="shard")     return {ang:-0.05-e*.2,   L:42};
+ if(sw.mo==="sweep")     return {ang:-1.5+e*2.6,   L:50};
+ return                         {ang:-1.15+e*1.9, L:42};
+}
+/* 사람 하나를 그린다 — 주인공, 1vs1 상대, 듀얼 동료가 전부 이 함수를 쓴다.
+   셋이 따로 그려지던 것을 합쳐 두면 연출을 고칠 때 한쪽만 빠지는 일이 없다. */
+const AR_SKIN={
+ me:  {cloak:"rgba(24,30,46,.9)", b0:"#f2f6ff",b1:"#9aa6bd",head:"#e8edf7"},
+ mate:{cloak:"rgba(20,34,26,.9)", b0:"#e6fff0",b1:"#8fb49c",head:"#eef7f0"},
+ foe: {cloak:"rgba(46,22,26,.9)", b0:"#ffd9d4",b1:"#b06a68",head:"#f7e6e4"},
+};
+function arBodyGrad(g,sk){
+ const m=BA.grad||(BA.grad={}),k="b:"+sk.b0;
+ if(m[k])return m[k];
+ const bg=g.createLinearGradient(0,-12,0,12);
+ bg.addColorStop(0,sk.b0);bg.addColorStop(1,sk.b1);
+ return m[k]=bg;
+}
+function arDrawFighter(g,x,y,dir,col,mo,sw,skin,fade){
+ const sk=AR_SKIN[skin]||AR_SKIN.me;
+ g.save();g.translate(x,y);
+ if(fade)g.globalAlpha=fade;
+ const a0=g.globalAlpha;
+ g.rotate(dir+Math.PI/2);              // 위쪽을 정면으로 둔다
+ g.fillStyle=sk.cloak;                 // 망토
  g.beginPath();g.moveTo(-12,2);g.quadraticCurveTo(0,20,12,2);
  g.quadraticCurveTo(0,10,-12,2);g.closePath();g.fill();
- /* 몸통 */
- const bg=g.createLinearGradient(0,-12,0,12);
- bg.addColorStop(0,"#f2f6ff");bg.addColorStop(1,"#9aa6bd");
- g.fillStyle=bg;g.strokeStyle="rgba(10,14,24,.8)";g.lineWidth=2;
+ g.fillStyle=arBodyGrad(g,sk);         // 몸통
+ g.strokeStyle="rgba(10,14,24,.8)";g.lineWidth=2;
  g.beginPath();g.ellipse(0,0,11,12.5,0,0,6.283);g.fill();g.stroke();
- /* 어깨 */
- g.fillStyle=col;g.globalAlpha=(g.globalAlpha)*.85;
+ g.fillStyle=col;g.globalAlpha=a0*.85; // 어깨
  g.beginPath();g.ellipse(-10,1,4.2,5.4,-.3,0,6.283);g.fill();
  g.beginPath();g.ellipse(10,1,4.2,5.4,.3,0,6.283);g.fill();
- g.globalAlpha=P.inv>0&&Math.floor(P.inv*14)%2?.45:1;
- /* 머리 */
- g.fillStyle="#e8edf7";g.strokeStyle="rgba(10,14,24,.8)";
+ g.globalAlpha=a0;
+ g.fillStyle=sk.head;g.strokeStyle="rgba(10,14,24,.8)";   // 머리
  g.beginPath();g.arc(0,-3,6.4,0,6.283);g.fill();g.stroke();
  /* 검 — 오른손에서 뻗어 나가고, 벨 때 실제로 호를 그린다 */
- const sw=BA.swing;
- let ang=-0.42, L=42;                  // 검을 크게 — 손에 든 게 보여야 한다
- if(sw){
-  const k=sw.t/sw.d, e=k<.28?k/.28:1-(k-.28)/.72;
-  if(sw.mo==="thrust")      {ang=-0.05; L=42+34*e;}
-  else if(sw.mo==="shard")  {ang=-0.05-e*.2;}
-  else if(sw.mo==="sweep")  {ang=-1.5+e*2.6; L=50;}
-  else                      {ang=-1.15+e*1.9;}
- }
+ const po=arBladePose(sw),L=po.L;
  g.save();
- g.translate(9,0);g.rotate(ang);
- g.shadowColor=col;g.shadowBlur=sw?14:6;
- const gl=g.createLinearGradient(0,-L,0,0);
- gl.addColorStop(0,"#ffffff");gl.addColorStop(.5,col);gl.addColorStop(1,"#6d7689");
- g.fillStyle=gl;g.strokeStyle="rgba(8,12,20,.85)";g.lineWidth=1.4;
+ g.translate(9,0);g.rotate(po.ang);
+ /* 빛은 그림자 대신 같은 모양을 굵게 덧그려 낸다 — 캔버스 그림자는
+    그릴 때마다 흐림 패스를 따로 돌려서 저사양 기기에서 가장 비싸다. */
+ g.globalCompositeOperation="lighter";g.globalAlpha=a0*(sw?.55:.3);
+ g.strokeStyle=col;g.lineWidth=sw?7:4.5;g.lineJoin="round";
+ arBladePath(g,mo,L);g.stroke();
+ g.globalCompositeOperation="source-over";g.globalAlpha=a0;
+ g.fillStyle=arBladeGrad(g,col,L);g.strokeStyle="rgba(8,12,20,.85)";g.lineWidth=1.4;
  arBladePath(g,mo,L);g.fill();g.stroke();
- g.shadowBlur=0;
  g.fillStyle="#3a3f4d";g.fillRect(-2.8,0,5.6,12);          // 자루
  g.fillStyle=col;g.fillRect(-7.5,-2,15,4);                 // 가드
  g.restore();
  g.restore();g.globalAlpha=1;
+}
+function arDrawPlayer(g){
+ const P=BA.p,c=arCur();
+ const blink=P.inv>0&&Math.floor(P.inv*14)%2?.45:0;
+ arDrawFighter(g,P.x,P.y,P.dir,arCol(),c.st.arch.mo,BA.swing,"me",blink);
 }
 
 /* 터치 조작부 */
@@ -714,7 +811,12 @@ function arDrawKeyHint(g){
 /* 장착한 검의 아우라 — 검을 바꾸면 같이 바뀐다.
    모양은 그 검의 고유 특징에서 오고, 색은 등급에서 온다. */
 function arDrawAura(g){
- const P=BA.p,c=arCol(),tr=arCur().st.trait.id,T=BA.time||0;
+ const P=BA.p,st=arCur().st;
+ arAuraAt(g,P.x,P.y,P.dir,st.trait.id,arCol(),st.sig);
+}
+/* 자리와 검만 주면 누구 발밑에든 깔린다 — 1vs1 상대와 듀얼 동료도 같은 걸 쓴다 */
+function arAuraAt(g,px,py,pdir,tr,c,sig){
+ const P={x:px,y:py,dir:pdir},T=BA.time||0;
  g.save();g.translate(P.x,P.y);
  g.globalCompositeOperation="lighter";
  /* 바닥에 깔리는 기본 후광 — 어느 검이든 공통 */
@@ -725,7 +827,7 @@ function arDrawAura(g){
  g.globalAlpha=1;g.strokeStyle=c;g.fillStyle=c;
 
  if(tr==="crit"){                       // 치명 — 날 선 조각이 돈다
-  for(let i=0;i<4;i++){const a=T*1.9+i*1.571,r=30+Math.sin(T*3+i)*4;
+  for(let i=0,N=QC(4);i<N;i++){const a=T*1.9+i*1.571,r=30+Math.sin(T*3+i)*4;
    g.save();g.translate(Math.cos(a)*r,Math.sin(a)*r);g.rotate(a);
    g.globalAlpha=.75;g.beginPath();
    g.moveTo(6,0);g.lineTo(0,3.4);g.lineTo(-6,0);g.lineTo(0,-3.4);g.closePath();g.fill();
@@ -749,14 +851,14 @@ function arDrawAura(g){
    g.beginPath();g.arc(-Math.cos(P.dir)*i*13,-Math.sin(P.dir)*i*13,12,0,6.283);g.fill();}
  }else if(tr==="rush"){                 // 질주 — 뒤로 흐르는 줄기
   const back=P.dir+Math.PI;
-  for(let i=0;i<5;i++){const o=(i-2)*5,k=((T*2.2+i*.2)%1);
+  for(let i=0,N=QC(5);i<N;i++){const o=(i-2)*5,k=((T*2.2+i*.2)%1);
    g.globalAlpha=.45*(1-k);g.lineWidth=2;
    const px=Math.cos(back)*(14+k*30)+Math.cos(back+1.571)*o;
    const py=Math.sin(back)*(14+k*30)+Math.sin(back+1.571)*o;
    g.beginPath();g.moveTo(px,py);
    g.lineTo(px+Math.cos(back)*9,py+Math.sin(back)*9);g.stroke();}
  }else if(tr==="linger"){               // 잔존 — 떨어져 고이는 방울
-  for(let i=0;i<5;i++){const a=i*1.257+T*.4,k=((T*.8+i/5)%1);
+  for(let i=0,N=QC(5);i<N;i++){const a=i*1.257+T*.4,k=((T*.8+i/5)%1);
    g.globalAlpha=.5*(1-k);
    g.beginPath();g.arc(Math.cos(a)*26,Math.sin(a)*26+k*16,2.6*(1-k)+.8,0,6.283);g.fill();}
  }else if(tr==="twin"){                 // 쌍격 — 두 고리가 서로 반대로
@@ -769,12 +871,12 @@ function arDrawAura(g){
   g.setLineDash([5,7]);g.lineDashOffset=-T*24;
   g.beginPath();g.arc(0,0,30,0,6.283);g.stroke();g.setLineDash([]);
  }else{                                 // 수확 — 위로 피어오르는 알갱이
-  for(let i=0;i<6;i++){const a=i*1.047+T*.3,k=((T*.7+i/6)%1);
+  for(let i=0,N=QC(6);i<N;i++){const a=i*1.047+T*.3,k=((T*.7+i/6)%1);
    g.globalAlpha=.55*(1-k);
    g.beginPath();g.arc(Math.cos(a)*22,Math.sin(a)*22-k*26,2.2*(1-k)+.7,0,6.283);g.fill();}
  }
  g.restore();g.globalAlpha=1;g.globalCompositeOperation="source-over";
- if(arCur().st.sig)arDrawAbsAura(g,arCur().st.sig,c,T);
+ if(sig)arDrawAbsAura(g,sig,c,T,P.x,P.y);
 }
 
 /* 공격 이펙트 — 모션마다 다르게 */
@@ -843,14 +945,15 @@ function arDrawSwingFx(g,f){
 
 /* ══ ABSOLUTE 전용 연출 ══
    고유 특징(trait) 아우라 위에 제 테마의 층을 하나 더 얹는다. */
-function arDrawAbsAura(g,sig,c,T){
+function arDrawAbsAura(g,sig,c,T,px,py){
  /* 스스로 자리를 잡는다 — 호출부의 translate 에 기대면 복원 뒤에 불릴 때 원점에 그려진다 */
- g.save();g.translate(BA.p.x,BA.p.y);g.globalCompositeOperation="lighter";
+ g.save();g.translate(px!=null?px:BA.p.x,py!=null?py:BA.p.y);
+ g.globalCompositeOperation="lighter";
  if(sig==="tdz"){                        // 시계 — 바늘이 도는 작은 시계들이 공전한다
   g.globalAlpha=.3;g.strokeStyle=c;g.lineWidth=1.2;
   g.save();g.rotate(-T*.35);              // 큰 문자판은 거꾸로 돈다
   g.beginPath();g.arc(0,0,58,0,6.283);g.stroke();
-  for(let i=0;i<12;i++){const a=i*.5236;
+  for(let i=0,N=QC(12);i<N;i++){const a=i*(6.283/N);
    g.beginPath();g.moveTo(Math.cos(a)*52,Math.sin(a)*52);
    g.lineTo(Math.cos(a)*58,Math.sin(a)*58);g.stroke();}
   g.restore();
@@ -871,7 +974,7 @@ function arDrawAbsAura(g,sig,c,T){
   g.fillStyle="#ff2d4d";g.beginPath();g.arc(-6-ox,oy,14,0,6.283);g.fill();
   g.fillStyle="#31e8ff";g.beginPath();g.arc(6+ox,-oy,14,0,6.283);g.fill();
   const GC=["#ff2d4d","#31e8ff","#ff4df0","#5eff7a","#ffe14d","#ffffff"];
-  for(let i=0;i<7;i++){                   // 튀는 색 사각형
+  for(let i=0,N=QC(7);i<N;i++){          // 튀는 색 사각형
    const s=(Math.floor(T*9)+i*37)%11;
    if(s>4)continue;
    const a=i*.897+Math.floor(T*4)*1.3, r=24+((i*13)%22);
@@ -890,7 +993,7 @@ function arDrawAbsAura(g,sig,c,T){
    g.globalAlpha=.4*(1-k);
    g.beginPath();g.arc(0,0,18+k*34,0,6.283);g.stroke();}
   g.fillStyle=c;
-  for(let i=0;i<8;i++){                   // 떠올라 잊히는 알갱이
+  for(let i=0,N=QC(8);i<N;i++){          // 떠올라 잊히는 알갱이
    const a=i*.785+T*.25,k=((T*.5+i/8)%1);
    g.globalAlpha=.7*(1-k)*(1-k);
    g.beginPath();g.arc(Math.cos(a)*(20+k*16),Math.sin(a)*(20+k*16)-k*34,
@@ -900,7 +1003,7 @@ function arDrawAbsAura(g,sig,c,T){
 }
 /* 서명 공격 — 기본 모션이 끝난 뒤에 얹힌다 */
 function arAbsAttack(sig,dmg,tr,dir){
- const P=BA.p,c=arCol();
+ const P=BA.p,c=(BA.as&&BA.as.col)||arCol();
  if(sig==="tdz"){
   /* 벤 자리의 시간이 잠깐 멎는다 — 맞은 적이 느려지고 되감김 잔상이 남는다 */
   for(const o of BA.mobs) if(arDist(o,P)<110)o.slow=Math.max(o.slow||0,.9);
@@ -909,7 +1012,7 @@ function arAbsAttack(sig,dmg,tr,dir){
   /* 깨진 조각이 튄다 — 지지직거리며 날아간다 */
   for(let i=0;i<3;i++){const a=dir+(i-1)*.34;
    BA.bul.push({x:P.x,y:P.y,vx:Math.cos(a)*380,vy:Math.sin(a)*380,
-     r:7,dmg:dmg*.4,tr,foe:0,t:0,c,gl:1});}
+     r:7,dmg:dmg*.4,tr,foe:0,t:0,c,gl:1,ghost:arAsGhost()});}
   BA.fx.push({k:"glxTear",x:P.x,y:P.y,a:dir,t:0,d:.3,c});
  }else{
   /* 지워진다 — 베인 자리가 잠깐 없던 것이 된다 */
