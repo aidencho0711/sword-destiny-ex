@@ -25,8 +25,11 @@ function openArena(mode){
  if(team.length<TEAM_SIZE){toast("출전 검을 다시 정해 주세요");return;}
  BA={mode,cv,ctx,team,slot:0,over:false,raf:0,last:0,w:0,h:0,dpr:1,
      p:{x:0,y:0,vx:0,vy:0,r:15,dir:-Math.PI/2,hp:100,hpMax:100,inv:0,atkCd:0},
-     mobs:[],bul:[],fx:[],num:[],
+     mobs:[],bul:[],fx:[],num:[],haz:[],boss:null,
      wave:1,spawnLeft:0,spawnT:0,restT:1.6,rage:0,
+     /* 보스는 판마다 순서를 섞는다 — 10웨이브마다 하나씩이라 순서를 고정하면
+        현실적으로 첫 보스만 평생 보게 된다. */
+     bossOrder:BOSSES.map((_,i)=>i).sort(()=>Math.random()-.5),
      joy:{id:null,cx:0,cy:0,dx:0,dy:0},atk:{id:null},kills:0,
      input:"touch",keys:{},swing:null};
  /* 체력은 팀 평균 방어력을 타고 오른다 — 단단한 검을 넣으면 오래 버틴다 */
@@ -137,7 +140,9 @@ function arStep(dt){
   BA.restT-=dt;
   if(BA.restT<=0){
    BA.spawnLeft=waveCount(BA.wave);BA.spawnT=0;
-   if(isBossWave(BA.wave))BA.spawnLeft=Math.max(4,Math.floor(waveCount(BA.wave)*.5));}
+   if(isBossWave(BA.wave)){                              // 보스 웨이브는 보스 + 소수의 잡병
+    BA.spawnLeft=Math.max(3,Math.floor(waveCount(BA.wave)*.35));
+    arSpawnBoss(BA.wave);}}
  }else{
   BA.spawnT-=dt;
   if(BA.spawnLeft>0&&BA.spawnT<=0){
@@ -179,7 +184,7 @@ function arStep(dt){
  /* 몬스터 */
  for(let i=BA.mobs.length-1;i>=0;i--){
   const o=BA.mobs[i];
-  arMobStep(o,dt);
+  if(o.boss)arBossStep(o,dt); else arMobStep(o,dt);
   if(o.hit>0)o.hit-=dt;
   if(o.hp<=0){arKill(o,i);continue;}
   if(arDist(o,P)<o.r+P.r&&P.inv<=0){
@@ -196,6 +201,7 @@ function arStep(dt){
         for(const o of BA.mobs) if(arDist(b,o)<o.r+b.r){arHit(o,b.dmg,b.tr);hitOne=true;break;}
         if(hitOne&&b.tr!=="pierce")BA.bul.splice(i,1); }
  }
+ arHazStep(dt);
  /* 잔존 장판 */
  for(const f of BA.fx) if(f.k==="pool"){
   f.tick=(f.tick||0)+dt;
@@ -254,6 +260,10 @@ function arKill(o,i){
  BA.fx.push({k:"pop",x:o.x,y:o.y,r:o.r,t:0,d:.32,c:o.m.c});
  if(arCur().st.trait.id==="drain")
   BA.p.hp=Math.min(BA.p.hpMax,BA.p.hp+Math.round(BA.p.hpMax*.012));
+ if(o.boss){BA.boss=null;
+  for(let i=0;i<14;i++)BA.fx.push({k:"pop",x:o.x+(Math.random()-.5)*o.r*2,
+    y:o.y+(Math.random()-.5)*o.r*2,r:o.r*.3,t:-i*.03,d:.5,c:o.B.c});
+  return;}
  if(o.m.id==="splitter"&&!o.small){
   for(let k=0;k<2;k++){const hp=Math.round(o.hpMax*.34);
    BA.mobs.push({m:o.m,x:o.x+(k?18:-18),y:o.y,r:o.r*.6,hp,hpMax:hp,
@@ -391,13 +401,15 @@ function arDraw(){
   g.globalAlpha=.3;g.beginPath();g.arc(b.x,b.y,b.r*2.1,0,6.283);g.fill();
   g.globalAlpha=1;g.beginPath();g.arc(b.x,b.y,b.r,0,6.283);g.fill();
   g.fillStyle="#fff";g.beginPath();g.arc(b.x-b.vx*.006,b.y-b.vy*.006,b.r*.45,0,6.283);g.fill();}
- for(const o of BA.mobs)arDrawMob(g,o);
+ arDrawHaz(g);
+ for(const o of BA.mobs){ if(o.boss)arDrawBoss(g,o); else arDrawMob(g,o); }
  /* 공격 궤적 */
  /* 모션별 공격 이펙트 */
  for(const f of BA.fx)
   if(f.k==="slash"||f.k==="crescent"||f.k==="lance"||f.k==="flame"||
      f.k==="cross"||f.k==="dash"||f.k==="rift"||f.k==="muzzle")arDrawSwingFx(g,f);
   else if(f.k==="tdzEcho"||f.k==="glxTear"||f.k==="oblErase")arDrawAbsFx(g,f);
+  else if(f.k==="bossIn"||f.k==="bossTell")arDrawBossFx(g,f);
  for(const f of BA.fx) if(f.k==="pop"){
   const k=f.t/f.d;
   g.strokeStyle=f.c;g.globalAlpha=1-k;g.lineWidth=3*(1-k)+1;
@@ -436,6 +448,7 @@ function arDraw(){
   if(isBossWave(f.n)){g.font="500 13px serif";g.fillStyle="#ff8f6a";
    g.fillText("보스", W/2, H*.33+24);}
   g.globalAlpha=1;}
+ arDrawBossBar(g);
  if(BA.input==="touch")arDrawUI(g,BA.ui);
  else arDrawKeyHint(g);
 }

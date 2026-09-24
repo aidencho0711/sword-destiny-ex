@@ -140,3 +140,22 @@ const ABS_SIG={
  "O B L I V I O N":"obl",              // 보랏빛 지워짐 · 잊혀 가는 잔상
 };
 const absSigOf=s=>ABS_SIG[s.n]||null;
+
+/* ═════════ 보스 10종 ═════════
+   10웨이브마다 하나. 100웨이브에 한 바퀴 돈다.
+   전부 예고(telegraph)가 있는 패턴을 쓴다 — 능력치로 찍어누르는 게 아니라
+   읽고 피하는 싸움이 되어야 한다. */
+const BOSSES=[
+ {id:"crush", n:"파 쇄 자",   c:"#e0724a", r:40, hp:820,  dmg:34, spd:32, d:"내리쳐 충격파를 퍼뜨린다"},
+ {id:"watch", n:"감 시 자",   c:"#7a9fe0", r:34, hp:700,  dmg:26, spd:40, d:"긴 빛줄기가 훑고 지나간다"},
+ {id:"hive",  n:"군 집 왕",   c:"#8fd08a", r:42, hp:980,  dmg:22, spd:26, d:"쉬지 않고 새끼를 낳는다"},
+ {id:"stalk", n:"추 격 자",   c:"#c96a6a", r:32, hp:660,  dmg:30, spd:58, d:"선을 그어 두고 그대로 달려든다"},
+ {id:"bomb",  n:"포 격 체",   c:"#d8a24a", r:36, hp:760,  dmg:28, spd:30, d:"바닥에 표식을 찍고 떨어뜨린다"},
+ {id:"thorn", n:"가 시 고 리",c:"#b48cff", r:34, hp:880,  dmg:26, spd:36, d:"가시가 돈다. 틈으로 들어가야 한다"},
+ {id:"phant", n:"환 영 술 사",c:"#5fe0e8", r:30, hp:620,  dmg:24, spd:52, d:"본체는 하나뿐이다"},
+ {id:"devour",n:"포 식 자",   c:"#e05a8a", r:44, hp:1050, dmg:38, spd:24, d:"끌어당겨 삼킨다"},
+ {id:"turret",n:"격 발 탑",   c:"#8f96a8", r:38, hp:900,  dmg:20, spd:0,  d:"움직이지 않고 나선으로 쏜다"},
+ {id:"final", n:"종 말",      c:"#ffffff", r:46, hp:1400, dmg:36, spd:34, d:"앞선 모든 것을 한 몸에 가졌다"},
+];
+const BOSSM=Object.fromEntries(BOSSES.map(b=>[b.id,b]));
+const bossFor=w=>BOSSES[(Math.floor(w/10)-1+BOSSES.length)%BOSSES.length];
