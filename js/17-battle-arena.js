@@ -214,7 +214,8 @@ function arNearest(){
 function arMobStep(o,dt){
  const P=BA.p;o.t+=dt;
  const ang=Math.atan2(P.y-o.y,P.x-o.x);
- const id=o.m.id, rg=1+BA.rage;
+ if(o.slow>0)o.slow-=dt;
+ const id=o.m.id, rg=(1+BA.rage)*(o.slow>0?.42:1);   // 시간이 멎은 적은 느리다
  if(id==="charger"){
   o.st-=dt;
   if(o.st<=0){ if(o.ch){o.ch=false;o.st=1.1;} else {o.ch=true;o.st=.45;o.ca=ang;} }
@@ -328,6 +329,7 @@ function arMotion(mo,dmg,tr,dir){
  }
  if(tr==="linger")BA.fx.push({k:"pool",x:P.x+Math.cos(dir)*52,y:P.y+Math.sin(dir)*52,
    r:42,t:0,d:1.6,dmg:dmg*.18,c});
+ const sig=arCur().st.sig; if(sig)arAbsAttack(sig,dmg,tr,dir);
 }
 /* ── 종료 ── */
 function arEnd(quit){
@@ -384,6 +386,7 @@ function arDraw(){
  g.beginPath();g.ellipse(P.x,P.y+13,15,5.5,0,0,6.283);g.fill();
  /* 탄 */
  for(const b of BA.bul){
+  if(b.gl){arDrawGlitchBullet(g,b);continue;}
   g.fillStyle=b.c||"#fff";
   g.globalAlpha=.3;g.beginPath();g.arc(b.x,b.y,b.r*2.1,0,6.283);g.fill();
   g.globalAlpha=1;g.beginPath();g.arc(b.x,b.y,b.r,0,6.283);g.fill();
@@ -394,6 +397,7 @@ function arDraw(){
  for(const f of BA.fx)
   if(f.k==="slash"||f.k==="crescent"||f.k==="lance"||f.k==="flame"||
      f.k==="cross"||f.k==="dash"||f.k==="rift"||f.k==="muzzle")arDrawSwingFx(g,f);
+  else if(f.k==="tdzEcho"||f.k==="glxTear"||f.k==="oblErase")arDrawAbsFx(g,f);
  for(const f of BA.fx) if(f.k==="pop"){
   const k=f.t/f.d;
   g.strokeStyle=f.c;g.globalAlpha=1-k;g.lineWidth=3*(1-k)+1;
@@ -708,6 +712,7 @@ function arDrawAura(g){
    g.beginPath();g.arc(Math.cos(a)*22,Math.sin(a)*22-k*26,2.2*(1-k)+.7,0,6.283);g.fill();}
  }
  g.restore();g.globalAlpha=1;g.globalCompositeOperation="source-over";
+ if(arCur().st.sig)arDrawAbsAura(g,arCur().st.sig,c,T);
 }
 
 /* 공격 이펙트 — 모션마다 다르게 */
@@ -770,5 +775,136 @@ function arDrawSwingFx(g,f){
    g.moveTo(16+k*22,0);g.lineTo(26+k*26,3.5*ik);g.lineTo(26+k*26,-3.5*ik);
    g.closePath();g.fill();g.restore();}
  }
+ g.restore();g.globalAlpha=1;g.globalCompositeOperation="source-over";
+}
+
+/* ══ ABSOLUTE 전용 연출 ══
+   고유 특징(trait) 아우라 위에 제 테마의 층을 하나 더 얹는다. */
+function arDrawAbsAura(g,sig,c,T){
+ /* 스스로 자리를 잡는다 — 호출부의 translate 에 기대면 복원 뒤에 불릴 때 원점에 그려진다 */
+ g.save();g.translate(BA.p.x,BA.p.y);g.globalCompositeOperation="lighter";
+ if(sig==="tdz"){                        // 시계 — 바늘이 도는 작은 시계들이 공전한다
+  g.globalAlpha=.3;g.strokeStyle=c;g.lineWidth=1.2;
+  g.save();g.rotate(-T*.35);              // 큰 문자판은 거꾸로 돈다
+  g.beginPath();g.arc(0,0,58,0,6.283);g.stroke();
+  for(let i=0;i<12;i++){const a=i*.5236;
+   g.beginPath();g.moveTo(Math.cos(a)*52,Math.sin(a)*52);
+   g.lineTo(Math.cos(a)*58,Math.sin(a)*58);g.stroke();}
+  g.restore();
+  for(let i=0;i<3;i++){                   // 작은 시계 셋
+   const a=T*.8+i*2.094,r=40;
+   g.save();g.translate(Math.cos(a)*r,Math.sin(a)*r);
+   g.globalAlpha=.85;g.strokeStyle=c;g.lineWidth=1.4;
+   g.beginPath();g.arc(0,0,9,0,6.283);g.stroke();
+   g.lineWidth=1.8;g.beginPath();g.moveTo(0,0);       // 시침
+   g.lineTo(Math.cos(T*1.6+i)*5,Math.sin(T*1.6+i)*5);g.stroke();
+   g.beginPath();g.moveTo(0,0);                       // 분침 — 거꾸로
+   g.lineTo(Math.cos(-T*4.2+i)*7.5,Math.sin(-T*4.2+i)*7.5);g.stroke();
+   g.restore();}
+ }else if(sig==="glx"){                  // 색 어긋남 — 빨강·청록 사본이 튄다
+  const j=Math.floor(T*14)%3;
+  const ox=(j-1)*4, oy=((Math.floor(T*11)%3)-1)*3;
+  g.globalAlpha=.42;
+  g.fillStyle="#ff2d4d";g.beginPath();g.arc(-6-ox,oy,14,0,6.283);g.fill();
+  g.fillStyle="#31e8ff";g.beginPath();g.arc(6+ox,-oy,14,0,6.283);g.fill();
+  const GC=["#ff2d4d","#31e8ff","#ff4df0","#5eff7a","#ffe14d","#ffffff"];
+  for(let i=0;i<7;i++){                   // 튀는 색 사각형
+   const s=(Math.floor(T*9)+i*37)%11;
+   if(s>4)continue;
+   const a=i*.897+Math.floor(T*4)*1.3, r=24+((i*13)%22);
+   g.globalAlpha=.85;g.fillStyle=GC[i%GC.length];
+   g.fillRect(Math.cos(a)*r,Math.sin(a)*r,4+(i%4)*3,3+(i%3)*2);}
+  g.globalAlpha=.3;g.strokeStyle="#cfe8ff";g.lineWidth=1;   // 주사선
+  for(let i=-2;i<=2;i++){const y=i*9+((T*40)%9);
+   g.beginPath();g.moveTo(-26,y);g.lineTo(26,y);g.stroke();}
+ }else{                                  // 망각 — 보랏빛으로 지워지고, 잔상이 잊힌다
+  g.globalCompositeOperation="source-over";
+  g.globalAlpha=.5;g.fillStyle="#0d0618";   // 발밑이 지워진다
+  g.beginPath();g.ellipse(0,4,34,15,0,0,6.283);g.fill();
+  g.globalCompositeOperation="lighter";
+  g.globalAlpha=.3;g.strokeStyle=c;g.lineWidth=1.4;
+  for(let i=0;i<2;i++){const k=((T*.42+i/2)%1);
+   g.globalAlpha=.4*(1-k);
+   g.beginPath();g.arc(0,0,18+k*34,0,6.283);g.stroke();}
+  g.fillStyle=c;
+  for(let i=0;i<8;i++){                   // 떠올라 잊히는 알갱이
+   const a=i*.785+T*.25,k=((T*.5+i/8)%1);
+   g.globalAlpha=.7*(1-k)*(1-k);
+   g.beginPath();g.arc(Math.cos(a)*(20+k*16),Math.sin(a)*(20+k*16)-k*34,
+     2.6*(1-k)+.6,0,6.283);g.fill();}
+ }
+ g.restore();g.globalAlpha=1;g.globalCompositeOperation="source-over";
+}
+/* 서명 공격 — 기본 모션이 끝난 뒤에 얹힌다 */
+function arAbsAttack(sig,dmg,tr,dir){
+ const P=BA.p,c=arCol();
+ if(sig==="tdz"){
+  /* 벤 자리의 시간이 잠깐 멎는다 — 맞은 적이 느려지고 되감김 잔상이 남는다 */
+  for(const o of BA.mobs) if(arDist(o,P)<110)o.slow=Math.max(o.slow||0,.9);
+  BA.fx.push({k:"tdzEcho",x:P.x,y:P.y,a:dir,t:0,d:.5,c});
+ }else if(sig==="glx"){
+  /* 깨진 조각이 튄다 — 지지직거리며 날아간다 */
+  for(let i=0;i<3;i++){const a=dir+(i-1)*.34;
+   BA.bul.push({x:P.x,y:P.y,vx:Math.cos(a)*380,vy:Math.sin(a)*380,
+     r:7,dmg:dmg*.4,tr,foe:0,t:0,c,gl:1});}
+  BA.fx.push({k:"glxTear",x:P.x,y:P.y,a:dir,t:0,d:.3,c});
+ }else{
+  /* 지워진다 — 베인 자리가 잠깐 없던 것이 된다 */
+  BA.fx.push({k:"oblErase",x:P.x+Math.cos(dir)*58,y:P.y+Math.sin(dir)*58,t:0,d:.55,c});
+ }
+}
+function arDrawAbsFx(g,f){
+ const k=f.t/f.d, ik=1-k;
+ g.save();
+ if(f.k==="tdzEcho"){                     // 되감기는 시곗바늘
+  g.globalCompositeOperation="lighter";
+  g.translate(f.x,f.y);
+  g.globalAlpha=ik*.8;g.strokeStyle=f.c;g.lineWidth=2;
+  g.beginPath();g.arc(0,0,44*(1-ik*.25),f.a-2.6+k*5.2,f.a-2.4+k*5.2);g.stroke();
+  g.lineWidth=1.2;g.globalAlpha=ik*.5;
+  g.beginPath();g.arc(0,0,44,0,6.283);g.stroke();
+  for(let i=0;i<12;i++){const a=i*.5236-k*1.6;   // 눈금이 거꾸로 흐른다
+   g.beginPath();g.moveTo(Math.cos(a)*38,Math.sin(a)*38);
+   g.lineTo(Math.cos(a)*44,Math.sin(a)*44);g.stroke();}
+ }else if(f.k==="glxTear"){               // 찢어진 자리 + 노이즈 블록
+  g.translate(f.x,f.y);g.rotate(f.a);
+  const GC=["#ff2d4d","#31e8ff","#ff4df0","#ffffff"];
+  g.globalAlpha=ik;
+  for(let i=0;i<9;i++){
+   const x=14+i*11+((i*17)%9), y=((i*29)%17)-8;
+   g.fillStyle=GC[i%4];
+   g.fillRect(x,y+(Math.floor(k*9)%3-1)*3,7+(i%3)*4,2.5+(i%2)*2.5);}
+  g.globalAlpha=ik*.9;g.strokeStyle="#fff";g.lineWidth=2;
+  g.beginPath();g.moveTo(10,0);
+  for(let i=1;i<=5;i++)g.lineTo(10+i*18,((i%2?1:-1)*7)*ik);
+  g.stroke();
+ }else{                                   // 지워지는 자리 — 안으로 오므라든다
+  g.translate(f.x,f.y);
+  g.globalAlpha=ik*.75;g.fillStyle="#0d0618";
+  g.beginPath();g.arc(0,0,34*ik,0,6.283);g.fill();
+  g.globalCompositeOperation="lighter";
+  g.globalAlpha=ik*.85;g.strokeStyle=f.c;g.lineWidth=2.4*ik+.8;
+  g.beginPath();g.arc(0,0,38*ik,0,6.283);g.stroke();
+  g.fillStyle=f.c;
+  for(let i=0;i<7;i++){const a=i*.897;
+   g.globalAlpha=ik*.8;
+   g.beginPath();g.arc(Math.cos(a)*40*ik,Math.sin(a)*40*ik,2.2*ik+.5,0,6.283);g.fill();}
+ }
+ g.restore();g.globalAlpha=1;g.globalCompositeOperation="source-over";
+}
+/* 지지직거리는 조각 탄 */
+function arDrawGlitchBullet(g,b){
+ const GC=["#ff2d4d","#31e8ff","#ffffff"];
+ const j=Math.floor(b.t*40);
+ g.save();g.translate(b.x,b.y);
+ g.globalCompositeOperation="lighter";
+ for(let i=0;i<3;i++){
+  const ox=((j+i*5)%3-1)*3.5, oy=((j+i*7)%3-1)*3;
+  g.globalAlpha=.85;g.fillStyle=GC[i];
+  g.fillRect(-b.r+ox,-b.r*.7+oy,b.r*2,b.r*1.4);}
+ g.globalAlpha=.6;g.strokeStyle="#fff";g.lineWidth=1;
+ g.beginPath();g.moveTo(-b.r*2,0);
+ for(let i=0;i<4;i++)g.lineTo(-b.r*2+i*b.r,((i%2)?1:-1)*b.r*.8);
+ g.stroke();
  g.restore();g.globalAlpha=1;g.globalCompositeOperation="source-over";
 }

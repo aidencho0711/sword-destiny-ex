@@ -54,7 +54,7 @@ function battleStat(s){
  return {dmg:Math.round(BT_DMG(s.t)*a.dmg),
          def:Math.round(BT_DEF(s.t)*a.def),
          spd:+(BT_SPD(s.t)*a.spd).toFixed(2),
-         arch:a, trait:traitOf(s)};}
+         arch:a, trait:traitOf(s), sig:ABS_SIG[s.n]||null};}
 
 /* ═════════ 출전 규칙 ═════════ */
 const BATTLE_RB=1;                                  // 환생 1회부터 열린다
@@ -130,3 +130,13 @@ function waveMobs(w){
  return pool;}
 const waveCount=w=>Math.min(22,4+Math.floor(w*0.9));
 const isBossWave=w=>w%10===0;
+
+/* ═════════ ABSOLUTE 전용 서명 ═════════
+   등급 최상위 세 자루는 고유 특징(trait) 위에 제 테마의 연출을 하나 더 얹는다.
+   기존 특징은 그대로 두고, 아우라와 공격에만 붙는다. */
+const ABS_SIG={
+ "T I M E  D E S T R O Y E R":"tdz",   // 시계 · 되감김 · 잠깐 멎는 시간
+ "G L I T C H":"glx",                  // 색 어긋남 · 노이즈 · 튀는 조각
+ "O B L I V I O N":"obl",              // 보랏빛 지워짐 · 잊혀 가는 잔상
+};
+const absSigOf=s=>ABS_SIG[s.n]||null;
