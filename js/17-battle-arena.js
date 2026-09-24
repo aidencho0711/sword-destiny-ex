@@ -124,8 +124,12 @@ const arCol=()=>RARITY[arCur().s.t].c;
 function arLoop(now){
  if(!BA)return;
  const dt=Math.min(.05,(now-BA.last)/1000);BA.last=now;
- if(!BA.over&&!BA.pick)arStep(dt);          // 강화를 고르는 동안은 멈춘다
- arDraw();
+ /* 한 프레임이 터져도 판이 통째로 멈추면 안 된다 —
+    예외가 나가면 다음 rAF 가 안 걸려서 화면이 그대로 얼어붙는다. */
+ try{
+  if(!BA.over&&!BA.pick)arStep(dt);         // 강화를 고르는 동안은 멈춘다
+  arDraw();
+ }catch(e){ if(!BA.warned){BA.warned=1;console.error("arena frame:",e);} }
  BA.raf=requestAnimationFrame(arLoop);
 }
 function arSpawn(id,w){
@@ -157,7 +161,9 @@ function arStep(dt){
    BA.rage=Math.min(1.6,BA.rage+dt*0.055);
    /* 그래도 안 잡히면 웨이브가 안 끝난다. 달아오름이 최고에 닿은 뒤로는
       남은 적을 시간이 갉아먹어 교착이 반드시 풀리게 한다. */
-   if(BA.rage>=1.6)for(const o of BA.mobs)o.hp-=o.hpMax*0.055*dt;
+   /* 보스는 제외한다 — 보스는 늘 플레이어에게 다가오므로 교착이 날 수 없고,
+      여기에 걸어 두면 가만히 있어도 보스가 저절로 죽는다. */
+   if(BA.rage>=1.6)for(const o of BA.mobs) if(!o.boss)o.hp-=o.hpMax*0.055*dt;
   }
   if(BA.spawnLeft<=0&&!BA.mobs.length){
    BA.wave++;BA.restT=1.5;BA.rage=0;
@@ -419,10 +425,10 @@ function arDraw(){
      f.k==="cross"||f.k==="dash"||f.k==="rift"||f.k==="muzzle")arDrawSwingFx(g,f);
   else if(f.k==="tdzEcho"||f.k==="glxTear"||f.k==="oblErase")arDrawAbsFx(g,f);
   else if(f.k==="bossIn"||f.k==="bossTell")arDrawBossFx(g,f);
- for(const f of BA.fx) if(f.k==="pop"){
+ for(const f of BA.fx) if(f.k==="pop"&&f.t>=0){
   const k=f.t/f.d;
   g.strokeStyle=f.c;g.globalAlpha=1-k;g.lineWidth=3*(1-k)+1;
-  g.beginPath();g.arc(f.x,f.y,f.r+k*28,0,6.283);g.stroke();
+  g.beginPath();g.arc(f.x,f.y,Math.max(.5,f.r+k*28),0,6.283);g.stroke();
   for(let i=0;i<5;i++){const a=i*1.257+f.x;
    const d=f.r+k*40;
    g.beginPath();g.arc(f.x+Math.cos(a)*d,f.y+Math.sin(a)*d,2.4*(1-k),0,6.283);
@@ -739,6 +745,7 @@ function arDrawAura(g){
 
 /* 공격 이펙트 — 모션마다 다르게 */
 function arDrawSwingFx(g,f){
+ if(f.t<0)return;                         // 음수 t 는 지연이다 — 아직 그릴 때가 아니다
  const k=f.t/f.d, ik=1-k;
  g.save();g.globalCompositeOperation="lighter";
  if(f.k==="slash"){
@@ -876,6 +883,7 @@ function arAbsAttack(sig,dmg,tr,dir){
  }
 }
 function arDrawAbsFx(g,f){
+ if(f.t<0)return;
  const k=f.t/f.d, ik=1-k;
  g.save();
  if(f.k==="tdzEcho"){                     // 되감기는 시곗바늘

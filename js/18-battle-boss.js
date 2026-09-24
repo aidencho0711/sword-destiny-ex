@@ -251,6 +251,7 @@ function arDrawBossBar(g){
 
 /* 보스 등장 배너와 패턴 예고 */
 function arDrawBossFx(g,f){
+ if(f.t<0)return;
  const k=f.t/f.d;
  if(f.k==="bossIn"){
   const W=BA.w,H=BA.h;
