@@ -204,6 +204,7 @@ function arStep(dt){
  for(let i=BA.fx.length-1;i>=0;i--){const f=BA.fx[i];f.t+=dt;if(f.t>=f.d)BA.fx.splice(i,1);}
  for(let i=BA.num.length-1;i>=0;i--){const n=BA.num[i];n.t+=dt;n.y-=26*dt;if(n.t>.8)BA.num.splice(i,1);}
  if(BA.swing){BA.swing.t+=dt;if(BA.swing.t>=BA.swing.d)BA.swing=null;}
+ BA.time=(BA.time||0)+dt;
  const hb=$("ar-hp"); if(hb)hb.style.width=Math.max(0,P.hp/P.hpMax*100)+"%";
 }
 function arNearest(){
@@ -266,8 +267,9 @@ function arSwing(){
  if(tr==="echo")setTimeout(()=>{if(BA&&!BA.over)arMotion(mo,dmg*.6,null,BA.p.dir);},240);
  if(tr==="recast"&&Math.random()<.2)P.atkCd=0;
 }
-function arCone(reach,half,mul,dmg,tr,dir){
+function arCone(reach,half,mul,dmg,tr,dir,cap){
  const P=BA.p;let n=0;
+ const lim=tr==="pierce"?99:(cap||4);
  for(const o of BA.mobs){
   const d=arDist(o,P); if(d>reach+o.r)continue;
   let a=Math.atan2(o.y-P.y,o.x-P.x)-dir;
@@ -275,27 +277,57 @@ function arCone(reach,half,mul,dmg,tr,dir){
   if(Math.abs(a)>half)continue;
   arHit(o,dmg*mul,tr);n++;
   if(tr==="burst")for(const q of BA.mobs)if(q!==o&&arDist(q,o)<56)arHit(q,dmg*.35,null);
-  if(tr!=="pierce"&&n>=4)break;}
- BA.fx.push({k:"arc",x:P.x,y:P.y,a:dir,half,R:reach,t:0,d:.2,c:arCol()});
+  if(n>=lim)break;}
+ BA.fx.push({k:"arc",x:P.x,y:P.y,a:dir,half,R:reach,t:0,d:.22,c:arCol()});
 }
+/* 앞으로 나아가며 베는 검은 지나간 자리의 적을 전부 때린다 —
+   선분과 적의 거리로 판정하므로 몸을 스치고 지나간 것도 놓치지 않는다. */
+function arPath(x0,y0,x1,y1,rad,dmg,tr){
+ const dx=x1-x0,dy=y1-y0,L2=dx*dx+dy*dy;
+ for(const o of BA.mobs){
+  let t=L2?((o.x-x0)*dx+(o.y-y0)*dy)/L2:0;
+  t=Math.max(0,Math.min(1,t));
+  if(Math.hypot(o.x-(x0+dx*t),o.y-(y0+dy*t))<rad+o.r)arHit(o,dmg,tr);}
+}
+const arClampX=x=>Math.max(BA.p.r,Math.min(BA.w-BA.p.r,x));
+const arClampY=y=>Math.max(BA.p.r,Math.min(BA.h-BA.p.r,y));
 function arMotion(mo,dmg,tr,dir){
- const P=BA.p;
- if(mo==="slash")       arCone(68,.62,1,dmg,tr,dir);
- else if(mo==="sweep")  arCone(96,1.15,1,dmg,tr,dir);
- else if(mo==="thrust") arCone(120,.2,1,dmg,tr,dir);
- else if(mo==="cone")   arCone(78,.85,1,dmg,tr,dir);
- else if(mo==="lunge"){ P.x=Math.max(P.r,Math.min(BA.w-P.r,P.x+Math.cos(dir)*34));
-                        P.y=Math.max(P.r,Math.min(BA.h-P.r,P.y+Math.sin(dir)*34));
-                        arCone(62,.7,1.1,dmg,tr,dir);}
- else if(mo==="double"){arCone(64,.5,.6,dmg,tr,dir);
-                        setTimeout(()=>{if(BA&&!BA.over)arCone(64,.5,.6,dmg,tr,BA.p.dir);},90);}
- else if(mo==="blink"){ P.x=Math.max(P.r,Math.min(BA.w-P.r,P.x+Math.cos(dir)*64));
-                        P.y=Math.max(P.r,Math.min(BA.h-P.r,P.y+Math.sin(dir)*64));
-                        arCone(72,.8,1.05,dmg,tr,dir);}
- else if(mo==="shard")  BA.bul.push({x:P.x,y:P.y,vx:Math.cos(dir)*430,vy:Math.sin(dir)*430,
-                          r:7,dmg,tr,foe:0,t:0,c:arCol()});
- if(tr==="linger")BA.fx.push({k:"pool",x:P.x+Math.cos(dir)*46,y:P.y+Math.sin(dir)*46,
-   r:38,t:0,d:1.6,dmg:dmg*.18,c:arCol()});
+ const P=BA.p,c=arCol();
+ if(mo==="slash"){
+  arCone(80,.62,1,dmg,tr,dir);
+  BA.fx.push({k:"slash",x:P.x,y:P.y,a:dir,R:80,t:0,d:.24,c});
+ }else if(mo==="sweep"){
+  arCone(112,1.15,1,dmg,tr,dir);
+  BA.fx.push({k:"crescent",x:P.x,y:P.y,a:dir,R:112,half:1.15,t:0,d:.32,c});
+ }else if(mo==="thrust"){
+  /* 찌르기는 곧게 나아가므로 꿰뚫은 적을 전부 때린다 */
+  arPath(P.x,P.y,P.x+Math.cos(dir)*140,P.y+Math.sin(dir)*140,15,dmg,tr);
+  BA.fx.push({k:"lance",x:P.x,y:P.y,a:dir,R:140,t:0,d:.26,c});
+ }else if(mo==="cone"){
+  arCone(92,.85,1,dmg,tr,dir);
+  BA.fx.push({k:"flame",x:P.x,y:P.y,a:dir,R:92,half:.85,t:0,d:.34,c});
+ }else if(mo==="lunge"){
+  const x0=P.x,y0=P.y;
+  P.x=arClampX(P.x+Math.cos(dir)*42);P.y=arClampY(P.y+Math.sin(dir)*42);
+  arPath(x0,y0,P.x,P.y,28,dmg*.8,tr);          // 파고들며 스친 적
+  arCone(74,.7,1.1,dmg,tr,dir);
+  BA.fx.push({k:"dash",x0,y0,x1:P.x,y1:P.y,t:0,d:.28,c});
+ }else if(mo==="double"){
+  arCone(78,.5,.6,dmg,tr,dir);
+  BA.fx.push({k:"cross",x:P.x,y:P.y,a:dir,R:78,t:0,d:.3,c});
+  setTimeout(()=>{if(BA&&!BA.over)arCone(78,.5,.6,dmg,tr,BA.p.dir);},90);
+ }else if(mo==="blink"){
+  const x0=P.x,y0=P.y;
+  P.x=arClampX(P.x+Math.cos(dir)*78);P.y=arClampY(P.y+Math.sin(dir)*78);
+  arPath(x0,y0,P.x,P.y,30,dmg*.85,tr);         // 갈라진 자리를 지난 적
+  arCone(86,.8,1.05,dmg,tr,dir);
+  BA.fx.push({k:"rift",x0,y0,x1:P.x,y1:P.y,t:0,d:.34,c});
+ }else if(mo==="shard"){
+  BA.bul.push({x:P.x,y:P.y,vx:Math.cos(dir)*450,vy:Math.sin(dir)*450,r:8,dmg,tr,foe:0,t:0,c});
+  BA.fx.push({k:"muzzle",x:P.x,y:P.y,a:dir,t:0,d:.2,c});
+ }
+ if(tr==="linger")BA.fx.push({k:"pool",x:P.x+Math.cos(dir)*52,y:P.y+Math.sin(dir)*52,
+   r:42,t:0,d:1.6,dmg:dmg*.18,c});
 }
 /* ── 종료 ── */
 function arEnd(quit){
@@ -358,14 +390,10 @@ function arDraw(){
   g.fillStyle="#fff";g.beginPath();g.arc(b.x-b.vx*.006,b.y-b.vy*.006,b.r*.45,0,6.283);g.fill();}
  for(const o of BA.mobs)arDrawMob(g,o);
  /* 공격 궤적 */
- for(const f of BA.fx) if(f.k==="arc"){
-  const k=1-f.t/f.d;
-  g.save();g.globalCompositeOperation="lighter";
-  g.strokeStyle=f.c;g.globalAlpha=k*.55;g.lineWidth=f.R*.5*k+3;
-  g.beginPath();g.arc(f.x,f.y,f.R*.72,f.a-f.half,f.a+f.half);g.stroke();
-  g.globalAlpha=k*.95;g.lineWidth=2.5;g.strokeStyle="#fff";
-  g.beginPath();g.arc(f.x,f.y,f.R*.86,f.a-f.half*(1-k*.3),f.a+f.half*(1-k*.3));g.stroke();
-  g.restore();}
+ /* 모션별 공격 이펙트 */
+ for(const f of BA.fx)
+  if(f.k==="slash"||f.k==="crescent"||f.k==="lance"||f.k==="flame"||
+     f.k==="cross"||f.k==="dash"||f.k==="rift"||f.k==="muzzle")arDrawSwingFx(g,f);
  for(const f of BA.fx) if(f.k==="pop"){
   const k=f.t/f.d;
   g.strokeStyle=f.c;g.globalAlpha=1-k;g.lineWidth=3*(1-k)+1;
@@ -379,6 +407,7 @@ function arDraw(){
   const k=f.t/f.d;
   g.strokeStyle=f.c;g.globalAlpha=1-k;g.lineWidth=3;
   g.beginPath();g.arc(P.x,P.y,20+k*46,0,6.283);g.stroke();g.globalAlpha=1;}
+ arDrawAura(g);
  arDrawPlayer(g);
  /* 피해 숫자 */
  g.textAlign="center";g.font="700 13px system-ui,sans-serif";
@@ -558,12 +587,12 @@ function arDrawPlayer(g){
  g.beginPath();g.arc(0,-3,6.4,0,6.283);g.fill();g.stroke();
  /* 검 — 오른손에서 뻗어 나가고, 벨 때 실제로 호를 그린다 */
  const sw=BA.swing;
- let ang=-0.42, L=30;
+ let ang=-0.42, L=42;                  // 검을 크게 — 손에 든 게 보여야 한다
  if(sw){
   const k=sw.t/sw.d, e=k<.28?k/.28:1-(k-.28)/.72;
-  if(sw.mo==="thrust")      {ang=-0.05; L=30+26*e;}
+  if(sw.mo==="thrust")      {ang=-0.05; L=42+34*e;}
   else if(sw.mo==="shard")  {ang=-0.05-e*.2;}
-  else if(sw.mo==="sweep")  {ang=-1.5+e*2.6; L=36;}
+  else if(sw.mo==="sweep")  {ang=-1.5+e*2.6; L=50;}
   else                      {ang=-1.15+e*1.9;}
  }
  g.save();
@@ -574,8 +603,8 @@ function arDrawPlayer(g){
  g.fillStyle=gl;g.strokeStyle="rgba(8,12,20,.85)";g.lineWidth=1.4;
  arBladePath(g,mo,L);g.fill();g.stroke();
  g.shadowBlur=0;
- g.fillStyle="#3a3f4d";g.fillRect(-2.2,0,4.4,9);          // 자루
- g.fillStyle=col;g.fillRect(-5.5,-1.6,11,3.2);            // 가드
+ g.fillStyle="#3a3f4d";g.fillRect(-2.8,0,5.6,12);          // 자루
+ g.fillStyle=col;g.fillRect(-7.5,-2,15,4);                 // 가드
  g.restore();
  g.restore();g.globalAlpha=1;
 }
@@ -615,4 +644,131 @@ function arDrawKeyHint(g){
  g.fillStyle="rgba(200,212,232,.5)";
  g.fillText("WASD 이동   ·   L 공격   ·   1 2 3 검 교체",BA.w-16,BA.h-18);
  g.textAlign="center";
+}
+/* 장착한 검의 아우라 — 검을 바꾸면 같이 바뀐다.
+   모양은 그 검의 고유 특징에서 오고, 색은 등급에서 온다. */
+function arDrawAura(g){
+ const P=BA.p,c=arCol(),tr=arCur().st.trait.id,T=BA.time||0;
+ g.save();g.translate(P.x,P.y);
+ g.globalCompositeOperation="lighter";
+ /* 바닥에 깔리는 기본 후광 — 어느 검이든 공통 */
+ const gl=g.createRadialGradient(0,0,4,0,0,46);
+ gl.addColorStop(0,c);gl.addColorStop(1,"rgba(0,0,0,0)");
+ g.globalAlpha=.16+Math.sin(T*2.4)*.04;
+ g.fillStyle=gl;g.beginPath();g.arc(0,0,46,0,6.283);g.fill();
+ g.globalAlpha=1;g.strokeStyle=c;g.fillStyle=c;
+
+ if(tr==="crit"){                       // 치명 — 날 선 조각이 돈다
+  for(let i=0;i<4;i++){const a=T*1.9+i*1.571,r=30+Math.sin(T*3+i)*4;
+   g.save();g.translate(Math.cos(a)*r,Math.sin(a)*r);g.rotate(a);
+   g.globalAlpha=.75;g.beginPath();
+   g.moveTo(6,0);g.lineTo(0,3.4);g.lineTo(-6,0);g.lineTo(0,-3.4);g.closePath();g.fill();
+   g.restore();}
+ }else if(tr==="drain"){                // 흡혈 — 고리가 안으로 빨려든다
+  for(let i=0;i<3;i++){const k=((T*.55+i/3)%1);
+   g.globalAlpha=.5*k;g.lineWidth=2;
+   g.beginPath();g.arc(0,0,10+(1-k)*34,0,6.283);g.stroke();}
+ }else if(tr==="burst"){                // 광역 — 파문이 퍼진다
+  for(let i=0;i<3;i++){const k=((T*.6+i/3)%1);
+   g.globalAlpha=.5*(1-k);g.lineWidth=2.4*(1-k)+.6;
+   g.beginPath();g.arc(0,0,12+k*38,0,6.283);g.stroke();}
+ }else if(tr==="pierce"){               // 관통 — 앞으로 뻗는 선
+  g.rotate(P.dir);
+  for(let i=0;i<3;i++){const k=((T*1.1+i/3)%1);
+   g.globalAlpha=.6*(1-k);g.lineWidth=2;
+   g.beginPath();g.moveTo(18+k*30,-5+i*5);g.lineTo(34+k*30,-5+i*5);g.stroke();}
+ }else if(tr==="echo"){                 // 분신 — 흐릿한 사본이 따라온다
+  for(let i=1;i<=2;i++){
+   g.globalAlpha=.2/i;
+   g.beginPath();g.arc(-Math.cos(P.dir)*i*13,-Math.sin(P.dir)*i*13,12,0,6.283);g.fill();}
+ }else if(tr==="rush"){                 // 질주 — 뒤로 흐르는 줄기
+  const back=P.dir+Math.PI;
+  for(let i=0;i<5;i++){const o=(i-2)*5,k=((T*2.2+i*.2)%1);
+   g.globalAlpha=.45*(1-k);g.lineWidth=2;
+   const px=Math.cos(back)*(14+k*30)+Math.cos(back+1.571)*o;
+   const py=Math.sin(back)*(14+k*30)+Math.sin(back+1.571)*o;
+   g.beginPath();g.moveTo(px,py);
+   g.lineTo(px+Math.cos(back)*9,py+Math.sin(back)*9);g.stroke();}
+ }else if(tr==="linger"){               // 잔존 — 떨어져 고이는 방울
+  for(let i=0;i<5;i++){const a=i*1.257+T*.4,k=((T*.8+i/5)%1);
+   g.globalAlpha=.5*(1-k);
+   g.beginPath();g.arc(Math.cos(a)*26,Math.sin(a)*26+k*16,2.6*(1-k)+.8,0,6.283);g.fill();}
+ }else if(tr==="twin"){                 // 쌍격 — 두 고리가 서로 반대로
+  g.globalAlpha=.42;g.lineWidth=1.8;
+  for(let s=0;s<2;s++){
+   g.save();g.rotate(T*(s?-1.3:1.3));
+   g.beginPath();g.ellipse(0,0,30,17,0,0,6.283);g.stroke();g.restore();}
+ }else if(tr==="recast"){               // 재격 — 점선 고리가 깜빡인다
+  g.globalAlpha=.3+Math.abs(Math.sin(T*6))*.4;g.lineWidth=2;
+  g.setLineDash([5,7]);g.lineDashOffset=-T*24;
+  g.beginPath();g.arc(0,0,30,0,6.283);g.stroke();g.setLineDash([]);
+ }else{                                 // 수확 — 위로 피어오르는 알갱이
+  for(let i=0;i<6;i++){const a=i*1.047+T*.3,k=((T*.7+i/6)%1);
+   g.globalAlpha=.55*(1-k);
+   g.beginPath();g.arc(Math.cos(a)*22,Math.sin(a)*22-k*26,2.2*(1-k)+.7,0,6.283);g.fill();}
+ }
+ g.restore();g.globalAlpha=1;g.globalCompositeOperation="source-over";
+}
+
+/* 공격 이펙트 — 모션마다 다르게 */
+function arDrawSwingFx(g,f){
+ const k=f.t/f.d, ik=1-k;
+ g.save();g.globalCompositeOperation="lighter";
+ if(f.k==="slash"){
+  g.translate(f.x,f.y);
+  g.strokeStyle=f.c;g.globalAlpha=ik*.85;g.lineWidth=9*ik+2;g.lineCap="round";
+  g.beginPath();g.arc(0,0,f.R*.74,f.a-.6+k*.5,f.a+.6+k*.5);g.stroke();
+  g.strokeStyle="#fff";g.globalAlpha=ik;g.lineWidth=2.5;
+  g.beginPath();g.arc(0,0,f.R*.82,f.a-.5+k*.5,f.a+.5+k*.5);g.stroke();
+ }else if(f.k==="crescent"){            // 대검 — 두꺼운 초승달 + 잔상
+  g.translate(f.x,f.y);
+  for(let i=0;i<3;i++){
+   g.globalAlpha=ik*(.5-i*.13);g.strokeStyle=i?f.c:"#fff";
+   g.lineWidth=(16-i*4)*ik+2;g.lineCap="round";
+   g.beginPath();g.arc(0,0,f.R*(.68+i*.07),f.a-f.half+k*1.5,f.a+f.half+k*1.5);g.stroke();}
+ }else if(f.k==="lance"){               // 레이피어 — 길게 뻗는 빛의 창
+  g.translate(f.x,f.y);g.rotate(f.a);
+  const L=f.R*Math.min(1,k*3);
+  g.globalAlpha=ik*.9;
+  const lg=g.createLinearGradient(0,0,L,0);
+  lg.addColorStop(0,"rgba(0,0,0,0)");lg.addColorStop(.6,f.c);lg.addColorStop(1,"#fff");
+  g.fillStyle=lg;
+  g.beginPath();g.moveTo(10,-7*ik-1);g.lineTo(L,0);g.lineTo(10,7*ik+1);g.closePath();g.fill();
+ }else if(f.k==="flame"){               // 화염도 — 부채꼴로 흩어지는 불티
+  g.translate(f.x,f.y);
+  for(let i=0;i<9;i++){
+   const a=f.a-f.half+(i/8)*f.half*2, d=f.R*(.3+k*.9);
+   g.globalAlpha=ik*.8;g.fillStyle=i%2?f.c:"#ffd9a8";
+   g.beginPath();g.arc(Math.cos(a)*d,Math.sin(a)*d,(5-k*3)*ik+1,0,6.283);g.fill();}
+ }else if(f.k==="cross"){               // 도 — 엇갈린 두 줄
+  g.translate(f.x,f.y);g.rotate(f.a);
+  g.strokeStyle="#fff";g.globalAlpha=ik;g.lineWidth=4*ik+1.5;g.lineCap="round";
+  g.beginPath();g.moveTo(14,-26);g.lineTo(f.R*.9,20);g.stroke();
+  g.strokeStyle=f.c;g.lineWidth=6*ik+1.5;
+  g.beginPath();g.moveTo(14,26);g.lineTo(f.R*.9,-20);g.stroke();
+ }else if(f.k==="dash"){                // 송곳니 — 파고든 자국
+  g.strokeStyle=f.c;g.globalAlpha=ik*.8;g.lineWidth=22*ik+2;g.lineCap="round";
+  g.beginPath();g.moveTo(f.x0,f.y0);g.lineTo(f.x1,f.y1);g.stroke();
+  g.strokeStyle="#fff";g.globalAlpha=ik;g.lineWidth=4*ik+1;
+  g.beginPath();g.moveTo(f.x0,f.y0);g.lineTo(f.x1,f.y1);g.stroke();
+ }else if(f.k==="rift"){                // 균열검 — 갈라진 틈
+  g.globalAlpha=ik;
+  const dx=f.x1-f.x0,dy=f.y1-f.y0,n=6;
+  g.strokeStyle=f.c;g.lineWidth=9*ik+1.5;g.lineJoin="round";
+  g.beginPath();g.moveTo(f.x0,f.y0);
+  for(let i=1;i<=n;i++){const t=i/n,o=(i%2?1:-1)*11*ik*(1-Math.abs(t-.5)*1.4);
+   g.lineTo(f.x0+dx*t-dy/n*o*.14,f.y0+dy*t+dx/n*o*.14);}
+  g.stroke();
+  g.strokeStyle="#fff";g.lineWidth=2.5;g.stroke();
+  for(let i=0;i<2;i++){g.globalAlpha=ik*.5;g.fillStyle=f.c;
+   g.beginPath();g.arc(i?f.x1:f.x0,i?f.y1:f.y0,(14-k*10)+2,0,6.283);g.fill();}
+ }else if(f.k==="muzzle"){              // 수정검 — 쏘는 순간 파편이 튄다
+  g.translate(f.x,f.y);g.rotate(f.a);
+  g.globalAlpha=ik;g.fillStyle=f.c;
+  for(let i=0;i<5;i++){const a=(i-2)*.32;
+   g.save();g.rotate(a);g.beginPath();
+   g.moveTo(16+k*22,0);g.lineTo(26+k*26,3.5*ik);g.lineTo(26+k*26,-3.5*ik);
+   g.closePath();g.fill();g.restore();}
+ }
+ g.restore();g.globalAlpha=1;g.globalCompositeOperation="source-over";
 }
