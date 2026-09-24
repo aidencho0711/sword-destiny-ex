@@ -37,7 +37,7 @@ function arBossBullet(o,a,sp,dmg,r){
 function arSpawnBoss(w){
  const ord=BA.bossOrder||BOSSES.map((_,i)=>i);
  const B=BOSSES[ord[(Math.floor(w/10)-1+ord.length*99)%ord.length]];
- const hp=Math.round(B.hp*waveHp(w)*1.15);
+ const hp=Math.round(B.hp*waveHp(w)*0.8);
  const a=Math.random()*6.283,R=Math.max(BA.w,BA.h)*.55;
  const o={m:{id:"boss",n:B.n,c:B.c,r:B.r},B,boss:true,
    x:BA.w/2+Math.cos(a)*R,y:BA.h/2+Math.sin(a)*R,
@@ -271,4 +271,59 @@ function arDrawBossFx(g,f){
   g.beginPath();g.arc(f.x,f.y,f.r*(1+k*.7),0,6.283);g.stroke();
   g.restore();g.globalAlpha=1;
  }
+}
+
+/* ═════════ 보스 보상 · 강화 ═════════
+   보스를 잡을 때마다 셋 중 하나를 고른다. 판이 끝나면 사라진다.
+   적은 웨이브마다 지수로 강해지는데 플레이어가 그대로면 판이 금방 끝난다 —
+   깊이 들어갈 수 있어야 보스 열 종을 다 본다. */
+const BUP_BASE={dmg:1,spd:1,reach:1,move:1,dr:1,inv:1,crit:0,pierce:0,drain:0,shock:0};
+const BUPS=[
+ {id:"edge",  n:"예 리 함", d:"공격력 +25%",              f:u=>u.dmg*=1.25},
+ {id:"haste", n:"속 행",    d:"공격 속도 +20%",           f:u=>u.spd*=1.20},
+ {id:"reach", n:"긴 팔",    d:"공격 범위 +22%",           f:u=>u.reach*=1.22},
+ {id:"crit",  n:"급 소",    d:"치명타 확률 +14%",         f:u=>u.crit+=.14},
+ {id:"pierce",n:"관 통",    d:"한 번에 2명 더 벤다",       f:u=>u.pierce+=2},
+ {id:"stout", n:"강 골",    d:"최대 체력 +25% (즉시 회복)", f:u=>u.hpUp=1.25},
+ {id:"mend",  n:"회 복",    d:"체력 45% 회복",            f:u=>u.heal=.45},
+ {id:"hide",  n:"가 죽",    d:"받는 피해 -16%",           f:u=>u.dr*=.84},
+ {id:"ghost", n:"잔 상",    d:"무적 시간 +35%",           f:u=>u.inv*=1.35},
+ {id:"swift", n:"질 주",    d:"이동 속도 +16%",           f:u=>u.move*=1.16},
+ {id:"leech", n:"흡 취",    d:"처치할 때마다 체력 회복",    f:u=>u.drain+=.015},
+ {id:"burst", n:"파 편",    d:"벨 때 주변까지 함께 때린다", f:u=>u.shock+=.3},
+];
+/* 겹쳐 쌓이는 강화는 여러 번 나와도 되지만, 한 번짜리(회복·강골)는 덜 나오게 */
+function arRollUps(){
+ const pool=BUPS.slice();
+ const out=[];
+ while(out.length<3&&pool.length){
+  const i=Math.floor(Math.random()*pool.length);
+  out.push(pool.splice(i,1)[0]);}
+ return out;
+}
+function arOpenPick(){
+ BA.pick=arRollUps();
+ const el=$("ar-pick");
+ el.innerHTML=`<div class="arp-box">
+   <div class="arp-t">강 화 를 고 른 다</div>
+   <div class="arp-s">보스를 쓰러뜨렸다</div>
+   <div class="arp-row">${BA.pick.map((u,i)=>`
+     <button class="arp-c" data-up="${i}">
+       <b>${u.n}</b><span>${u.d}</span></button>`).join("")}</div></div>`;
+ el.classList.add("on");
+ el.querySelectorAll("[data-up]").forEach(b=>b.onclick=()=>arTakeUp(+b.dataset.up));
+}
+function arTakeUp(i){
+ const u=BA.pick&&BA.pick[i]; if(!u)return;
+ const U=BA.up;
+ U.hpUp=0;U.heal=0;
+ u.f(U);
+ if(U.hpUp){const add=Math.round(BA.p.hpMax*(U.hpUp-1));
+  BA.p.hpMax+=add;BA.p.hp+=add;}
+ if(U.heal)BA.p.hp=Math.min(BA.p.hpMax,BA.p.hp+Math.round(BA.p.hpMax*U.heal));
+ U.hpUp=0;U.heal=0;
+ (BA.taken=BA.taken||[]).push(u.n.replace(/ /g,""));
+ BA.pick=null;
+ $("ar-pick").classList.remove("on");$("ar-pick").innerHTML="";
+ BA.last=performance.now();                 // 멈춰 있던 동안의 시간은 버린다
 }

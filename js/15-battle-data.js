@@ -115,7 +115,7 @@ const MOBS=[
 const MOBM=Object.fromEntries(MOBS.map(m=>[m.id,m]));
 /* 웨이브 배율 — 체력은 빠르게, 공격력은 천천히 오른다.
    둘 다 빠르면 어느 순간 손쓸 수 없이 죽는다. */
-const waveHp =w=>Math.pow(1.13,w-1);
+const waveHp =w=>Math.pow(1.105,w-1);
 const waveDmg=w=>Math.pow(1.05,w-1);
 /* 웨이브마다 나오는 종류 — 뒤로 갈수록 종류가 늘어난다 */
 function waveMobs(w){

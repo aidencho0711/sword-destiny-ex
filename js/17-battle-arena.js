@@ -15,7 +15,8 @@ function openArena(mode){
      <div class="ar-wv"><b id="ar-wave">1</b><span>웨이브</span></div>
      <button class="ar-quit" id="ar-quit">나가기</button>
    </div>
-   <div class="ar-over" id="ar-over"></div>`;
+   <div class="ar-over" id="ar-over"></div>
+   <div class="ar-pick" id="ar-pick"></div>`;
  el.classList.add("on");
  const cv=$("ar-cv"),ctx=cv.getContext("2d");
  /* 저장된 팀에 없는 이름이 섞여 있으면 여기서 걸러 낸다 — 검 이름이 바뀌거나
@@ -30,6 +31,7 @@ function openArena(mode){
      /* 보스는 판마다 순서를 섞는다 — 10웨이브마다 하나씩이라 순서를 고정하면
         현실적으로 첫 보스만 평생 보게 된다. */
      bossOrder:BOSSES.map((_,i)=>i).sort(()=>Math.random()-.5),
+     up:Object.assign({},BUP_BASE),pick:null,taken:[],
      joy:{id:null,cx:0,cy:0,dx:0,dy:0},atk:{id:null},kills:0,
      input:"touch",keys:{},swing:null};
  /* 체력은 팀 평균 방어력을 타고 오른다 — 단단한 검을 넣으면 오래 버틴다 */
@@ -122,7 +124,7 @@ const arCol=()=>RARITY[arCur().s.t].c;
 function arLoop(now){
  if(!BA)return;
  const dt=Math.min(.05,(now-BA.last)/1000);BA.last=now;
- if(!BA.over)arStep(dt);
+ if(!BA.over&&!BA.pick)arStep(dt);          // 강화를 고르는 동안은 멈춘다
  arDraw();
  BA.raf=requestAnimationFrame(arLoop);
 }
@@ -164,7 +166,7 @@ function arStep(dt){
  }
  /* 플레이어 */
  const cur=arCur(),tr=cur.st.trait.id;
- const base=196*(tr==="rush"?1.18:1);
+ const base=196*(tr==="rush"?1.18:1)*BA.up.move;
  let mx=BA.joy.dx,my=BA.joy.dy;
  if(BA.input==="key"){                                  // WASD / 방향키, L 로 벤다
   const K=BA.keys;
@@ -180,7 +182,7 @@ function arStep(dt){
  if(P.inv>0)P.inv-=dt;
  if(P.atkCd>0)P.atkCd-=dt;
  const firing=BA.input==="key"?!!BA.keys.l:BA.atk.id!==null;
- if(firing&&P.atkCd<=0){arSwing();P.atkCd=1/cur.st.spd;}
+ if(firing&&P.atkCd<=0){arSwing();P.atkCd=1/(cur.st.spd*BA.up.spd);}
  /* 몬스터 */
  for(let i=BA.mobs.length-1;i>=0;i--){
   const o=BA.mobs[i];
@@ -244,13 +246,13 @@ function arMobStep(o,dt){
 }
 function arHurt(d){
  const P=BA.p;
- P.hp-=Math.max(1,Math.round(d));P.inv=.7;
+ P.hp-=Math.max(1,Math.round(d*BA.up.dr));P.inv=.7*BA.up.inv;
  BA.fx.push({k:"hurt",t:0,d:.32});
  if(P.hp<=0){P.hp=0;arEnd(false);}
 }
 function arHit(o,dmg,tr){
  let d=dmg;
- if(tr==="crit"&&Math.random()<.16)d*=2;
+ if((tr==="crit"&&Math.random()<.16)||Math.random()<BA.up.crit)d*=2;
  d=Math.max(1,Math.round(d));
  o.hp-=d;o.hit=.12;
  BA.num.push({x:o.x,y:o.y-o.r,v:d,t:0,c:d>dmg*1.5?"#ffd45e":"#fff"});
@@ -258,9 +260,10 @@ function arHit(o,dmg,tr){
 function arKill(o,i){
  BA.mobs.splice(i,1);BA.kills++;
  BA.fx.push({k:"pop",x:o.x,y:o.y,r:o.r,t:0,d:.32,c:o.m.c});
- if(arCur().st.trait.id==="drain")
-  BA.p.hp=Math.min(BA.p.hpMax,BA.p.hp+Math.round(BA.p.hpMax*.012));
+ const heal=(arCur().st.trait.id==="drain"?.012:0)+BA.up.drain;
+ if(heal)BA.p.hp=Math.min(BA.p.hpMax,BA.p.hp+Math.round(BA.p.hpMax*heal));
  if(o.boss){BA.boss=null;
+  arOpenPick();                                  // 강화 셋 중 하나
   for(let i=0;i<14;i++)BA.fx.push({k:"pop",x:o.x+(Math.random()-.5)*o.r*2,
     y:o.y+(Math.random()-.5)*o.r*2,r:o.r*.3,t:-i*.03,d:.5,c:o.B.c});
   return;}
@@ -271,7 +274,8 @@ function arKill(o,i){
 }
 /* ── 공격 ── 날 모양 8종이 기본 모션, 그 위에 특징이 얹힌다 */
 function arSwing(){
- const P=BA.p,c=arCur(),mo=c.st.arch.mo,tr=c.st.trait.id,dmg=c.st.dmg,dir=P.dir;
+ const P=BA.p,c=arCur(),mo=c.st.arch.mo,tr=c.st.trait.id,dir=P.dir;
+ const dmg=c.st.dmg*BA.up.dmg;
  BA.swing={t:0,d:.26,dir,mo};                          // 칼이 실제로 휘둘러지게
  arMotion(mo,dmg,tr,dir);
  if(tr==="twin")setTimeout(()=>{if(BA&&!BA.over)arMotion(mo,dmg,null,BA.p.dir);},110);
@@ -280,7 +284,8 @@ function arSwing(){
 }
 function arCone(reach,half,mul,dmg,tr,dir,cap){
  const P=BA.p;let n=0;
- const lim=tr==="pierce"?99:(cap||4);
+ reach*=BA.up.reach;
+ const lim=tr==="pierce"?99:(cap||4)+BA.up.pierce;
  for(const o of BA.mobs){
   const d=arDist(o,P); if(d>reach+o.r)continue;
   let a=Math.atan2(o.y-P.y,o.x-P.x)-dir;
@@ -339,6 +344,9 @@ function arMotion(mo,dmg,tr,dir){
  }
  if(tr==="linger")BA.fx.push({k:"pool",x:P.x+Math.cos(dir)*52,y:P.y+Math.sin(dir)*52,
    r:42,t:0,d:1.6,dmg:dmg*.18,c});
+ if(BA.up.shock){                                // 파편 — 벤 자리 주변까지
+  for(const o of BA.mobs) if(arDist(o,P)<64+o.r)arHit(o,dmg*BA.up.shock,null);
+  BA.fx.push({k:"pop",x:P.x,y:P.y,r:22,t:0,d:.26,c});}
  const sig=arCur().st.sig; if(sig)arAbsAttack(sig,dmg,tr,dir);
 }
 /* ── 종료 ── */
@@ -356,6 +364,7 @@ function arEnd(quit){
    <div class="ar-rt">${quit?"중 단":"패 배"}</div>
    <div class="ar-rw"><b>${reached}</b><span>도달 웨이브</span></div>
    <div class="ar-rk">처치 ${BA.kills}</div>
+   ${(BA.taken&&BA.taken.length)?`<div class="ar-ups">강화 ${BA.taken.join(" · ")}</div>`:""}
    ${reached<BT_MINWAVE
      ? `<p class="ar-no">웨이브 ${BT_MINWAVE} 부터 보상이 나옵니다</p>`
      : `<div class="ar-gain">
