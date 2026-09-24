@@ -36,9 +36,9 @@ async function pvpSend(){
  if(!nm)return toast("상대 이름을 적어 주세요");
  if(nm===(S.acctName||""))return toast("자기 자신에게는 신청할 수 없습니다");
  const r=await findUser(nm);
- const u=r&&r.data&&r.data[0];
- if(!u)return toast("그런 이름의 계정이 없습니다");
- const c=await pvpChallenge(u.uid,nm);
+ if(r&&r.error)return toast(cloudErr({message:r.error}));
+ if(!r||!r.uid)return toast("그런 이름의 계정이 없습니다");
+ const c=await pvpChallenge(r.uid,nm);
  if(c&&c.error)return toast(cloudErr(c.error));
  toast("신청했습니다 · "+nm);
  $("pv-name").value="";pvpLoad();
