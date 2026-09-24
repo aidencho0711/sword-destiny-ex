@@ -1,6 +1,6 @@
 /* ═════════ 상태 ═════════ */
 const S={gold:0,gems:0,gemTot:0,rolls:0,goldTot:0,rebirth:0,ach:{},up:{luck:0,speed:0,greed:0,vault:0,auto:0},inv:{},owned:{},ench:{},enchMax:0,
-  equipped:null,pity:0,best:-1,sound:false,auto:false,cutMin:6,safe:0,cardMin:6,perf:0,autoQ:0,acct:"__local__",cloud:false,uid:null,devLuck:1,econ:ECON_VER,filter:"all",vfilter:"all",
+  equipped:null,pity:0,best:-1,sound:false,auto:false,cutMin:6,safe:0,cardMin:6,perf:0,autoQ:0,acct:"__local__",cloud:false,uid:null,devLuck:1,econ:ECON_VER,filter:"all",vfilter:"all",team:[],
   buff:{luck:{m:1,t:0},speed:{m:1,t:0},gold:{m:1,t:0}}};
 
 /* ═════════ 연출 품질 ═════════
@@ -131,6 +131,7 @@ async function load(){try{
     if(typeof S.autoQ!=="number")S.autoQ=0;
     if(typeof S.acct!=="string")S.acct="__local__";
     if(typeof S.devLuck!=="number"||!(S.devLuck>0))S.devLuck=1;
+    if(!Array.isArray(S.team))S.team=[];
   }}catch(e){}}
 const CUT_STEPS=[6,7,8,9,10,11,12,13,14,15,16,17,99];
 function cutLabel(v){return v>=99?"컷신 끄기":RARITY[v].n+" 이상";}

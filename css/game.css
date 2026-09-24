@@ -1530,3 +1530,57 @@ nav button.on{color:var(--paper);border-top-color:var(--ember)}
   0%,6%{opacity:.9;transform:translate(-50%,-50%) rotate(0)}
   100%{opacity:0;transform:translate(calc(-50% + var(--dbx)),calc(-50% + var(--dby))) rotate(var(--dbr))}}
 #cs.q3 .tzb-d,#cs.safe2 .tzb-crack{display:none}
+
+/* ═══ 배틀 · 출전 편성 ═══ */
+#v-battle{padding-bottom:20px}
+.bt-lock{text-align:center;padding:52px 20px;color:var(--ash)}
+.bt-lock-i{font-size:44px;color:var(--ember);opacity:.7;margin-bottom:14px}
+.bt-lock h3{font-family:var(--serif);font-size:17px;letter-spacing:.3em;text-indent:.3em;
+  color:var(--paper);margin-bottom:14px;font-weight:500}
+.bt-lock p{font-size:13px;line-height:1.9}
+.bt-lock p.sub{margin-top:12px;font-size:11.5px;color:var(--ash-dim)}
+.bt-head{display:flex;align-items:baseline;gap:12px;margin-bottom:12px}
+.bt-head h3{font-family:var(--serif);font-size:15px;letter-spacing:.28em;font-weight:500}
+.bt-head span{margin-left:auto;font-size:12px;color:var(--ash-dim);font-variant-numeric:tabular-nums}
+/* 출전 슬롯 3칸 */
+.bt-slots{display:grid;grid-template-columns:repeat(3,1fr);gap:7px}
+.bt-slot{border:1px solid var(--line);background:rgba(18,16,17,.6);padding:8px 5px 7px;
+  position:relative;display:flex;flex-direction:column;align-items:center;min-height:174px}
+.bt-slot.empty{border-style:dashed;justify-content:center;color:var(--ash-dim)}
+.bt-slot.empty i{font-style:normal;font-size:10.5px;letter-spacing:.1em}
+.bt-slot>span{position:absolute;top:5px;left:7px;font-size:10px;color:var(--ash-dim)}
+.bt-slot:not(.empty){border-color:color-mix(in srgb,var(--acc) 45%,var(--line))}
+.bt-art{height:74px;margin:10px 0 6px}
+.bt-art svg{height:100%;width:auto}
+.bt-nm{font-family:var(--serif);font-size:10px;text-align:center;line-height:1.3;
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis;width:100%}
+.bt-rr{font-size:8px;letter-spacing:.16em;color:var(--acc);margin-top:2px}
+.bt-st{display:grid;grid-template-columns:repeat(3,1fr);gap:1px;margin-top:6px;width:100%;text-align:center}
+.bt-st b{font-size:11px;font-variant-numeric:tabular-nums;grid-row:1}
+.bt-st i{font-size:7px;letter-spacing:.06em;color:var(--ash-dim);font-style:normal;grid-row:2}
+.bt-x{margin-top:auto;background:transparent;border:1px solid var(--line);color:var(--ash-dim);
+  font-size:9.5px;padding:3px 9px;cursor:pointer;font-family:var(--sans)}
+/* 합산 */
+.bt-sum{display:grid;grid-template-columns:repeat(3,1fr);gap:7px;margin-top:9px}
+.bt-sum div{border:1px solid var(--line);padding:8px 4px;text-align:center;background:rgba(18,16,17,.4)}
+.bt-sum b{display:block;font-size:16px;font-variant-numeric:tabular-nums}
+.bt-sum span{font-size:9px;letter-spacing:.1em;color:var(--ash-dim)}
+.bt-modes{display:flex;flex-direction:column;gap:6px;margin-top:12px}
+/* .use 는 가로줄용이라 flex-basis 가 세로에선 높이가 된다 — 여기선 무력화 */
+.bt-modes .buy{flex:0 0 auto}
+.bt-hint{font-size:10.5px;color:var(--ash-dim);line-height:1.8;margin-bottom:9px}
+/* 보유 목록 */
+.bt-list{display:flex;flex-direction:column;gap:5px}
+.bt-row{display:flex;align-items:center;gap:9px;padding:7px 9px;cursor:pointer;
+  border:1px solid var(--line);background:rgba(18,16,17,.5)}
+.bt-row.on{border-color:var(--acc);background:color-mix(in srgb,var(--acc) 9%,rgba(18,16,17,.5))}
+.bt-row.no{opacity:.34}
+.bt-ic{flex:0 0 24px;height:44px;display:flex;align-items:center;justify-content:center}
+.bt-ic svg{height:100%;width:auto}
+.bt-info{min-width:0;flex:1}
+.bt-rn{font-family:var(--serif);font-size:12px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.bt-rt{font-size:9.5px;color:var(--ash-dim);letter-spacing:.06em;margin-top:2px;
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.bt-rs{flex:0 0 auto;display:flex;gap:7px}
+.bt-rs b{font-size:11px;font-variant-numeric:tabular-nums;min-width:24px;text-align:right}
+.bt-tag{flex:0 0 auto;font-size:9px;letter-spacing:.06em;color:var(--acc);min-width:44px;text-align:right}
