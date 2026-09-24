@@ -74,3 +74,15 @@ function cloudErr(error){
  if(m.includes("email not confirmed")||m.includes("not confirmed"))return "Supabase 설정에서 이메일 확인(Confirm email)을 꺼주세요";
  if(m.includes("network")||m.includes("failed to fetch"))return "네트워크 오류. 연결을 확인하세요";
  return (error&&error.message)||"오류가 발생했습니다"; }
+
+/* ═════════ 1 vs 1 ═════════
+   신청 → 수락으로 방을 잡고, 실제 대전은 Realtime 브로드캐스트로 주고받는다.
+   정산은 양쪽 보고가 일치할 때만 서버가 처리한다(pvp_report). */
+async function pvpChallenge(toUid,toName){ if(!SB)return {error:"no client"};
+ return SB.from("pvp").insert({from_uid:S.uid,from_name:S.acctName||"",to_uid:toUid,to_name:toName,status:"pending"}); }
+async function pvpList(){ if(!SB)return {data:[],error:"no client"};
+ return SB.from("pvp").select("*").eq("status","pending").or("from_uid.eq."+S.uid+",to_uid.eq."+S.uid); }
+async function pvpAccept(id){ if(!SB)return {error:"no client"}; return SB.rpc("pvp_accept",{mid:id}); }
+async function pvpCancel(id){ if(!SB)return {error:"no client"}; return SB.rpc("pvp_cancel",{mid:id}); }
+async function pvpReport(id,winner){ if(!SB)return {error:"no client"};
+ return SB.rpc("pvp_report",{mid:id,winner_uid:winner}); }

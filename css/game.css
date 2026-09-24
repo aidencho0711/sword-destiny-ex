@@ -1633,3 +1633,24 @@ nav button.on{color:var(--paper);border-top-color:var(--ember)}
   letter-spacing:.12em;margin-bottom:5px}
 .arp-c span{font-size:11.5px;color:#9aa4b8;letter-spacing:.02em}
 .ar-ups{font-size:11px;color:#8fd0ff;letter-spacing:.06em;margin-bottom:14px;line-height:1.7}
+
+/* ═══ 1 vs 1 ═══ */
+#pvp{position:fixed;inset:0;z-index:24;display:none;background:rgba(10,9,8,.97);
+  backdrop-filter:blur(6px);padding:18px 15px 26px;overflow-y:auto}
+#pvp.on{display:block;animation:fade .2s}
+.pv-head{display:flex;align-items:center;gap:12px;margin-bottom:16px}
+.pv-head h2{font-family:var(--serif);font-size:16px;letter-spacing:.22em;font-weight:500}
+.pv-head button{margin-left:auto;flex:0 0 72px;background:transparent;border:1px solid var(--line);
+  color:var(--ash-dim);font-size:12px;padding:6px 0;cursor:pointer;font-family:var(--sans)}
+.pv-find{display:flex;gap:6px;margin-top:11px}
+.pv-find input{flex:1;padding:9px 11px;background:rgba(0,0,0,.3);border:1px solid var(--line);
+  color:var(--paper);font-size:13px;font-family:var(--sans)}
+.pv-find .buy{flex:0 0 78px}
+.pv-list{display:flex;flex-direction:column;gap:6px}
+.pv-card{border:1px solid var(--line);background:rgba(18,16,17,.55);padding:10px 12px}
+.pv-who{font-family:var(--serif);font-size:13px;margin-bottom:8px;color:var(--paper)}
+.pv-act{display:flex;align-items:center;gap:8px}
+.pv-act span{font-size:11px;color:var(--ash-dim);flex:1}
+.pv-act .mini{flex:0 0 64px}
+.pv-empty{font-size:12px;color:var(--ash-dim);padding:16px 2px;text-align:center}
+.pv-note{font-size:11.5px;line-height:1.9;color:var(--ash-dim);margin-top:14px}

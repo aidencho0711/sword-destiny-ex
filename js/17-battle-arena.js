@@ -12,7 +12,9 @@ function openArena(mode){
  el.innerHTML=`<canvas id="ar-cv"></canvas>
    <div class="ar-hud">
      <div class="ar-bar"><i id="ar-hp"></i></div>
-     <div class="ar-wv"><b id="ar-wave">1</b><span>웨이브</span></div>
+     <div class="ar-wv">${mode==="pvp"
+       ? `<b style="font-size:12px">1 vs 1</b>`
+       : `<b id="ar-wave">1</b><span>웨이브</span>`}</div>
      <button class="ar-quit" id="ar-quit">나가기</button>
    </div>
    <div class="ar-over" id="ar-over"></div>
@@ -46,7 +48,7 @@ function openArena(mode){
  addEventListener("keydown",arKey);
  addEventListener("keyup",arKey);
  $("ar-quit").onclick=()=>arEnd(true);
- btBgmStart("wave");
+ btBgmStart(mode==="pvp"?"boss":"wave");   // 대전은 보스곡으로
  BA.last=performance.now();
  BA.raf=requestAnimationFrame(arLoop);
 }
@@ -143,7 +145,9 @@ function arSpawn(id,w){
 }
 function arStep(dt){
  const P=BA.p;
- /* 웨이브 */
+ if(BA.mode==="pvp"){pvpTick(dt);}
+ /* 웨이브 — 대전에는 웨이브가 없다 */
+ if(BA.mode!=="pvp")
  if(BA.restT>0){
   BA.restT-=dt;
   if(BA.restT<=0){
@@ -169,7 +173,7 @@ function arStep(dt){
   }
   if(BA.spawnLeft<=0&&!BA.mobs.length){
    BA.wave++;BA.restT=1.5;BA.rage=0;
-   const w=$("ar-wave"); if(w)w.textContent=BA.wave;
+   const w=$("ar-wave"); if(w)w.textContent=BA.wave;      // 대전에는 이 칸이 없다
    sfxWaveStart(BA.wave);
    BA.fx.push({k:"wave",t:0,d:1.2,n:BA.wave});}
  }
@@ -257,7 +261,7 @@ function arHurt(d){
  const P=BA.p;
  P.hp-=Math.max(1,Math.round(d*BA.up.dr));P.inv=.7*BA.up.inv;
  BA.fx.push({k:"hurt",t:0,d:.32});sfxHurt();
- if(P.hp<=0){P.hp=0;arEnd(false);}
+ if(P.hp<=0){P.hp=0; if(BA.mode==="pvp")pvpOnMyDeath(); else arEnd(false);}
 }
 function arHit(o,dmg,tr){
  let d=dmg;
@@ -289,6 +293,7 @@ function arSwing(){
  const dmg=c.st.dmg*BA.up.dmg;
  BA.swing={t:0,d:.26,dir,mo};                          // 칼이 실제로 휘둘러지게
  sfxSwing(mo);
+ if(BA.mode==="pvp")pvpOnSwing(mo,dmg,tr,dir,c.st.sig);
  arMotion(mo,dmg,tr,dir);
  if(tr==="twin")setTimeout(()=>{if(BA&&!BA.over)arMotion(mo,dmg,null,BA.p.dir);},110);
  if(tr==="echo")setTimeout(()=>{if(BA&&!BA.over)arMotion(mo,dmg*.6,null,BA.p.dir);},240);
@@ -448,6 +453,7 @@ function arDraw(){
   g.strokeStyle=f.c;g.globalAlpha=1-k;g.lineWidth=3;
   g.beginPath();g.arc(P.x,P.y,20+k*46,0,6.283);g.stroke();g.globalAlpha=1;}
  arDrawAura(g);
+ if(BA.mode==="pvp")pvpDrawFoe(g);
  arDrawPlayer(g);
  /* 피해 숫자 */
  g.textAlign="center";g.font="700 13px system-ui,sans-serif";
