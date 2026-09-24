@@ -639,6 +639,7 @@ function sfxTdz(){
  noise(.75,.15,T.title);
  [73.4,110,146.8].forEach((f,i)=>tone(f,f,3.4,"sine",.055,T.title+.06+i*.05));
  bellFall(T.title+.04,150,62,4.2,.075);                     // 모든 차원의 종이 한꺼번에 내려앉는다
+ sfxTdzBreak(T.title);                                      // 시계가 부서진다
 
  /* ⑦ 마감 — 밝아지며 올라간다 */
  tone(190,860,T.fade,"sine",.085,T.close);
@@ -703,3 +704,16 @@ function sfxObl(){
  /* 마감 */
  tone(190,860,T.fade,"sine",.085,T.close);
  noise(1.0,.075,T.close);}
+
+/* 시계가 부서지는 순간 — TIME DESTROYER 의 이름이 떨어질 때.
+   본 시계 한 번 크게, 차원 시계들은 뒤따라 잘게. glassBreak 이 균열·파열·잔해를 다 만든다. */
+function sfxTdzBreak(t){
+ if(!S.sound)return;
+ tone(64,22,1.9,"sine",.17,t);                       // 낮은 충격
+ noise(.55,.14,t);
+ glassBreak(t,1.4);                                  // 본 시계
+ glassBreak(t+.06,.85);
+ [.16,.27,.4,.55,.72,.92].forEach((o,i)=>glassBreak(t+o,.36-i*.045));   // 차원 시계들
+ for(let i=0;i<14;i++)                               // 흩어진 파편이 늦게까지 부딪힌다
+  noiseBP(3000+Math.random()*5200,.05+Math.random()*.08,.05,
+    t+1.0+Math.pow(Math.random(),.9)*1.5);}

@@ -1113,7 +1113,56 @@ function themeHTML(s,R){
        <circle cx="50" cy="50" r="37" fill="none" stroke="currentColor" stroke-width=".8" opacity=".28"/>
        ${[0,1,2,3,4,5,6,7,8,9,10,11].map(k=>`<line x1="50" y1="6" x2="50" y2="13" stroke="currentColor"
          stroke-width="1.7" opacity=".5" transform="rotate(${k*30} 50 50)"/>`).join("")}
-     </svg><i class="dh"></i><i class="dm"></i><i class="dp"></i></div>`;}
+     </svg><i class="dh"></i><i class="dm"></i><i class="dp"></i>${
+      Array.from({length:QC(4)},(_,k)=>{const a=(k*90+((i*37+k*53)%64))*Math.PI/180;
+       return `<i class="db" style="--dbx:${(Math.cos(a)*(240+((i*29+k*17)%200))).toFixed(0)}%;`+
+        `--dby:${(Math.sin(a)*(240+((i*41+k*23)%200))+90).toFixed(0)}%;`+
+        `--dbr:${(-170+((i*53+k*31)%340))}deg;--dbl:${(((i*7+k*11)%14)/100).toFixed(2)}s">`+
+        `</i>`;}).join("")}</div>`;}
+
+  /* ── 부서짐 ──
+     이름이 떨어지는 순간 문자판이 갈라지고 조각으로 흩어진다.
+     조각은 단순화한 문자판을 부채꼴로 잘라 들고 날아간다 —
+     추상 삼각형보다 "시계가 깨졌다"가 훨씬 분명하게 읽힌다. */
+  const rnd=(i,m)=>((i*2654435761)%1009)/1009*m;        // 인덱스 기반 결정적 난수
+  const liteDial=`<svg viewBox="0 0 400 400">
+    <circle cx="200" cy="200" r="190" fill="currentColor" fill-opacity=".1"/>
+    <circle cx="200" cy="200" r="192" fill="none" stroke="currentColor" stroke-width="4" opacity=".6"/>
+    <circle cx="200" cy="200" r="${R3}" fill="none" stroke="currentColor" stroke-width="1" opacity=".34"/>
+    ${Array.from({length:24},(_,k)=>`<line x1="200" y1="${200-R2}" x2="200" y2="${200-(k%2?R2-11:R3)}"
+      stroke="currentColor" stroke-width="${k%2?1.4:3.6}" opacity="${k%2?.34:.72}" transform="rotate(${k*15} 200 200)"/>`).join("")}
+    <circle cx="200" cy="200" r="12.5" fill="currentColor" opacity=".9"/></svg>`;
+  const pt=(deg,r)=>`${(50+Math.cos(deg*Math.PI/180)*r).toFixed(1)}% ${(50+Math.sin(deg*Math.PI/180)*r).toFixed(1)}%`;
+  let brk="";
+  for(let i=0,N=Math.max(9,QC(14));i<N;i++){
+   const a0=i*(360/N),a1=(i+1)*(360/N),mid=(a0+a1)/2*Math.PI/180;
+   const poly=[`${(48+rnd(i,4)).toFixed(1)}% ${(48+rnd(i+3,4)).toFixed(1)}%`,
+     pt(a0,48+rnd(i*7+1,12)),pt((a0+a1)/2,48+rnd(i*7+2,12)),pt(a1,48+rnd(i*7+3,12))].join(",");
+   brk+=`<i class="tzb-sh" style="clip-path:polygon(${poly});`+
+     `--bx:${(Math.cos(mid)*(44+rnd(i+1,36))).toFixed(0)}%;`+
+     `--by:${(Math.sin(mid)*(44+rnd(i+2,36))+18).toFixed(0)}%;`+
+     `--br:${(-150+rnd(i+4,300)).toFixed(0)}deg;`+
+     `--bd:${(.74+rnd(i+5,.5)).toFixed(2)}s;--bl:${rnd(i+6,.13).toFixed(3)}s">${liteDial}</i>`;}
+  /* 갈라지는 금 — 조각이 날기 직전에 먼저 뻗는다 */
+  let crk="";
+  for(let i=0,N=Math.max(7,QC(10));i<N;i++){
+   const a=i*(360/N)+rnd(i,16);
+   let d="M200 200";
+   for(let k=1;k<=4;k++){const dv=(rnd(i*5+k,24)-12)*.013;
+    d+=` L${(200+Math.cos(a*Math.PI/180+dv)*k*52).toFixed(1)} ${(200+Math.sin(a*Math.PI/180+dv)*k*52).toFixed(1)}`;}
+   crk+=`<path d="${d}" pathLength="100" stroke-dasharray="100" stroke-dashoffset="100"
+     style="animation:tzbCrack .2s calc(var(--tdt) + ${(i*.013).toFixed(3)}s) forwards"/>`;}
+  /* 유리 가루 */
+  let dust="";
+  for(let i=0,N=QC(24);i<N;i++){
+   const a=rnd(i,6.283),r=rnd(i+9,46);
+   dust+=`<i class="tzb-d" style="left:${(50+Math.cos(a)*r).toFixed(1)}%;top:${(50+Math.sin(a)*r).toFixed(1)}%;
+     --dx:${(Math.cos(a)*(34+rnd(i+2,64))).toFixed(0)}px;--dy:${(Math.sin(a)*(26+rnd(i+3,52))+54).toFixed(0)}px;
+     --dd:${(.82+rnd(i+4,.7)).toFixed(2)}s;--dl:${rnd(i+5,.3).toFixed(2)}s;--dz:${(2+rnd(i+6,3.6)).toFixed(1)}px"></i>`;}
+  const breakHTML=`<div class="tz-break">
+    <div class="tzb-crack"><svg viewBox="0 0 400 400">${crk}</svg></div>
+    ${brk}<i class="tzb-wave"></i>${dust}
+  </div>`;
 
   /* 부서진 시간 조각 */
   let shard="";
@@ -1173,6 +1222,7 @@ function themeHTML(s,R){
           </div>
           <i class="tz-orbit"></i>
           <div class="tz-rev">${rev}</div>
+          ${breakHTML}
         </div>
       </div>
       <i class="tz-hum"></i>
