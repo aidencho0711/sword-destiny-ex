@@ -959,7 +959,7 @@ function themeHTML(s,R){
     <div class="tz-white"></div>
   </div>
   <div class="csay obl" data-t="Do you remember these swords exist?" data-d="${T.ask1}"
-    style="top:76%;--sd:${T.ask1}s;--sl:3.4s"></div>
+    style="top:76%;--sd:${T.ask1}s;--sl:${(T.sig-T.ask1-.5).toFixed(2)}s"></div>
   <div class="csay obl" data-t="How about this?" data-d="${T.ask2}"
     style="top:76%;--sd:${T.ask2}s;--sl:${(T.quake-T.ask2-.4).toFixed(2)}s"></div></div>`;}
  case "glx":{                                    // G L I T C H — 코드가 흐르다 무너진다. 검은 등장하지 않는다
