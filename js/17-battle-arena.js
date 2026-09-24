@@ -49,6 +49,7 @@ function openArena(mode){
  addEventListener("keyup",arKey);
  $("ar-quit").onclick=()=>arEnd(true);
  btBgmStart(mode==="pvp"?"boss":"wave");   // 대전은 보스곡으로
+ if(mode!=="duo")BA.duo=null;
  BA.last=performance.now();
  BA.raf=requestAnimationFrame(arLoop);
 }
@@ -145,9 +146,12 @@ function arSpawn(id,w){
 }
 function arStep(dt){
  const P=BA.p;
- if(BA.mode==="pvp"){pvpTick(dt);}
- /* 웨이브 — 대전에는 웨이브가 없다 */
- if(BA.mode!=="pvp")
+ if(BA.mode==="pvp")pvpTick(dt);
+ if(BA.mode==="duo")duoTick(dt);
+ /* 적 시뮬레이션 — 대전엔 없고, 듀얼은 호스트만 돌린다.
+    손님이 같이 돌리면 두 화면의 적이 절대 안 맞는다. */
+ const simFoe = BA.mode!=="pvp" && !(BA.duo && !BA.duo.host);
+ if(simFoe)
  if(BA.restT>0){
   BA.restT-=dt;
   if(BA.restT<=0){
@@ -194,17 +198,19 @@ function arStep(dt){
  else{const n=arNearest();if(n)P.dir=Math.atan2(n.y-P.y,n.x-P.x);}
  if(P.inv>0)P.inv-=dt;
  if(P.atkCd>0)P.atkCd-=dt;
- const firing=BA.input==="key"?!!BA.keys.l:BA.atk.id!==null;
+ if(BA.mode==="duo"&&P.hp<=0){BA.joy.dx=0;BA.joy.dy=0;}   // 쓰러지면 못 움직인다
+ const firing=(BA.input==="key"?!!BA.keys.l:BA.atk.id!==null)&&P.hp>0;
  if(firing&&P.atkCd<=0){arSwing();P.atkCd=1/(cur.st.spd*BA.up.spd);}
  /* 몬스터 */
  for(let i=BA.mobs.length-1;i>=0;i--){
   const o=BA.mobs[i];
-  if(o.boss)arBossStep(o,dt); else arMobStep(o,dt);
+  if(simFoe){ if(o.boss)arBossStep(o,dt); else arMobStep(o,dt); }
   if(o.hit>0)o.hit-=dt;
-  if(o.hp<=0){arKill(o,i);continue;}
+  if(o.hp<=0){ if(simFoe)arKill(o,i); else {BA.mobs.splice(i,1);sfxKill();} continue; }
+  /* 맞았는지는 각자 제 화면에서 본다 — 손님도 제 피는 제가 깎는다 */
   if(arDist(o,P)<o.r+P.r&&P.inv<=0){
    arHurt(o.dmg*(o.m.id==="bomber"?1:.45));
-   if(o.m.id==="bomber"){o.hp=0;arKill(o,i);}}
+   if(o.m.id==="bomber"&&simFoe){o.hp=0;arKill(o,i);}}
  }
  /* 탄 */
  for(let i=BA.bul.length-1;i>=0;i--){
@@ -213,7 +219,7 @@ function arStep(dt){
   if(b.t>3||b.x<-40||b.y<-40||b.x>BA.w+40||b.y>BA.h+40){BA.bul.splice(i,1);continue;}
   if(b.foe){ if(arDist(b,P)<P.r+b.r&&P.inv<=0){arHurt(b.dmg);BA.bul.splice(i,1);} }
   else{ let hitOne=false;
-        for(const o of BA.mobs) if(arDist(b,o)<o.r+b.r){arHit(o,b.dmg,b.tr);hitOne=true;break;}
+        for(const o of BA.mobs) if(arDist(b,o)<o.r+b.r){arHit(o,b.dmg,b.tr,1);hitOne=true;break;}
         if(hitOne&&b.tr!=="pierce")BA.bul.splice(i,1); }
  }
  arHazStep(dt);
@@ -221,7 +227,7 @@ function arStep(dt){
  for(const f of BA.fx) if(f.k==="pool"){
   f.tick=(f.tick||0)+dt;
   if(f.tick>=.3){f.tick=0;
-   for(const o of BA.mobs) if(arDist(o,f)<f.r+o.r)arHit(o,f.dmg,null);}}
+   for(const o of BA.mobs) if(arDist(o,f)<f.r+o.r)arHit(o,f.dmg,null,1);}}
  for(let i=BA.fx.length-1;i>=0;i--){const f=BA.fx[i];f.t+=dt;if(f.t>=f.d)BA.fx.splice(i,1);}
  for(let i=BA.num.length-1;i>=0;i--){const n=BA.num[i];n.t+=dt;n.y-=26*dt;if(n.t>.8)BA.num.splice(i,1);}
  if(BA.swing){BA.swing.t+=dt;if(BA.swing.t>=BA.swing.d)BA.swing=null;}
@@ -261,14 +267,25 @@ function arHurt(d){
  const P=BA.p;
  P.hp-=Math.max(1,Math.round(d*BA.up.dr));P.inv=.7*BA.up.inv;
  BA.fx.push({k:"hurt",t:0,d:.32});sfxHurt();
- if(P.hp<=0){P.hp=0; if(BA.mode==="pvp")pvpOnMyDeath(); else arEnd(false);}
+ if(P.hp<=0){P.hp=0;
+  if(BA.mode==="pvp")pvpOnMyDeath();
+  else if(BA.mode==="duo")duoOnMyDown();      // 듀얼은 한 명 누워도 안 끝난다
+  else arEnd(false);}
 }
-function arHit(o,dmg,tr){
+function arHit(o,dmg,tr,report){
  let d=dmg;
  if((tr==="crit"&&Math.random()<.16)||Math.random()<BA.up.crit)d*=2;
  d=Math.max(1,Math.round(d));
- o.hp-=d;o.hit=.12;sfxHit();
+ o.hit=.12;sfxHit();
  BA.num.push({x:o.x,y:o.y-o.r,v:d,t:0,c:d>dmg*1.5?"#ffd45e":"#fff"});
+ /* 듀얼 손님은 적의 체력을 건드리지 않는다 — 적의 주인은 호스트 하나다.
+    여기서 깎으면 손님 화면의 체력(백분율)이 제멋대로 0 이 된다.
+    휘두르기는 호스트가 그대로 재생하므로 여기선 보고하지 않는다.
+    보고가 필요한 건 재생되지 않는 것들뿐이다 — 제 탄과 장판(report). */
+ if(BA.duo&&!BA.duo.host){
+  if(report)duoSend2("atk",{mo:"point",x:Math.round(o.x),y:Math.round(o.y),dmg:d});
+  return;}
+ o.hp-=d;
 }
 function arKill(o,i){
  BA.mobs.splice(i,1);BA.kills++;
@@ -294,6 +311,7 @@ function arSwing(){
  BA.swing={t:0,d:.26,dir,mo};                          // 칼이 실제로 휘둘러지게
  sfxSwing(mo);
  if(BA.mode==="pvp")pvpOnSwing(mo,dmg,tr,dir,c.st.sig);
+ if(BA.mode==="duo")duoOnSwing(mo,dmg,tr,dir);
  arMotion(mo,dmg,tr,dir);
  if(tr==="twin")setTimeout(()=>{if(BA&&!BA.over)arMotion(mo,dmg,null,BA.p.dir);},110);
  if(tr==="echo")setTimeout(()=>{if(BA&&!BA.over)arMotion(mo,dmg*.6,null,BA.p.dir);},240);
@@ -394,7 +412,7 @@ function arEnd(quit){
         ${drop?`<p class="ar-drop">${gradText(RARITY[drop.t],drop.n,drop)} 획득</p>`:""}`}
    <button class="buy" id="ar-close">돌아가기</button></div>`;
  $("ar-over").classList.add("on");
- $("ar-close").onclick=()=>{closeArena();renderBattle();};
+ $("ar-close").onclick=()=>{duoEndSession();pvpEndSession();closeArena();renderBattle();};
 }
 
 
@@ -454,6 +472,7 @@ function arDraw(){
   g.beginPath();g.arc(P.x,P.y,20+k*46,0,6.283);g.stroke();g.globalAlpha=1;}
  arDrawAura(g);
  if(BA.mode==="pvp")pvpDrawFoe(g);
+ if(BA.mode==="duo")duoDrawMate(g);
  arDrawPlayer(g);
  /* 피해 숫자 */
  g.textAlign="center";g.font="700 13px system-ui,sans-serif";

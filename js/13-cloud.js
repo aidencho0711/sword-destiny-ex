@@ -78,8 +78,9 @@ function cloudErr(error){
 /* ═════════ 1 vs 1 ═════════
    신청 → 수락으로 방을 잡고, 실제 대전은 Realtime 브로드캐스트로 주고받는다.
    정산은 양쪽 보고가 일치할 때만 서버가 처리한다(pvp_report). */
-async function pvpChallenge(toUid,toName){ if(!SB)return {error:"no client"};
- return SB.from("pvp").insert({from_uid:S.uid,from_name:S.acctName||"",to_uid:toUid,to_name:toName,status:"pending"}); }
+async function pvpChallenge(toUid,toName,kind){ if(!SB)return {error:"no client"};
+ return SB.from("pvp").insert({from_uid:S.uid,from_name:S.acctName||"",to_uid:toUid,to_name:toName,
+   status:"pending",kind:kind||"pvp"}); }
 async function pvpList(){ if(!SB)return {data:[],error:"no client"};
  return SB.from("pvp").select("*").eq("status","pending").or("from_uid.eq."+S.uid+",to_uid.eq."+S.uid); }
 async function pvpAccept(id){ if(!SB)return {error:"no client"}; return SB.rpc("pvp_accept",{mid:id}); }

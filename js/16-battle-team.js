@@ -81,6 +81,6 @@ $("v-battle").addEventListener("click",e=>{
  const m=e.target.closest("[data-mode]");
  if(m){const md=m.dataset.mode;
   if(md==="pvp"){pvpOpen();return;}
-  if(md!=="solo"){toast("듀얼은 다음 단계입니다");return;}
+  if(md==="duo"){duoOpen();return;}
   openArena(md);return;}
 });

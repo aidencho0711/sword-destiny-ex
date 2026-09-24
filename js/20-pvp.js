@@ -51,10 +51,11 @@ async function pvpLoad(){
  box.innerHTML=rows.map(m=>{
   const mine=m.from_uid===S.uid;
   return `<div class="pv-card">
-    <div class="pv-who">${mine?"→ "+esc2(m.to_name):"← "+esc2(m.from_name)}</div>
+    <div class="pv-who">${m.kind==="duo"?"[듀얼] ":"[1vs1] "}${mine?"→ "+esc2(m.to_name):"← "+esc2(m.from_name)}</div>
     <div class="pv-act">${mine
       ? `<span>수락 기다리는 중</span><button class="mini" data-pvc="${m.id}">취소</button>`
-      : `<button class="buy" data-pva="${m.id}" data-uid="${m.from_uid}" data-nm="${esc2(m.from_name)}">수락하고 시작</button>`}</div>
+      : `<button class="buy" data-pva="${m.id}" data-uid="${m.from_uid}" data-nm="${esc2(m.from_name)}"
+           data-kind="${esc2(m.kind||"pvp")}">수락하고 시작</button>`}</div>
   </div>`;}).join("");
 }
 const esc2=v=>String(v||"").replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/"/g,"&quot;");
@@ -70,7 +71,9 @@ function pvpWatch(){
      pvpLoad();
      /* 내가 건 신청이 수락되면 바로 들어간다 */
      const n=p.new;
-     if(n&&n.status==="live"&&!PV)pvpBegin(n.id,n.to_uid,n.to_name,true);})
+     if(n&&n.status==="live"&&!PV&&!DU){
+      if(n.kind==="duo")duoBegin(n.id,n.to_uid,n.to_name,true);
+      else pvpBegin(n.id,n.to_uid,n.to_name,true);}})
    .subscribe(); }catch(e){}
 }
 function pvpUnwatch(){ try{ if(pvWatch)SB.removeChannel(pvWatch); }catch(e){} pvWatch=null; }
@@ -79,7 +82,9 @@ $("pvp").addEventListener("click",async e=>{
  const a=e.target.closest("[data-pva]");
  if(a){ const r=await pvpAccept(a.dataset.pva);
    if(r&&r.error)return toast(cloudErr(r.error));
-   pvpBegin(a.dataset.pva,a.dataset.uid,a.dataset.nm,false); return; }
+   if(a.dataset.kind==="duo")duoBegin(a.dataset.pva,a.dataset.uid,a.dataset.nm,false);
+   else pvpBegin(a.dataset.pva,a.dataset.uid,a.dataset.nm,false);
+   return; }
  const c=e.target.closest("[data-pvc]");
  if(c){ await pvpCancel(c.dataset.pvc); pvpLoad(); }
 });
