@@ -38,9 +38,28 @@ function arSpawnBoss(w){
  const ord=BA.bossOrder||BOSSES.map((_,i)=>i);
  const B=BOSSES[ord[(Math.floor(w/10)-1+ord.length*99)%ord.length]];
  const hp=Math.round(B.hp*waveHp(w)*0.8);
- const a=Math.random()*6.283,R=Math.max(BA.w,BA.h)*.55;
+ let bx,by;
+ if(B.still){
+  /* 제자리에 서는 보스는 처음부터 판 안에 세운다.
+     여백 안으로 밀어 넣다 보면 주인공 코앞에 설 수 있으므로,
+     방향을 몇 개 뽑아 그중 가장 멀리 떨어지는 자리를 고른다. */
+  const m=B.r+22, want=Math.min(BA.w,BA.h)*0.34;
+  /* 아래쪽 4분의 1은 조작부가 덮는다. 움직이는 보스야 걸어 나오지만
+     제자리에 서는 보스가 거기 서면 단추 뒤에 가린 채로 싸워야 한다. */
+  const yMax=Math.min(BA.h-m,BA.h*0.72);
+  let bd=-1;
+  for(let k=0;k<10;k++){
+   const aa=Math.random()*6.283;
+   const px=Math.max(m,Math.min(BA.w-m,BA.p.x+Math.cos(aa)*want));
+   const py=Math.max(m,Math.min(yMax,BA.p.y+Math.sin(aa)*want));
+   const d=Math.hypot(px-BA.p.x,py-BA.p.y);
+   if(d>bd){bd=d;bx=px;by=py;}}
+ }else{
+  const a=Math.random()*6.283,R=Math.max(BA.w,BA.h)*.55;
+  bx=BA.w/2+Math.cos(a)*R;by=BA.h/2+Math.sin(a)*R;
+ }
  const o={m:{id:"boss",n:B.n,c:B.c,r:B.r},B,boss:true,
-   x:BA.w/2+Math.cos(a)*R,y:BA.h/2+Math.sin(a)*R,
+   x:bx,y:by,
    r:B.r,hp,hpMax:hp,dmg:B.dmg*waveDmg(w),spd:B.spd,
    st:2,t:0,hit:0,ph:0,tele:null,copies:null,slow:0,uid:++MOB_UID};
  BA.mobs.push(o);
@@ -52,6 +71,17 @@ function arSpawnBoss(w){
 function arBossStep(o,dt){
  const P=BA.p,B=o.B;
  o.t+=dt;o.st-=dt;
+ /* 화면 밖에 오래 머무는 보스는 잡을 수가 없고, 보스가 안 죽으면 웨이브가
+    끝나지 않아 판이 통째로 멈춘다. 격발탑이 실제로 그랬다 —
+    제자리 패턴이라 걸어 들어오지 않았다.
+    앞으로 어떤 패턴이 와도 막히도록 여기서 한 번 더 받아 둔다. */
+ const pad=o.r+12;
+ const away=o.x<-pad||o.x>BA.w+pad||o.y<-pad||o.y>BA.h+pad;
+ o.out=away?(o.out||0)+dt:0;
+ if(o.out>4){
+  const a2=Math.atan2(BA.h/2-o.y,BA.w/2-o.x), sp=Math.max(130,o.spd*1.6);
+  o.x+=Math.cos(a2)*sp*dt;o.y+=Math.sin(a2)*sp*dt;
+ }
  const ang=Math.atan2(P.y-o.y,P.x-o.x);
  const step=(mul)=>{o.x+=Math.cos(ang)*o.spd*mul*dt;o.y+=Math.sin(ang)*o.spd*mul*dt;};
  const id=B.id;
