@@ -226,7 +226,7 @@ function pvpResultCard(win,res){
  const done=res&&res.ok;
  const amt=done?`<div class="ar-gain">
      <div><b>${win?"+":"−"}${fmt(res.gold||0)}</b><span>주화</span></div>
-     <div><b>💎 ${win?"+":"−"}${res.gems||0}</b><span>보석</span></div></div>`
+     <div><b>💎 ${win?"+":"−"}${fmt(res.gems||0)}</b><span>보석</span></div></div>`
    : `<p class="ar-no">${res?(PV_WHY[res.why]||res.why||"정산하지 못했습니다"):"정산 중…"}</p>`;
  $("ar-over").innerHTML=`<div class="ar-res">
    <div class="ar-rt">${win?"승 리":"패 배"}</div>

@@ -84,13 +84,29 @@ function teamSummary(team){
    천천히 오르므로, 후반에 보상이 시들해지면 BT_GOLD 만 올리면 된다. */
 const BT_MINWAVE=10;
 const BT_GOLD=5000;
+/* 보상은 지금 가진 것의 몇 % × 도달 웨이브다.
+   고정 액수로 두면 반드시 시들해진다 — 주화는 환생마다 자릿수가 바뀌는데
+   보상만 제자리에 있으면 몇 회차만 지나도 한 판이 푼돈이 된다.
+   자산을 기준으로 삼으면 언제 오든 "한 판에 얼마나 늘었나"가 같게 유지된다.
+
+   웨이브당 1 % — 웨이브 N 까지 가면 가진 주화의 N % 다. 셈이 단순해서
+   어디까지 버티면 얼마가 되는지 머릿속에서 바로 그려진다.
+   보석은 훨씬 귀하므로 그 절반도 안 되게 둔다.
+
+   다만 가진 게 없으면 몇 %도 0 이다. 그래서 예전의 고정 보상을 바닥에 깐다 —
+   막 환생 1회를 넘긴 사람은 이쪽이 잡힌다. */
+const BT_PCT_GOLD=0.010;
+const BT_PCT_GEM =0.004;
 function battleReward(wave){
- if(wave<BT_MINWAVE)return {gold:0,gems:0,wave};
- const gold=Math.floor(wave*rbGold()*BT_GOLD);
- /* 보석은 잡은 보스 수만큼 — 10웨이브마다 하나씩 */
- let gems=0;
- for(let b=1;b*10<=wave;b++)gems+=2+b;
- return {gold,gems,wave};}
+ if(wave<BT_MINWAVE)return {gold:0,gems:0,wave,pct:0};
+ const gold=capNum(Math.max(
+   Math.floor(wave*rbGold()*BT_GOLD),                       // 바닥 — 예전 고정 보상
+   Math.floor((S.gold||0)*BT_PCT_GOLD*wave)));
+ /* 보석 바닥은 잡은 보스 수만큼 — 10웨이브마다 하나씩 */
+ let floorGem=0;
+ for(let b=1;b*10<=wave;b++)floorGem+=2+b;
+ const gems=capNum(Math.max(floorGem,Math.floor((S.gems||0)*BT_PCT_GEM*wave)));
+ return {gold,gems,wave,pct:BT_PCT_GOLD*wave};}
 /* 보스가 드물게 검을 떨군다. 깊이 갈수록 등급대가 올라가되 상한을 둔다. */
 function battleDrop(wave){
  if(wave<BT_MINWAVE||Math.random()>=0.08)return null;

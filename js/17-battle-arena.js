@@ -473,8 +473,8 @@ function arEnd(quit){
  const reached=BA.wave;
  const rw=battleReward(reached);
  const drop=quit?null:battleDrop(reached);
- if(rw.gold){S.gold+=rw.gold;S.goldTot+=rw.gold;}
- if(rw.gems){S.gems=(S.gems||0)+rw.gems;S.gemTot=(S.gemTot||0)+rw.gems;}
+ if(rw.gold){S.gold=capNum(S.gold+rw.gold);S.goldTot=capNum(S.goldTot+rw.gold);}
+ if(rw.gems){S.gems=capNum((S.gems||0)+rw.gems);S.gemTot=capNum((S.gemTot||0)+rw.gems);}
  if(drop){S.owned[drop.n]=(S.owned[drop.n]||0)+1;if(drop.t>S.best)S.best=drop.t;}
  save();checkAch();renderHUD();
  btBgmStop();
@@ -489,8 +489,10 @@ function arEnd(quit){
      ? `<p class="ar-no">웨이브 ${BT_MINWAVE} 부터 보상이 나옵니다</p>`
      : `<div class="ar-gain">
           <div><b>+${fmt(rw.gold)}</b><span>주화</span></div>
-          ${rw.gems?`<div><b>💎 +${rw.gems}</b><span>보석</span></div>`:""}
+          ${rw.gems?`<div><b>💎 +${fmt(rw.gems)}</b><span>보석</span></div>`:""}
         </div>
+        <p class="ar-pct">보유 주화의 <b>${(rw.pct*100).toFixed(0)}%</b>
+          (웨이브당 ${(BT_PCT_GOLD*100).toFixed(1)}%)</p>
         ${drop?`<p class="ar-drop">${gradText(RARITY[drop.t],drop.n,drop)} 획득</p>`:""}`}
    <button class="buy" id="ar-close">돌아가기</button></div>`;
  $("ar-over").classList.add("on");

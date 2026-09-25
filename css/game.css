@@ -1654,3 +1654,6 @@ nav button.on{color:var(--paper);border-top-color:var(--ember)}
 .pv-act .mini{flex:0 0 64px}
 .pv-empty{font-size:12px;color:var(--ash-dim);padding:16px 2px;text-align:center}
 .pv-note{font-size:11.5px;line-height:1.9;color:var(--ash-dim);margin-top:14px}
+/* 보상이 자산 비례로 바뀐 뒤로는 "얼마"보다 "몇 %"가 판단 기준이다 */
+.ar-pct{font-size:11.5px;color:#8a94a6;letter-spacing:.04em;margin:-6px 0 14px}
+.ar-pct b{color:#d8c9a8;font-size:12.5px}

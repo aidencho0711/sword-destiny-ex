@@ -104,6 +104,11 @@ function rbReq(n){
  const g=Math.round(60*Math.pow(1.85,k));
  return {gold:Math.round(750000000*Math.pow(2.4,k)),gems:g,tier:13,need:1,coll:c,
          note:"운명 1자루 · 도감 "+c+"종 · 보석 "+g};}
+/* 자산이 배정밀도의 한계(약 1.8e308)를 넘으면 무한대가 되고,
+   JSON.stringify 가 무한대를 null 로 바꿔 저장이 통째로 깨진다.
+   보상이 자산에 비례하게 된 뒤로는 실제로 닿을 수 있는 거리라 천장을 둔다. */
+const NUM_CAP=1e300;
+const capNum=v=>(!isFinite(v)||v>NUM_CAP)?NUM_CAP:(v>0?v:0);
 const rbGold=()=>Math.pow(1.75,S.rebirth);   // 환생 1회마다 주화 1.75배
 const rbLuck=()=>Math.pow(1.45,S.rebirth);   // 환생 1회마다 행운 1.45배
 /* 검 보유 판정 — 기본(owned) + 인첸트본(ench) 모두 고려 */

@@ -1,8 +1,24 @@
 /* ═════════ 렌더 ═════════ */
+/* 단위는 네 자리마다 하나씩 올라간다(만·억·조·경…). 조에서 끊어 두면
+   그 위로는 자릿수만 한없이 늘어나 눈으로 셀 수 없게 된다.
+   무량대수(10^68) 까지 두면 실질적으로 바닥이 없다 —
+   배정밀도가 무한대가 되는 10^308 이 훨씬 먼저 온다. */
+const BIG_UNITS=[
+ [1e68,"무량대수"],[1e64,"불가사의"],[1e60,"나유타"],[1e56,"아승기"],[1e52,"항하사"],
+ [1e48,"극"],[1e44,"재"],[1e40,"정"],[1e36,"간"],[1e32,"구"],[1e28,"양"],
+ [1e24,"자"],[1e20,"해"],[1e16,"경"],[1e12,"조"],[1e8,"억"],[1e4,"만"]];
+const SUP_DIG="⁰¹²³⁴⁵⁶⁷⁸⁹";
+const supNum=e=>String(e).split("").map(c=>SUP_DIG[+c]||c).join("");
 function fmt(n){
- if(n>=1e12)return (n/1e12).toFixed(2)+"조";
- if(n>=1e8)return (n/1e8).toFixed(2)+"억";
- if(n>=1e4)return (n/1e4).toFixed(1)+"만";
+ if(!isFinite(n))return "∞";
+ if(n<0)return "-"+fmt(-n);
+ /* 무량대수보다 더 위에는 붙일 단위가 없다 — 거기서부터는 거듭제곱으로 적는다.
+    "1e+232무량대수" 같은 것이 나오면 읽을 수가 없다. */
+ if(n>=1e72){const e=Math.floor(Math.log10(n));
+  return (n/Math.pow(10,e)).toFixed(2)+"×10"+supNum(e);}
+ for(let i=0;i<BIG_UNITS.length;i++){
+  const v=BIG_UNITS[i][0];
+  if(n>=v)return (n/v).toFixed(v>=1e8?2:1)+BIG_UNITS[i][1];}
  return Math.floor(n).toLocaleString();}
 function renderHUD(){
  const armOn=$("v-armory")&&$("v-armory").classList.contains("on");

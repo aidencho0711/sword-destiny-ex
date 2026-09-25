@@ -62,6 +62,9 @@ function renderBattle(){
     <button class="buy use" data-mode="duo"  ${team.length<TEAM_SIZE?"disabled":""}>듀얼 · 2인 협력</button>
     <button class="buy use" data-mode="pvp"  ${team.length<TEAM_SIZE?"disabled":""}>1 vs 1</button>
   </div>
+  <p class="bt-hint">웨이브 <b>${BT_MINWAVE}</b>부터 보상이 나옵니다.
+     도달한 웨이브 수가 곧 비율입니다 — 웨이브 N 까지 가면 <b>보유 주화의 N %</b>.
+     보석은 웨이브당 <b>${(BT_PCT_GEM*100).toFixed(1)}%</b> 입니다.</p>
   <div class="sec">보유한 검</div>
   <p class="bt-hint">같은 희귀도는 한 자루만 넣을 수 있습니다. 인첸트는 전투에서 구분하지 않습니다.</p>
   <div class="bt-list">${list}</div>`;
