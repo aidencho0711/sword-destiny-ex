@@ -29,11 +29,12 @@ function botTeam(){
 }
 function botInit(){
  const team=botTeam(); if(!team.length)return;
+ team.forEach(skArm);                         // 동료도 제 검의 스킬을 가진다
  const def=team.reduce((a,b)=>a+b.st.def,0)/team.length;
  BA.bot={team,slot:0,r:15,
    x:Math.max(30,BA.w/2-54),y:Math.min(BA.h-30,BA.h/2+30),
    dir:-Math.PI/2,hp:0,hpMax:0,atkCd:0,inv:0,sw:null,t:0,slotT:5,down:false,
-   sx:0,sy:0,strafeT:0};
+   sx:0,sy:0,strafeT:0,skT:0};
  BA.bot.hpMax=BA.bot.hp=Math.round(520+def*12);
 }
 const botCur=()=>BA.bot.team[BA.bot.slot];
@@ -79,6 +80,7 @@ function botStep(dt){
  B.y=Math.max(B.r,Math.min(BA.h-B.r,B.y+my*spd*dt));
 
  if(tg&&td<botReach(mo)+tg.r&&B.atkCd<=0)botSwing();
+ botSkill(dt,tg,td);
 
  /* 맞는 쪽 — 접촉과 적 탄만 본다. 장판은 안 맞는다(위 주석). */
  for(const o of BA.mobs)
@@ -99,10 +101,30 @@ function botSwing(){
  const sx=P.x,sy=P.y,sd=P.dir;
  P.x=B.x;P.y=B.y;P.dir=dir;
  arStandIn(cur.look.col,cur.st.sig);
+ BA.gainTo=cur;                                // 이 피해는 동료 제 게이지로
  try{ arMotion(mo,dmg,tr,dir); }catch(e){}
+ BA.gainTo=null;
  arStandOut();
  B.x=P.x;B.y=P.y;                              // 파고드는 모션은 실제로 자리를 옮긴다
  P.x=sx;P.y=sy;P.dir=sd;
+}
+/* 동료의 스킬 — 차자마자 쏟아 버리지 않는다.
+   혼자 남은 잡졸 하나에 「처음이자 끝」을 쓰면 아까우므로,
+   쓸 만한 그림이 될 때까지 들고 있다가 낸다. */
+function botSkill(dt,tg,td){
+ const B=BA.bot,cur=botCur();
+ if(B.skT>0)B.skT-=dt;
+ if(!cur.sk||cur.gauge<cur.need||B.skT>0)return;
+ const near=skMobs(B.x,B.y,280).length;
+ const worth = near>=3                       // 여럿이 몰렸거나
+   || !!BA.boss                              // 보스가 섰거나
+   || BA.p.hp<BA.p.hpMax*.45                 // 주인공이 위험하거나
+   || B.hp<B.hpMax*.4;                       // 제가 위험하거나
+ if(!worth)return;
+ cur.gauge=0; B.skT=3;
+ (BA.skfx=BA.skfx||[]).push(
+   {k:"call",t:0,d:1.4,c:cur.look.col,n:cur.sk.n,en:"동료의 스킬"});
+ skFire(cur,B);
 }
 function botHurt(d){
  const B=BA.bot;
@@ -133,4 +155,9 @@ function botDraw(g){
  g.fillText(cur.s.n,B.x,B.y-36);g.globalAlpha=1;
  g.fillStyle="rgba(0,0,0,.6)";g.fillRect(B.x-24,B.y-26,48,4);
  g.fillStyle="#7ce08a";g.fillRect(B.x-24,B.y-26,48*Math.max(0,B.hp/B.hpMax),4);
+ /* 스킬 게이지 — 언제 터질지 보여야 같이 싸우는 맛이 난다 */
+ if(cur.sk){
+  const k=skRatio(cur);
+  g.fillStyle="rgba(0,0,0,.5)";g.fillRect(B.x-24,B.y-20,48,2.5);
+  g.fillStyle=k>=1?"#ffffff":col;g.fillRect(B.x-24,B.y-20,48*k,2.5);}
 }

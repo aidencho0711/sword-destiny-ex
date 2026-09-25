@@ -352,10 +352,11 @@ function arHit(o,dmg,tr,report){
  if(o.armor>0)d*=3;                      // 규칙 삭제 — 방어라는 규칙이 지워졌다
  if((tr==="crit"&&Math.random()<.16)||Math.random()<BA.up.crit)d*=2;
  d=Math.max(1,Math.round(d));
- /* 스킬 게이지는 내가 손으로 넣은 피해만 센다.
-    남의 공격을 대신 재생하는 중(BA.as)이면 내 몫이 아니고,
-    스킬이 내는 피해(skFiring)는 제 게이지를 되채워 무한 반복이 된다. */
- if(!BA.as&&!BA.skFiring)skGain(d);
+ /* 스킬 게이지는 손으로 넣은 피해만 센다.
+    스킬이 내는 피해(skFiring)는 제 게이지를 되채워 무한 반복이 되고,
+    남의 공격을 대신 재생하는 중(BA.as)이면 내 몫이 아니다 —
+    단, 그 남이 AI 동료면 동료 제 게이지로 간다(gainTo). */
+ if(!BA.skFiring&&(BA.gainTo||!BA.as))skGain(d);
  o.hit=.12;sfxHit();
  BA.num.push({x:o.x,y:o.y-o.r,v:d,t:0,c:d>dmg*1.5?"#ffd45e":"#fff"});
  /* 듀얼 손님은 적의 체력을 건드리지 않는다 — 적의 주인은 호스트 하나다.
@@ -509,6 +510,8 @@ function arEnd(quit){
  if(!BA||BA.over)return;
  BA.over=true;
  const reached=BA.wave;
+ /* 대전에는 웨이브가 없다 — 그쪽 기록까지 여기로 섞이면 안 된다 */
+ if(BA.mode!=="pvp"&&reached>(S.bestWave||0))S.bestWave=reached;
  const rw=battleReward(reached);
  const drop=quit?null:battleDrop(reached);
  if(rw.gold){S.gold=capNum(S.gold+rw.gold);S.goldTot=capNum(S.goldTot+rw.gold);}

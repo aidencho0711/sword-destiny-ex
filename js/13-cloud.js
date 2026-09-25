@@ -87,3 +87,9 @@ async function pvpAccept(id){ if(!SB)return {error:"no client"}; return SB.rpc("
 async function pvpCancel(id){ if(!SB)return {error:"no client"}; return SB.rpc("pvp_cancel",{mid:id}); }
 async function pvpReport(id,winner){ if(!SB)return {error:"no client"};
  return SB.rpc("pvp_report",{mid:id,winner_uid:winner}); }
+
+/* ── 랭킹 ── 서버 함수만 남의 기록을 읽는다. 나오는 건 이름과 숫자뿐이다 */
+async function rankBoard(kind,lim){ if(!SB)return {data:[],error:"no client"};
+ return SB.rpc("rank_board",{kind,lim:lim||50}); }
+async function rankMe(kind){ if(!SB)return {data:[],error:"no client"};
+ return SB.rpc("rank_me",{kind}); }

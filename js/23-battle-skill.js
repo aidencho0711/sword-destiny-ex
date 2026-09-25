@@ -19,7 +19,8 @@ function skArm(e){ e.sk=SKILLS[e.s.n]||null; e.gauge=0; e.need=skNeed(e); }
 function skNeed(e){ return e.sk?Math.max(1,Math.round(e.st.dmg*SK_FILL*(e.sk.cost||1))):0; }
 const skCur=()=>(BA&&BA.team)?BA.team[BA.slot]:null;
 function skGain(d){
- const e=skCur(); if(!e||!e.sk||e.gauge>=e.need)return;
+ /* gainTo 가 있으면 그쪽으로 — AI 동료가 제 게이지를 채울 때 쓴다 */
+ const e=BA.gainTo||skCur(); if(!e||!e.sk||e.gauge>=e.need)return;
  e.gauge=Math.min(e.need,e.gauge+d);
  if(e.gauge>=e.need){                                  // 막 찼다
   BA.skfx=BA.skfx||[];
@@ -37,12 +38,25 @@ function skUse(){
  if(e.gauge<e.need){
   toast(e.sk.n+" — 게이지 "+Math.floor(skRatio(e)*100)+"%");return;}
  e.gauge=0;
- const P=BA.p;
- const C={P,e,look:e.look,col:e.look.col,dmg:e.st.dmg*BA.up.dmg,
-          dir:P.dir,x:P.x,y:P.y};
  BA.skfx=BA.skfx||[];
  BA.skfx.push({k:"call",t:0,d:1.5,c:e.look.col,n:e.sk.n,en:e.sk.en});
+ skFire(e,null);
+}
+/* by 를 주면 그 사람이 시전한다(AI 동료).
+
+   즉발 효과는 시전자 자리에서 나가도록 주인공 자리를 잠깐 빌린다.
+   반면 몇 초에 걸쳐 도는 것(방벽·나선·사슬)은 매 프레임 BA.p 를 보므로
+   결국 주인공을 따라다닌다. 협력에서는 그게 맞다 —
+   동료가 벽을 세우면 내 둘레에 서고, 동료가 나를 감싼다. */
+function skFire(e,by){
+ const P=BA.p;
+ const ox=by?by.x:P.x, oy=by?by.y:P.y, od=by?by.dir:P.dir;
+ const C={P,e,look:e.look,col:e.look.col,
+          dmg:e.st.dmg*(by?0.85:BA.up.dmg),dir:od,x:ox,y:oy};
+ const sx=P.x,sy=P.y,sd=P.dir;
+ if(by){P.x=ox;P.y=oy;P.dir=od;}
  skRun(()=>e.sk.run(C));
+ if(by){P.x=sx;P.y=sy;P.dir=sd;}
 }
 /* 스킬이 내는 피해는 게이지를 채우지 않는다.
    안 그러면 큰 스킬일수록 제 피해로 제 게이지를 즉시 되채워
@@ -290,9 +304,11 @@ const SKILLS={
    arHit(o,C.dmg*1.45,null,1);}
   for(const b of BA.bul) if(b.foe){       // 적의 탄이 돌아선다
    b.foe=0;b.vx*=-1.2;b.vy*=-1.2;b.dmg=C.dmg*.7;b.c="#ffcf6e";}
-  for(let i=0,N=QC(7);i<N;i++)
-   BA.fx.push({k:"pool",x:60+Math.random()*(BA.w-120),y:60+Math.random()*(BA.h-120),
-     r:54,t:0,d:2.6,dmg:C.dmg*.34,c:"#ffcf6e"});
+  /* 불길은 다섯 자리만. 더 깔면 화면이 통째로 갈색 판이 되어
+     적도 내 위치도 안 보인다 — 어지러운 것과 안 보이는 것은 다르다. */
+  for(let i=0,N=QC(5);i<N;i++)
+   BA.fx.push({k:"pool",x:70+Math.random()*(BA.w-140),y:70+Math.random()*(BA.h-140),
+     r:42,t:0,d:2.6,dmg:C.dmg*.46,c:"#ffcf6e"});
   skFx("disorder",{x:C.x,y:C.y,d:1.3,c:C.col});
   skSound("disorder");}},
 

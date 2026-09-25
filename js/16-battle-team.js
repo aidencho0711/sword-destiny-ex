@@ -10,7 +10,8 @@ function renderBattle(){
     <h3>배 틀</h3>
     <p>환생 <b>${BATTLE_RB}회</b>부터 열립니다. (현재 ${S.rebirth}회)</p>
     <p class="sub">출전에는 서로 다른 희귀도의 검 ${TEAM_SIZE}자루가 필요합니다.
-       환생을 한 번 거치면 자연히 갖춰집니다.</p></div>`;
+       환생을 한 번 거치면 자연히 갖춰집니다.</p>
+    <button class="buy" data-mode="rank">랭 　킹 　보 기</button></div>`;
   return;}
 
  S.team=(S.team||[]).filter(n=>hasSword(n));
@@ -51,6 +52,7 @@ function renderBattle(){
  v.innerHTML=`
   <div class="bt-head">
     <h3>출 전 편 성</h3>
+    <button class="bt-rank" data-mode="rank">랭 킹</button>
     <span>${team.length} / ${TEAM_SIZE}</span>
   </div>
   <div class="bt-slots">${slots}</div>
@@ -85,6 +87,7 @@ $("v-battle").addEventListener("click",e=>{
   S.team.push(n);save();renderBattle();return;}
  const m=e.target.closest("[data-mode]");
  if(m){const md=m.dataset.mode;
+  if(md==="rank"){rankOpen();return;}
   if(md==="pvp"){pvpOpen();return;}
   if(md==="duo"){duoOpen();return;}
   openArena(md);return;}
