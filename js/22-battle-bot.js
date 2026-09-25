@@ -24,8 +24,8 @@ function botTeam(){
    if(pick.includes(s)||used.includes(s.t))continue;
    pick.push(s);used.push(s.t);}
  if(!pick.length)return (S.team||[]).map(n=>SWORDS.find(x=>x.n===n)).filter(Boolean)
-   .map(s=>({s,st:battleStat(s)}));
- return pick.map(s=>({s,st:battleStat(s)}));
+   .map(teamEntry);
+ return pick.map(teamEntry);
 }
 function botInit(){
  const team=botTeam(); if(!team.length)return;
@@ -98,7 +98,7 @@ function botSwing(){
  /* 주인공 자리를 잠깐 빌려 판정한다 — 같은 규칙이 그대로 동료에게 적용된다 */
  const sx=P.x,sy=P.y,sd=P.dir;
  P.x=B.x;P.y=B.y;P.dir=dir;
- arStandIn(RARITY[cur.s.t].c,cur.st.sig);
+ arStandIn(cur.look.col,cur.st.sig);
  try{ arMotion(mo,dmg,tr,dir); }catch(e){}
  arStandOut();
  B.x=P.x;B.y=P.y;                              // 파고드는 모션은 실제로 자리를 옮긴다
@@ -118,16 +118,19 @@ function botHurt(d){
 }
 function botDraw(g){
  const B=BA.bot; if(!B)return;
- const cur=botCur(),col=RARITY[cur.s.t].c;
- if(!B.down)arAuraAt(g,B.x,B.y,B.dir,cur.st.trait.id,col,cur.st.sig);
+ const cur=botCur(),k=cur.look,col=k.col;
+ if(!B.down)arAuraAt(g,B.x,B.y,B.dir,k.tr,col,k.sig);
  g.fillStyle="rgba(0,0,0,.34)";
  g.beginPath();g.ellipse(B.x,B.y+13,15,5.5,0,0,6.283);g.fill();
  const fade=B.down?.35:(B.inv>0&&Math.floor(B.inv*14)%2?.5:0);
- arDrawFighter(g,B.x,B.y,B.dir,col,cur.st.arch.mo,B.sw,"mate",fade);
+ arDrawFighter(g,B.x,B.y,B.dir,k,B.sw,"mate",fade);
  g.textAlign="center";g.font="500 10px system-ui";
  g.fillStyle=B.down?"#8a94a6":"#b8f0c8";
- g.fillText(B.down?BOT_NAME+" (쓰러짐)":BOT_NAME,B.x,B.y-30);
+ g.fillText(B.down?BOT_NAME+" (쓰러짐)":BOT_NAME,B.x,B.y-48);
  if(B.down)return;
+ g.font="500 9px system-ui";
+ g.fillStyle=col;g.globalAlpha=.9;
+ g.fillText(cur.s.n,B.x,B.y-36);g.globalAlpha=1;
  g.fillStyle="rgba(0,0,0,.6)";g.fillRect(B.x-24,B.y-26,48,4);
  g.fillStyle="#7ce08a";g.fillRect(B.x-24,B.y-26,48*Math.max(0,B.hp/B.hpMax),4);
 }

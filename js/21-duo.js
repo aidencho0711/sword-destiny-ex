@@ -110,19 +110,17 @@ function duoTick(dt){
  if(DU.mate.seen>0)DU.mate.seen-=dt;
  const s=DU.mate.sw; if(s){s.t+=dt; if(s.t>=s.d)DU.mate.sw=null;}
 }
-/* 동료가 지금 들고 있는 검 — 색·모션·특징·서명이 전부 여기서 나온다 */
+/* 동료가 지금 들고 있는 검 — 색·모션·특징·서명·이름이 전부 여기서 나온다 */
 function duoMateSword(){
  const f=DU&&DU.mate;
- const e=f&&f.team&&f.team[f.slot];
- return e?{col:RARITY[e.s.t].c,mo:e.st.arch.mo,tr:e.st.trait.id,sig:e.st.sig}
-        :{col:"#8fd08a",mo:"slash",tr:"crit",sig:null};
+ return swordLook(f&&f.team&&f.team[f.slot],"#8fd08a");
 }
 function duoOnState(p){
  if(!DU||!p||DU.done)return;
  const m=DU.mate;
  m.x=p.x;m.y=p.y;m.dir=p.dir;m.slot=p.slot;m.hp=p.hp;m.hpMax=p.hpMax||m.hpMax;
  m.alive=p.al!==false;m.seen=1.2;
- if(p.t&&!m.team)m.team=p.t.map(n=>{const s=SWORDS.find(x=>x.n===n);return s?{s,st:battleStat(s)}:null;}).filter(Boolean);
+ if(p.t&&!sameNames(p.t,m.names)){m.names=p.t;m.team=teamFromNames(p.t);}
  if(!m.alive)duoFinishBoth();                       // 한 명이 누우면 거기서 끝이다
 }
 /* 손님이 받는 적 스냅샷 — 그리기 전용이다 */
@@ -216,11 +214,14 @@ function duoDrawMate(g){
  if(f.alive)arAuraAt(g,f.x,f.y,f.dir,sw.tr,sw.col,sw.sig);
  g.fillStyle="rgba(0,0,0,.34)";
  g.beginPath();g.ellipse(f.x,f.y+13,15,5.5,0,0,6.283);g.fill();
- arDrawFighter(g,f.x,f.y,f.dir,sw.col,sw.mo,f.sw,"mate",f.alive?0:.4);
+ arDrawFighter(g,f.x,f.y,f.dir,sw,f.sw,"mate",f.alive?0:.4);
  g.textAlign="center";g.font="500 10px system-ui";
  g.fillStyle=f.alive?"#b8f0c8":"#8a94a6";
- g.fillText(f.alive?f.name:f.name+" (쓰러짐)",f.x,f.y-30);
+ g.fillText(f.alive?f.name:f.name+" (쓰러짐)",f.x,f.y-48);
  if(!f.alive)return;
+ g.font="500 9px system-ui";
+ g.fillStyle=sw.col;g.globalAlpha=.9;
+ g.fillText(sw.nm,f.x,f.y-36);g.globalAlpha=1;
  g.fillStyle="rgba(0,0,0,.6)";g.fillRect(f.x-24,f.y-26,48,4);
  g.fillStyle="#7ce08a";g.fillRect(f.x-24,f.y-26,48*Math.max(0,f.hp/f.hpMax),4);
 }

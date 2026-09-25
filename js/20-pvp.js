@@ -126,18 +126,18 @@ function pvpTick(dt){
  if(PV.foe.seen>0)PV.foe.seen-=dt;
  const s=PV.foe.sw; if(s){s.t+=dt; if(s.t>=s.d)PV.foe.sw=null;}   // 상대의 칼도 실제로 휘둘러진다
 }
-/* 상대가 지금 들고 있는 검 — 색·모션·서명이 전부 여기서 나온다 */
+/* 상대가 지금 들고 있는 검 — 색·모션·서명·이름이 전부 여기서 나온다 */
 function pvpFoeSword(){
  const f=PV&&PV.foe;
- const e=f&&f.team&&f.team[f.slot];
- return e?{col:RARITY[e.s.t].c,mo:e.st.arch.mo,tr:e.st.trait.id,sig:e.st.sig}
-        :{col:"#ff7a6a",mo:"slash",tr:"crit",sig:null};
+ return swordLook(f&&f.team&&f.team[f.slot],"#ff7a6a");
 }
 function pvpOnState(p){
  if(!PV||!p)return;
  const f=PV.foe;
  f.x=p.x;f.y=p.y;f.dir=p.dir;f.slot=p.slot;f.hp=p.hp;f.hpMax=p.hpMax||f.hpMax;f.seen=1.2;
- if(p.t&&!f.team)f.team=p.t.map(n=>{const s=SWORDS.find(x=>x.n===n);return s?{s,st:battleStat(s)}:null;}).filter(Boolean);
+ /* 한 번만 세우고 마는 게 아니라 목록이 달라지면 다시 세운다 —
+    첫 꾸러미를 놓치거나 어긋난 채로 들어오면 판이 끝날 때까지 고쳐지지 않았다. */
+ if(p.t&&!sameNames(p.t,f.names)){f.names=p.t;f.team=teamFromNames(p.t);}
 }
 /* 내가 휘두른 것을 알린다 — 맞았는지는 상대가 판정한다 */
 function pvpOnSwing(mo,dmg,tr,dir,sig){
@@ -201,13 +201,16 @@ function pvpFinish(winner){
 /* 정산 — 양쪽 보고가 모일 때까지 기다렸다가 결과를 받아 온다.
    pvp_report 는 (판, 보고자) 가 기본키라 몇 번을 다시 불러도 한 번만 센다.
    그래서 "아직 상대 보고가 없다(waiting)"면 그냥 다시 부르면 된다. */
+let pvBusy=false;
 async function pvpSettle(mid,winner,win){
+ if(pvBusy)return;
+ pvBusy=true;
  CLOUD_HOLD++;                                   // 정산 끝나기 전에 옛 저장을 올리면 되돌아간다
  let res=null;
  try{
   for(let i=0;i<12;i++){
    const r=await pvpReport(mid,winner);
-   if(r&&r.error){res={ok:false,why:cloudErr(r.error)};break;}
+   if(r&&r.error){res={ok:false,why:"server",msg:(r.error.message||String(r.error))};break;}
    res=(r&&r.data)||null;
    if(!res){res={ok:false,why:"응답 없음"};break;}
    if(res.ok||res.why!=="waiting")break;
@@ -216,25 +219,35 @@ async function pvpSettle(mid,winner,win){
  }catch(e){ res={ok:false,why:"통신 오류"}; }
  try{ await pullCloud(); }catch(e){}
  CLOUD_HOLD--;
+ pvBusy=false;
  renderHUD();
- if(PV&&BA&&BA.over)pvpResultCard(win,res);
+ if(PV&&BA&&BA.over)pvpResultCard(win,res,{mid,winner});
 }
 const PV_WHY={waiting:"상대의 결과가 오지 않았습니다. 상대가 보내는 대로 서버가 정산하며, 다음에 접속할 때 반영됩니다.",
  mismatch:"양쪽 보고가 어긋나 무효 처리했습니다.",
- void:"무효가 된 판입니다.", "not live":"이미 끝난 판입니다.", "no match":"판을 찾지 못했습니다."};
-function pvpResultCard(win,res){
+ void:"무효가 된 판입니다.", "not live":"이미 끝난 판입니다.", "no match":"판을 찾지 못했습니다.",
+ server:"서버가 정산을 거절했습니다."};
+function pvpResultCard(win,res,again){
  const done=res&&res.ok;
+ /* 서버 오류 원문은 접어 둔다 — 화면을 도배하지 않으면서도
+    무엇이 틀렸는지는 열어 볼 수 있어야 고칠 수 있다. */
+ const detail=(res&&res.msg)?`<details class="ar-why"><summary>자세히</summary>
+     <code>${esc2(res.msg).slice(0,300)}</code></details>`:"";
  const amt=done?`<div class="ar-gain">
      <div><b>${win?"+":"−"}${fmt(res.gold||0)}</b><span>주화</span></div>
      <div><b>💎 ${win?"+":"−"}${fmt(res.gems||0)}</b><span>보석</span></div></div>`
-   : `<p class="ar-no">${res?(PV_WHY[res.why]||res.why||"정산하지 못했습니다"):"정산 중…"}</p>`;
+   : `<p class="ar-no">${res?(PV_WHY[res.why]||res.why||"정산하지 못했습니다"):"정산 중…"}</p>${detail}`;
+ /* 실패했으면 다시 싸우지 않고도 정산만 다시 걸 수 있어야 한다 */
+ const retry=(res&&!res.ok&&again)?`<button class="mini" id="ar-retry">정산 다시 시도</button>`:"";
  $("ar-over").innerHTML=`<div class="ar-res">
    <div class="ar-rt">${win?"승 리":"패 배"}</div>
    <div class="ar-rw"><b>${esc2(PV?PV.oppName:"")}</b><span>상대</span></div>
    ${amt}
-   <button class="buy" id="ar-close">돌아가기</button></div>`;
+   <div class="btn-row">${retry}<button class="buy" id="ar-close">돌아가기</button></div></div>`;
  const b=$("ar-close");
  if(b)b.onclick=()=>{pvpEndSession();closeArena();renderBattle();};
+ const rb=$("ar-retry");
+ if(rb)rb.onclick=()=>{pvpResultCard(win,null,again);pvpSettle(again.mid,again.winner,win);};
 }
 function pvpEndSession(){
  if(!PV)return;
@@ -256,10 +269,15 @@ function pvpDrawFoe(g){
  arAuraAt(g,f.x,f.y,f.dir,sw.tr,sw.col,sw.sig);
  g.fillStyle="rgba(0,0,0,.34)";
  g.beginPath();g.ellipse(f.x,f.y+13,15,5.5,0,0,6.283);g.fill();
- arDrawFighter(g,f.x,f.y,f.dir,sw.col,sw.mo,f.sw,"foe",0);
- /* 머리 위 이름과 체력 */
- g.textAlign="center";g.font="500 10px system-ui";
- g.fillStyle="#ffd0cc";g.fillText(f.name,f.x,f.y-30);
+ arDrawFighter(g,f.x,f.y,f.dir,sw,f.sw,"foe",0);
+ /* 머리 위 이름·검·체력 — 상대가 무엇을 들었는지 글자로도 보여야
+    "왜 나랑 같은 검처럼 보이지" 를 화면에서 바로 가릴 수 있다 */
+ g.textAlign="center";
+ g.font="500 10px system-ui";
+ g.fillStyle="#ffd0cc";g.fillText(f.name,f.x,f.y-48);
+ g.font="500 9px system-ui";
+ g.fillStyle=sw.col;g.globalAlpha=.9;
+ g.fillText(sw.nm,f.x,f.y-36);g.globalAlpha=1;
  g.fillStyle="rgba(0,0,0,.6)";g.fillRect(f.x-24,f.y-26,48,4);
  g.fillStyle="#ff7a6a";g.fillRect(f.x-24,f.y-26,48*Math.max(0,f.hp/f.hpMax),4);
 }

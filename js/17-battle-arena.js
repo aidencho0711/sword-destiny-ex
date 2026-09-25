@@ -24,7 +24,7 @@ function openArena(mode,opt){
  /* 저장된 팀에 없는 이름이 섞여 있으면 여기서 걸러 낸다 — 검 이름이 바뀌거나
     다른 기기 저장이 들어오면 그대로 터진다. */
  const team=S.team.map(n=>SWORDS.find(x=>x.n===n)).filter(Boolean)
-   .map(s=>({s,st:battleStat(s)}));
+   .map(teamEntry);
  if(team.length<TEAM_SIZE){toast("출전 검을 다시 정해 주세요");return;}
  BA={mode,cv,ctx,team,slot:0,over:false,raf:0,last:0,w:0,h:0,dpr:1,
      p:{x:0,y:0,vx:0,vy:0,r:15,dir:-Math.PI/2,hp:100,hpMax:100,inv:0,atkCd:0},
@@ -98,12 +98,12 @@ function arBakeBg(){
 }
 /* 칼날 그라디언트는 색과 길이가 같으면 늘 같은 물건이다 — 매 프레임 새로 만들지 않는다.
    그라디언트 좌표는 그릴 때의 좌표계로 풀리므로 회전·이동해도 그대로 쓸 수 있다. */
-function arBladeGrad(g,col,L){
- const k=col+"|"+Math.round(L);
+function arBladeGrad(g,c0,c1,L){
+ const k=c0+"|"+c1+"|"+Math.round(L);
  const m=BA.grad||(BA.grad={});
  if(m[k])return m[k];
  const gl=g.createLinearGradient(0,-L,0,0);
- gl.addColorStop(0,"#ffffff");gl.addColorStop(.5,col);gl.addColorStop(1,"#6d7689");
+ gl.addColorStop(0,"#ffffff");gl.addColorStop(.52,c0);gl.addColorStop(1,c1);
  return m[k]=gl;
 }
 /* 캔버스 그림자는 그릴 때마다 따로 흐림 패스를 돌린다 — 가장 비싼 축이라
@@ -156,10 +156,10 @@ function arUp(e){
 function arSlot(i){
  if(!BA||i===BA.slot||!BA.team[i])return;
  BA.slot=i;BA.p.atkCd=Math.max(BA.p.atkCd,0.18);        // 교체 직후 한 박자 쉰다
- BA.fx.push({k:"ring",x:BA.p.x,y:BA.p.y,t:0,d:.3,c:RARITY[BA.team[i].s.t].c});
+ BA.fx.push({k:"ring",x:BA.p.x,y:BA.p.y,t:0,d:.3,c:BA.team[i].look.col});
 }
 const arCur=()=>BA.team[BA.slot];
-const arCol=()=>RARITY[arCur().s.t].c;
+const arCol=()=>arCur().look.col;
 
 /* ── 진행 ── */
 function arLoop(now){
@@ -733,8 +733,9 @@ function arBodyGrad(g,sk){
  bg.addColorStop(0,sk.b0);bg.addColorStop(1,sk.b1);
  return m[k]=bg;
 }
-function arDrawFighter(g,x,y,dir,col,mo,sw,skin,fade){
+function arDrawFighter(g,x,y,dir,look,sw,skin,fade){
  const sk=AR_SKIN[skin]||AR_SKIN.me;
+ const col=look.col, mo=look.mo;
  g.save();g.translate(x,y);
  if(fade)g.globalAlpha=fade;
  const a0=g.globalAlpha;
@@ -761,7 +762,8 @@ function arDrawFighter(g,x,y,dir,col,mo,sw,skin,fade){
  g.strokeStyle=col;g.lineWidth=sw?7:4.5;g.lineJoin="round";
  arBladePath(g,mo,L);g.stroke();
  g.globalCompositeOperation="source-over";g.globalAlpha=a0;
- g.fillStyle=arBladeGrad(g,col,L);g.strokeStyle="rgba(8,12,20,.85)";g.lineWidth=1.4;
+ g.fillStyle=arBladeGrad(g,look.c0,look.c1,L);
+ g.strokeStyle="rgba(8,12,20,.85)";g.lineWidth=1.4;
  arBladePath(g,mo,L);g.fill();g.stroke();
  g.fillStyle="#3a3f4d";g.fillRect(-2.8,0,5.6,12);          // 자루
  g.fillStyle=col;g.fillRect(-7.5,-2,15,4);                 // 가드
@@ -769,9 +771,9 @@ function arDrawFighter(g,x,y,dir,col,mo,sw,skin,fade){
  g.restore();g.globalAlpha=1;
 }
 function arDrawPlayer(g){
- const P=BA.p,c=arCur();
+ const P=BA.p;
  const blink=P.inv>0&&Math.floor(P.inv*14)%2?.45:0;
- arDrawFighter(g,P.x,P.y,P.dir,arCol(),c.st.arch.mo,BA.swing,"me",blink);
+ arDrawFighter(g,P.x,P.y,P.dir,arCur().look,BA.swing,"me",blink);
 }
 
 /* 터치 조작부 */
@@ -792,7 +794,7 @@ function arDrawUI(g,U){
 function arDrawSlots(g,sx,sy,sr,gap){
  g.textAlign="center";g.textBaseline="middle";
  for(let i=0;i<3;i++){
-  const cx=sx+i*gap,on=i===BA.slot,c=RARITY[BA.team[i].s.t].c;
+  const cx=sx+i*gap,on=i===BA.slot,c=BA.team[i].look.col;
   g.strokeStyle=c;g.globalAlpha=on?1:.4;g.lineWidth=on?3:1.5;
   g.beginPath();g.arc(cx,sy,sr,0,6.283);g.stroke();
   if(on){g.globalAlpha=.2;g.fillStyle=c;g.beginPath();g.arc(cx,sy,sr,0,6.283);g.fill();}
@@ -813,8 +815,8 @@ function arDrawKeyHint(g){
 /* 장착한 검의 아우라 — 검을 바꾸면 같이 바뀐다.
    모양은 그 검의 고유 특징에서 오고, 색은 등급에서 온다. */
 function arDrawAura(g){
- const P=BA.p,st=arCur().st;
- arAuraAt(g,P.x,P.y,P.dir,st.trait.id,arCol(),st.sig);
+ const P=BA.p,k=arCur().look;
+ arAuraAt(g,P.x,P.y,P.dir,k.tr,k.col,k.sig);
 }
 /* 자리와 검만 주면 누구 발밑에든 깔린다 — 1vs1 상대와 듀얼 동료도 같은 걸 쓴다 */
 function arAuraAt(g,px,py,pdir,tr,c,sig){

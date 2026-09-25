@@ -1657,3 +1657,9 @@ nav button.on{color:var(--paper);border-top-color:var(--ember)}
 /* 보상이 자산 비례로 바뀐 뒤로는 "얼마"보다 "몇 %"가 판단 기준이다 */
 .ar-pct{font-size:11.5px;color:#8a94a6;letter-spacing:.04em;margin:-6px 0 14px}
 .ar-pct b{color:#d8c9a8;font-size:12.5px}
+/* 정산 실패 원문 — 접어 두되 열어 볼 수는 있게 */
+.ar-why{margin:-6px 0 14px;font-size:11px;color:#6f7889}
+.ar-why summary{cursor:pointer;letter-spacing:.06em}
+.ar-why code{display:block;margin-top:8px;padding:8px 10px;border-radius:8px;
+  background:rgba(0,0,0,.35);color:#9aa6bd;font-size:10.5px;line-height:1.7;
+  word-break:break-all;text-align:left}

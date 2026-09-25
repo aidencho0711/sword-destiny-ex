@@ -70,6 +70,38 @@ function canAddToTeam(team,name){
  if(team.length>=TEAM_SIZE)return {ok:false,why:"자리가 찼습니다"};
  if(teamRarityUsed(team).includes(s.t))return {ok:false,why:RARITY[s.t].n+" 등급은 이미 한 자루 넣었습니다"};
  return {ok:true};}
+/* 아레나에서 검 한 자루가 어떻게 보이는가.
+
+   여태 등급색 하나와 날 모양 8종으로만 그렸더니, 같은 등급색·같은 날을 쓰는
+   검들이 화면에서 완전히 똑같아졌다. 실제로 네 무리가 그랬다 —
+   태초 셋(EQUINOX·적요·영겁 永劫)은 등급색이 전부 #ffffff 에 rift 라
+   서로 구별이 아예 안 됐고, T I M E  D E S T R O Y E R 와 G L I T C H 도 같았다.
+   검마다 제 색(acc, c[0], c[1])이 이미 있으니 그걸 쓰면 거의 다 갈라진다. */
+function lookOf(s,st){
+ const c=s.c||[], rc=RARITY[s.t].c;
+ return {col:s.acc||c[0]||rc,                 // 아우라·어깨·가드
+         c0:c[0]||rc, c1:c[1]||"#6d7689",     // 칼날 그라디언트
+         mo:st.arch.mo, tr:st.trait.id, sig:st.sig,
+         nm:s.n, rare:RARITY[s.t].n};
+}
+const teamEntry=s=>{const st=battleStat(s);return {s,st,look:lookOf(s,st)};};
+/* 상대가 보내 온 검 이름 목록 → 전투 정보.
+   찾지 못한 이름은 null 로 남긴다. 걸러내 버리면 뒤 칸이 앞으로 당겨져서
+   상대가 2번 검을 들었는데 내 화면에는 3번 검이 보인다 —
+   한쪽 기기가 옛 캐시를 물고 있어 새 검 이름을 모르면 실제로 이렇게 된다. */
+function teamFromNames(names){
+ if(!Array.isArray(names))return null;
+ return names.map(n=>{const s=SWORDS.find(x=>x.n===n);return s?teamEntry(s):null;});
+}
+const sameNames=(a,b)=>Array.isArray(a)&&Array.isArray(b)&&
+  a.length===b.length&&a.every((v,i)=>v===b[i]);
+/* 상대·동료를 그릴 때 — 모르는 이름이면 그렇다고 적는다.
+   조용히 아무 검이나 그리면 "왜 내 검이랑 똑같지" 가 된다. */
+function swordLook(e,fallback){
+ return e?e.look
+        :{col:fallback||"#8a94a6",c0:fallback||"#8a94a6",c1:"#4a5160",
+          mo:"slash",tr:"crit",sig:null,nm:"알 수 없는 검",rare:""};
+}
 /* 팀 합산 — 편성 화면에서 한눈에 보여 주는 값 */
 function teamSummary(team){
  const st=team.map(n=>SWORDS.find(x=>x.n===n)).filter(Boolean).map(battleStat);
