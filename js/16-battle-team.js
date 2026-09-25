@@ -20,13 +20,14 @@ function renderBattle(){
  const slots=Array.from({length:TEAM_SIZE},(_,i)=>{
   const n=team[i];
   if(!n)return `<div class="bt-slot empty"><span>${i+1}</span><i>비어 있음</i></div>`;
-  const s=SWORDS.find(x=>x.n===n),R=RARITY[s.t],b=battleStat(s);
+  const s=SWORDS.find(x=>x.n===n),R=RARITY[s.t],b=battleStat(s),sk=SKILLS[s.n];
   return `<div class="bt-slot" style="--acc:${R.c}" data-drop="${encodeURIComponent(n)}">
     <span>${i+1}</span>
     <div class="bt-art">${swordSVG(s)}</div>
     <div class="bt-nm">${gradText(R,s.n,s)}</div>
     <div class="bt-rr">${gradText(R,R.n)}</div>
     <div class="bt-st"><b>${b.dmg}</b><i>DMG</i><b>${b.def}</b><i>DEF</i><b>${b.spd}</b><i>SPD</i></div>
+    ${sk?`<div class="bt-sk"><i>P</i><b>${esc2(sk.n)}</b><p>${esc2(sk.d)}</p></div>`:""}
     <button class="bt-x" data-drop="${encodeURIComponent(n)}">빼기</button></div>`;}).join("");
 
  const used=teamRarityUsed(team);
@@ -40,7 +41,8 @@ function renderBattle(){
     <div class="bt-ic">${swordSVG(s)}</div>
     <div class="bt-info">
       <div class="bt-rn">${gradText(R,s.n,s)}</div>
-      <div class="bt-rt">${gradText(R,R.n)} · ${b.arch.n} · ${b.trait.n}</div>
+      <div class="bt-rt">${gradText(R,R.n)} · ${b.arch.n} · ${b.trait.n}${
+        SKILLS[s.n]?` · <em class="bt-skn">P ${esc2(SKILLS[s.n].n)}</em>`:""}</div>
     </div>
     <div class="bt-rs"><b>${b.dmg}</b><b>${b.def}</b><b>${b.spd}</b></div>
     <div class="bt-tag">${inTeam?"출전":blocked?"등급 중복":full?"자리 참":""}</div>

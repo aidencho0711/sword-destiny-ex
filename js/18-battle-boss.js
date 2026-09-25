@@ -42,7 +42,7 @@ function arSpawnBoss(w){
  const o={m:{id:"boss",n:B.n,c:B.c,r:B.r},B,boss:true,
    x:BA.w/2+Math.cos(a)*R,y:BA.h/2+Math.sin(a)*R,
    r:B.r,hp,hpMax:hp,dmg:B.dmg*waveDmg(w),spd:B.spd,
-   st:2,t:0,hit:0,ph:0,tele:null,copies:null,slow:0};
+   st:2,t:0,hit:0,ph:0,tele:null,copies:null,slow:0,uid:++MOB_UID};
  BA.mobs.push(o);
  BA.boss=o;
  btBgmStart("boss");sfxBossIn();

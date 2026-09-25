@@ -26,6 +26,7 @@ function openArena(mode,opt){
  const team=S.team.map(n=>SWORDS.find(x=>x.n===n)).filter(Boolean)
    .map(teamEntry);
  if(team.length<TEAM_SIZE){toast("출전 검을 다시 정해 주세요");return;}
+ team.forEach(skArm);                     // 검마다 제 스킬과 제 게이지
  BA={mode,cv,ctx,team,slot:0,over:false,raf:0,last:0,w:0,h:0,dpr:1,
      p:{x:0,y:0,vx:0,vy:0,r:15,dir:-Math.PI/2,hp:100,hpMax:100,inv:0,atkCd:0},
      mobs:[],bul:[],fx:[],num:[],haz:[],boss:null,
@@ -35,6 +36,8 @@ function openArena(mode,opt){
      bossOrder:BOSSES.map((_,i)=>i).sort(()=>Math.random()-.5),
      up:Object.assign({},BUP_BASE),pick:null,taken:[],
      joy:{id:null,cx:0,cy:0,dx:0,dy:0},atk:{id:null},kills:0,
+     freeze:0,fate:0,skT:0,hist:[],histT:0,        // 스킬이 쓰는 상태
+
      input:"touch",keys:{},swing:null};
  /* 체력은 팀 평균 방어력을 타고 오른다 — 단단한 검을 넣으면 오래 버틴다 */
  const sum=teamSummary(S.team);
@@ -114,6 +117,10 @@ function arLayout(){
  const b=Math.max(74,Math.min(106,BA.w*0.25));
  BA.ui={jx:b*0.84,jy:BA.h-b*1.62,jr:b*0.60,
         bx:BA.w-b*0.80,by:BA.h-b*1.05,br:b*0.54,
+        /* 스킬은 공격 버튼 위쪽 안쪽에. 두 단추의 터치 반경이 겹치면
+           계속 누르고 있어야 하는 공격 대신 스킬이 나가 버린다 —
+           반지름 합보다 확실히 멀리 띄운다. */
+        kx:BA.w-b*1.72,ky:BA.h-b*2.02,kr:b*0.33,
         sx:b*0.44,sy:BA.h-b*0.42,sr:b*0.21};
 }
 const arDist=(a,b)=>Math.hypot(a.x-b.x,a.y-b.y);
@@ -124,10 +131,11 @@ function arKey(e){
  if(!BA||BA.over)return;
  const k=e.key.toLowerCase(),down=e.type==="keydown";
  const move="wasd".includes(k)||["arrowup","arrowdown","arrowleft","arrowright"].includes(k);
- if(!move&&k!=="l"&&!["1","2","3"].includes(k))return;
+ if(!move&&k!=="l"&&k!=="p"&&!["1","2","3"].includes(k))return;
  e.preventDefault();
  BA.input="key";BA.keys[k]=down;
  if(down&&["1","2","3"].includes(k))arSlot(+k-1);
+ if(down&&k==="p")skUse();                              // 스킬
 }
 function arDown(e){
  if(!BA||BA.over)return;
@@ -137,6 +145,7 @@ function arDown(e){
  for(let i=0;i<3;i++){                                   // 검 교체 버튼
   const cx=u.sx+i*(u.sr*2.6);
   if(Math.hypot(p.x-cx,p.y-u.sy)<u.sr*1.3){arSlot(i);return;}}
+ if(Math.hypot(p.x-u.kx,p.y-u.ky)<u.kr*1.3){skUse();return;}   // 스킬 버튼
  if(Math.hypot(p.x-u.bx,p.y-u.by)<u.br*1.35){BA.atk.id=e.pointerId;return;}
  if(p.x<BA.w*0.55){BA.joy.id=e.pointerId;BA.joy.cx=p.x;BA.joy.cy=p.y;BA.joy.dx=0;BA.joy.dy=0;return;}
  BA.atk.id=e.pointerId;
@@ -173,17 +182,21 @@ function arLoop(now){
  }catch(e){ if(!BA.warned){BA.warned=1;console.error("arena frame:",e);} }
  BA.raf=requestAnimationFrame(arLoop);
 }
+let MOB_UID=0;
 function arSpawn(id,w){
  const m=MOBM[id],a=Math.random()*6.283;
  const R=Math.max(BA.w,BA.h)*0.62;
  const hp=Math.round(m.hp*waveHp(w));
  BA.mobs.push({m,x:BA.w/2+Math.cos(a)*R,y:BA.h/2+Math.sin(a)*R,
-   r:m.r,hp,hpMax:hp,dmg:m.dmg*waveDmg(w),spd:m.spd,st:0,t:Math.random()*2,hit:0});
+   r:m.r,hp,hpMax:hp,dmg:m.dmg*waveDmg(w),spd:m.spd,st:0,t:Math.random()*2,hit:0,uid:++MOB_UID});
 }
 function arStep(dt){
  const P=BA.p;
  if(BA.mode==="pvp")pvpTick(dt);
  if(BA.mode==="duo")duoTick(dt);
+ /* 「종착」이 걸리면 적의 시간만 멎는다 — 나는 그대로 움직이고 벤다 */
+ skTick(dt);
+ const froze=(BA.freeze||0)>0;
  /* 적 시뮬레이션 — 대전엔 없고, 듀얼은 호스트만 돌린다.
     손님이 같이 돌리면 두 화면의 적이 절대 안 맞는다. */
  const simFoe = BA.mode!=="pvp" && !(BA.duo && !BA.duo.host);
@@ -236,21 +249,32 @@ function arStep(dt){
  if(P.atkCd>0)P.atkCd-=dt;
  if(BA.mode==="duo"&&P.hp<=0){BA.joy.dx=0;BA.joy.dy=0;}   // 쓰러지면 못 움직인다
  const firing=(BA.input==="key"?!!BA.keys.l:BA.atk.id!==null)&&P.hp>0;
- if(firing&&P.atkCd<=0){arSwing();P.atkCd=1/(cur.st.spd*BA.up.spd);}
+ if(firing&&P.atkCd<=0){arSwing();
+  /* 「시간 파괴」가 걸린 동안은 나에게만 시간이 다르게 흐른다 */
+  P.atkCd=1/(cur.st.spd*BA.up.spd*((BA.skHaste||0)>0?2:1));}
  /* 몬스터 */
  for(let i=BA.mobs.length-1;i>=0;i--){
   const o=BA.mobs[i];
-  if(simFoe){ if(o.boss)arBossStep(o,dt); else arMobStep(o,dt); }
+  /* 스킬이 걸어 둔 상태 — 멎음(hush), 표식(mark), 표적 상실(noTgt) */
+  if(o.hush>0)o.hush-=dt;
+  if(o.mark>0)o.mark-=dt;
+  if(o.noTgt>0)o.noTgt-=dt;
+  if(o.armor>0)o.armor-=dt;
+  if(o.glitch>0)o.glitch-=dt;
+  if(o.ruleT>0)o.ruleT-=dt;
+  const still=froze||o.hush>0;
+  if(simFoe&&!still){ if(o.boss)arBossStep(o,dt); else arMobStep(o,dt); }
   if(o.hit>0)o.hit-=dt;
   if(o.hp<=0){ if(simFoe)arKill(o,i); else {BA.mobs.splice(i,1);sfxKill();} continue; }
   /* 맞았는지는 각자 제 화면에서 본다 — 손님도 제 피는 제가 깎는다 */
-  if(arDist(o,P)<o.r+P.r&&P.inv<=0){
+  if(arDist(o,P)<o.r+P.r&&P.inv<=0&&!still&&!(o.noTgt>0)){
    arHurt(o.dmg*(o.m.id==="bomber"?1:.45));
    if(o.m.id==="bomber"&&simFoe){o.hp=0;arKill(o,i);}}
  }
  /* 탄 */
  for(let i=BA.bul.length-1;i>=0;i--){
   const b=BA.bul[i];
+  if(froze&&b.foe)continue;                // 멎은 시간 속에서는 적의 탄도 서 있다
   b.x+=b.vx*dt;b.y+=b.vy*dt;b.t+=dt;
   if(b.t>3||b.x<-40||b.y<-40||b.x>BA.w+40||b.y>BA.h+40){BA.bul.splice(i,1);continue;}
   if(b.foe){ if(arDist(b,P)<P.r+b.r&&P.inv<=0){arHurt(b.dmg);BA.bul.splice(i,1);} }
@@ -260,7 +284,7 @@ function arStep(dt){
         if(hitOne&&b.tr!=="pierce")BA.bul.splice(i,1); }
  }
  if(BA.bot)botStep(dt);
- arHazStep(dt);
+ if(!froze)arHazStep(dt);
  /* 잔존 장판 */
  for(const f of BA.fx) if(f.k==="pool"){
   f.tick=(f.tick||0)+dt;
@@ -282,6 +306,13 @@ function arNearest(){
  return b;}
 function arMobStep(o,dt){
  const P=BA.p;o.t+=dt;
+ /* 「망각」 — 무엇을 쫓고 있었는지 잊었다. 아무 데로나 흘러 다닌다. */
+ if(o.noTgt>0){
+  if(o.wa===undefined)o.wa=Math.random()*6.283;
+  o.wa+=(Math.random()-.5)*dt*2.4;
+  o.x=Math.max(12,Math.min(BA.w-12,o.x+Math.cos(o.wa)*o.spd*.5*dt));
+  o.y=Math.max(12,Math.min(BA.h-12,o.y+Math.sin(o.wa)*o.spd*.5*dt));
+  return;}
  const ang=Math.atan2(P.y-o.y,P.x-o.x);
  if(o.slow>0)o.slow-=dt;
  const id=o.m.id, rg=(1+BA.rage)*(o.slow>0?.42:1);   // 시간이 멎은 적은 느리다
@@ -316,8 +347,15 @@ function arHurt(d){
 }
 function arHit(o,dmg,tr,report){
  let d=dmg;
+ if(BA.fate>0)d*=2.5;                    // 천기 — 이미 정해져 있던 일격
+ if(o.mark>0)d*=2;                       // 관측 — 관측된 것은 피할 수 없다
+ if(o.armor>0)d*=3;                      // 규칙 삭제 — 방어라는 규칙이 지워졌다
  if((tr==="crit"&&Math.random()<.16)||Math.random()<BA.up.crit)d*=2;
  d=Math.max(1,Math.round(d));
+ /* 스킬 게이지는 내가 손으로 넣은 피해만 센다.
+    남의 공격을 대신 재생하는 중(BA.as)이면 내 몫이 아니고,
+    스킬이 내는 피해(skFiring)는 제 게이지를 되채워 무한 반복이 된다. */
+ if(!BA.as&&!BA.skFiring)skGain(d);
  o.hit=.12;sfxHit();
  BA.num.push({x:o.x,y:o.y-o.r,v:d,t:0,c:d>dmg*1.5?"#ffd45e":"#fff"});
  /* 듀얼 손님은 적의 체력을 건드리지 않는다 — 적의 주인은 호스트 하나다.
@@ -578,6 +616,7 @@ function arDraw(){
   if(isBossWave(f.n)){g.font="500 13px serif";g.fillStyle="#ff8f6a";
    g.fillText("보스", W/2, H*.33+24);}
   g.globalAlpha=1;}
+ skDraw(g);                                   // 스킬 연출과 화면 덮개
  arDrawBossBar(g);
  if(BA.input==="touch")arDrawUI(g,BA.ui);
  else arDrawKeyHint(g);
@@ -789,15 +828,20 @@ function arDrawUI(g,U){
  g.beginPath();g.arc(U.bx,U.by,U.br*(on?.94:1),0,6.283);g.stroke();
  g.globalAlpha=on?.26:.1;g.fillStyle=arCol();
  g.beginPath();g.arc(U.bx,U.by,U.br*(on?.94:1),0,6.283);g.fill();g.globalAlpha=1;
+ skDrawBtn(g,U);
  arDrawSlots(g,U.sx,U.sy,U.sr,U.sr*2.6);
 }
 function arDrawSlots(g,sx,sy,sr,gap){
  g.textAlign="center";g.textBaseline="middle";
  for(let i=0;i<3;i++){
-  const cx=sx+i*gap,on=i===BA.slot,c=BA.team[i].look.col;
+  const e=BA.team[i],cx=sx+i*gap,on=i===BA.slot,c=e.look.col;
   g.strokeStyle=c;g.globalAlpha=on?1:.4;g.lineWidth=on?3:1.5;
   g.beginPath();g.arc(cx,sy,sr,0,6.283);g.stroke();
   if(on){g.globalAlpha=.2;g.fillStyle=c;g.beginPath();g.arc(cx,sy,sr,0,6.283);g.fill();}
+  /* 칸마다 제 게이지를 두른다 — 검을 바꾸기 전에 어느 게 찼는지 보여야 한다 */
+  if(e.sk){const k=Math.min(1,e.gauge/e.need);
+   g.globalAlpha=k>=1?1:.7;g.strokeStyle=k>=1?"#fff":c;g.lineWidth=2.4;
+   g.beginPath();g.arc(cx,sy,sr+4.5,-1.571,-1.571+6.283*k);g.stroke();}
   g.globalAlpha=on?1:.55;g.fillStyle="#e8ecf4";
   g.font="700 "+Math.round(sr*.88)+"px system-ui,sans-serif";
   g.fillText(String(i+1),cx,sy+1);g.globalAlpha=1;}
@@ -806,10 +850,11 @@ function arDrawSlots(g,sx,sy,sr,gap){
 /* 키보드일 땐 조이스틱 대신 안내와 슬롯만 */
 function arDrawKeyHint(g){
  const U=BA.ui;
+ skDrawBtn(g,U);
  arDrawSlots(g,U.sx,U.sy,U.sr,U.sr*2.6);
  g.textAlign="right";g.font="500 11px system-ui,sans-serif";
  g.fillStyle="rgba(200,212,232,.5)";
- g.fillText("WASD 이동   ·   L 공격   ·   1 2 3 검 교체",BA.w-16,BA.h-18);
+ g.fillText("WASD 이동   ·   L 공격   ·   P 스킬   ·   1 2 3 검 교체",BA.w-16,BA.h-18);
  g.textAlign="center";
 }
 /* 장착한 검의 아우라 — 검을 바꾸면 같이 바뀐다.
