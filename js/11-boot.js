@@ -25,8 +25,28 @@ document.addEventListener("touchend",e=>{
  if(t-lastTouch<320)e.preventDefault();
  lastTouch=t;},{passive:false});
 
-/* 서비스 워커 — 한 번 열면 오프라인에서도 동작 */
+/* 서비스 워커 — 한 번 열면 오프라인에서도 동작
+   스크립트는 캐시에서 먼저 꺼내므로(오프라인용) 배포 직후 처음 연 화면은 늘 옛 판이다.
+   그 사이 새 sw.js 가 모든 파일을 새로 받아 곧바로 자리를 넘겨받지만(skipWaiting·claim),
+   이미 떠 있는 화면은 옛 스크립트 그대로라 "두 번째로 열어야" 새 판이 보였다.
+   그래서 넘겨받는 순간 한 번 새로 고친다. 처음 설치(이전 관리자 없음)라면 고칠 것이 없고,
+   컷신·전투·대전 화면이 열려 있으면 끝날 때까지 미룬다. 새로 고치기 전에 저장을 먼저 끝낸다 —
+   클라우드 계정은 불러올 때 서버 저장을 먼저 보므로, 올리기 전에 끊으면 방금 것이 사라진다. */
 if("serviceWorker" in navigator&&location.protocol.startsWith("http")){
+ const hadSW=!!navigator.serviceWorker.controller;
+ let swReloading=false;
+ /* 대전 정산이 도는 동안(CLOUD_HOLD)에는 저장을 올리면 받은 보상이 되돌아가므로 그때도 기다린다 */
+ const swBusy=()=>(typeof CLOUD_HOLD!=="undefined"&&CLOUD_HOLD>0)||
+  ["cs","arena","pvp","trade"].some(id=>{const e=$(id);return e&&e.classList.contains("on");});
+ const swReload=async()=>{
+  if(swReloading)return;
+  if(swBusy()){setTimeout(swReload,1500);return;}
+  swReloading=true;
+  try{clearTimeout(saveT);await store.set(saveKey(),JSON.stringify(S));}catch(e){}
+  try{if(S.cloud&&S.uid&&typeof cloudReady==="function"&&cloudReady())
+   await cloudPutSave(S.uid,S.acctName||"",S);}catch(e){}
+  location.reload();};
+ navigator.serviceWorker.addEventListener("controllerchange",()=>{if(hadSW)swReload();});
  window.addEventListener("load",()=>navigator.serviceWorker.register("sw.js").catch(()=>{}));}
 
 let lgMode="login";
