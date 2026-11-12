@@ -97,7 +97,8 @@ function swordLite(s){
 /* ench: 인첸트 레벨(0=기본). 인첸트본이면 전용 글린트 레이어를 덧입힌다. */
 function swordSVG(s,ench){
  const elv=(typeof ench==="number"?ench:(ench&&ench.e)||0);
- const R=RARITY[s.t],id="s"+(uid++),glow=s.t>=4,aura=s.t>=6,prism=s.t>=11;
+ /* 공용 고리 아우라는 Present 에서만 뺀다 — 월계관과 겹쳐 둘 다 흐려진다 */
+ const R=RARITY[s.t],id="s"+(uid++),glow=s.t>=4,aura=s.t>=6&&s.th!=="prs",prism=s.t>=11;
  let defs=`<linearGradient id="b${id}" x1="0" y1="0" x2="1" y2=".3">
    <stop offset="0%" stop-color="${s.c[0]}"/><stop offset="46%" stop-color="${s.e}"/>
    <stop offset="100%" stop-color="${s.c[1]}"/></linearGradient>
@@ -342,6 +343,88 @@ function swordSVG(s,ench){
     dcF+=`<path d="M${(100+Math.cos(a)*rr).toFixed(1)} ${(258+Math.sin(a)*rr*.82).toFixed(1)} l7 3 l-3 7 l-7 -3 Z"
       fill="${s.gem}" opacity="0"><animate attributeName="opacity" values="0;.72;0"
       dur="${(2.4+(i%4)*.6).toFixed(1)}s" begin="${(i*.41).toFixed(2)}s" repeatCount="indefinite"/></path>`;}
+   break;}
+  case "Present":{                           // 마지막 검 — 월계관으로 묶고 리본을 맨 선물
+   /* 고전의 승리관(월계관)이 날을 두르고, 아래에서 붉은 리본으로 묶여 있다.
+      날에는 "HIC · ET · NVNC(지금, 여기)"가 새겨져 있고, 관의 한가운데 —
+      날 위의 한 점이 늘 빛난다. 그 점이 곧 "지금"이다. */
+   const CX=100,CY=214,RX=104,RY=112;
+   defs+=`<radialGradient id="pg${id}" cx="50%" cy="44%" r="52%">
+     <stop offset="0%" stop-color="#fff4d6" stop-opacity=".34"/>
+     <stop offset="55%" stop-color="#e9c977" stop-opacity=".12"/>
+     <stop offset="100%" stop-color="#e9c977" stop-opacity="0"/></radialGradient>
+    <linearGradient id="pl${id}" x1="0" y1="0" x2="1" y2="1">
+     <stop offset="0%" stop-color="#fff1c4"/><stop offset="55%" stop-color="#d9ac52"/>
+     <stop offset="100%" stop-color="#9c7024"/></linearGradient>
+    <linearGradient id="pd${id}" x1="0" y1="0" x2="1" y2="1">
+     <stop offset="0%" stop-color="#e2bb63"/><stop offset="100%" stop-color="#7d5718"/></linearGradient>
+    <linearGradient id="pr${id}" x1="0" y1="0" x2="0" y2="1">
+     <stop offset="0%" stop-color="#d4566a"/><stop offset="55%" stop-color="#9e2436"/>
+     <stop offset="100%" stop-color="#6b1222"/></linearGradient>`;
+   /* 뒤 — 따뜻한 빛무리와 천천히 도는 빛살 */
+   let rays="";
+   for(let i=0;i<18;i++){const a=i*20*Math.PI/180,L=150+(i%3)*22;
+    rays+=`<path d="M${CX} ${CY} L${(CX+Math.cos(a-.035)*L).toFixed(1)} ${(CY+Math.sin(a-.035)*L).toFixed(1)}
+      L${(CX+Math.cos(a+.035)*L).toFixed(1)} ${(CY+Math.sin(a+.035)*L).toFixed(1)} Z" fill="#ffe9b0" opacity=".065"/>`;}
+   dcB=`<ellipse cx="${CX}" cy="${CY+20}" rx="160" ry="240" fill="url(#pg${id})"/>
+    <g>${rays}<animateTransform attributeName="transform" type="rotate"
+      from="0 ${CX} ${CY}" to="360 ${CX} ${CY}" dur="90s" repeatCount="indefinite"/></g>`;
+   /* 월계관 — 아래에서 양쪽으로 자라 올라가 위에서 벌어진다.
+      잎은 줄기의 접선을 따라 바깥·안쪽으로 40도씩 벌리고, 끝으로 갈수록 작아진다. */
+   const leaf=(x,y,dx,dy,sc,fill)=>{
+    const rot=Math.atan2(dx,-dy)*180/Math.PI,s=sc;
+    return `<path d="M0 0 C${(4.2*s).toFixed(1)} ${(-5*s).toFixed(1)} ${(4.4*s).toFixed(1)} ${(-12*s).toFixed(1)} 0 ${(-17.5*s).toFixed(1)}
+      C${(-4.4*s).toFixed(1)} ${(-12*s).toFixed(1)} ${(-4.2*s).toFixed(1)} ${(-5*s).toFixed(1)} 0 0 Z"
+      transform="translate(${x.toFixed(1)} ${y.toFixed(1)}) rotate(${rot.toFixed(1)})" fill="${fill}"/>`;};
+   const branch=(a0,a1)=>{
+    let stem="",leaves="",berry="";
+    const sg=Math.sign(a1-a0),N=11;
+    for(let k=0;k<=40;k++){const th=(a0+(a1-a0)*k/40)*Math.PI/180;
+     stem+=(k?" L":"M")+(CX+RX*Math.cos(th)).toFixed(1)+" "+(CY+RY*Math.sin(th)).toFixed(1);}
+    for(let k=0;k<N;k++){
+     const t=.06+k*(.9/(N-1)),th=(a0+(a1-a0)*t)*Math.PI/180;
+     const x=CX+RX*Math.cos(th),y=CY+RY*Math.sin(th);
+     let tx=-RX*Math.sin(th)*sg,ty=RY*Math.cos(th)*sg;const tl=Math.hypot(tx,ty);tx/=tl;ty/=tl;
+     const ox=Math.cos(th),oy=Math.sin(th),c=Math.cos(.7),s=Math.sin(.7),sc=1.36-t*.56;
+     leaves+=leaf(x,y,tx*c+ox*s,ty*c+oy*s,sc,`url(#p${k%2?"l":"d"}${id})`)
+            +leaf(x,y,tx*c-ox*s,ty*c-oy*s,sc*.92,`url(#p${k%2?"d":"l"}${id})`);
+     if(k%3===1)berry+=`<circle cx="${(x+ox*9).toFixed(1)}" cy="${(y+oy*9).toFixed(1)}" r="2.4" fill="#f6dfa0"/>`;}
+    const te=a1*Math.PI/180;
+    let ex2=-RX*Math.sin(te)*sg,ey2=RY*Math.cos(te)*sg;const el=Math.hypot(ex2,ey2);
+    leaves+=leaf(CX+RX*Math.cos(te),CY+RY*Math.sin(te),ex2/el,ey2/el,.62,`url(#pl${id})`);
+    return `<path d="${stem}" fill="none" stroke="#b88a34" stroke-width="2.2" stroke-linecap="round"/>${leaves}${berry}`;};
+   const wreath=`<g opacity=".95">${branch(102,252)}${branch(78,-72)}
+     <animate attributeName="opacity" values=".82;1;.82" dur="5.6s" repeatCount="indefinite"/></g>`;
+   /* 리본 — 관의 아래 매듭에서 고리 둘, 꼬리 둘. 꼬리는 바람에 아주 조금 흔들린다 */
+   const BY=CY+RY;
+   const tail=(dir,dur)=>`<path d="M${100+dir*3} ${BY+3} C${100+dir*10} ${BY+26} ${100+dir*18} ${BY+50} ${100+dir*27} ${BY+78}
+     L${100+dir*19} ${BY+73} L${100+dir*17} ${BY+84} C${100+dir*9} ${BY+56} ${100+dir*3} ${BY+30} ${100-dir*3} ${BY+5} Z"
+     fill="url(#pr${id})" stroke="#5a0f1c" stroke-width=".8">
+     <animateTransform attributeName="transform" type="rotate" values="0 100 ${BY};${dir*3} 100 ${BY};0 100 ${BY}"
+       dur="${dur}s" repeatCount="indefinite"/></path>`;
+   const loop=dir=>`<path d="M100 ${BY} C${100+dir*12} ${BY-17} ${100+dir*36} ${BY-17} ${100+dir*35} ${BY-2}
+     C${100+dir*34} ${BY+11} ${100+dir*14} ${BY+9} 100 ${BY} Z" fill="url(#pr${id})" stroke="#5a0f1c" stroke-width=".9"/>
+     <path d="M${100+dir*7} ${BY-4} C${100+dir*16} ${BY-12} ${100+dir*28} ${BY-11} ${100+dir*29} ${BY-3}"
+       fill="none" stroke="#f08a9a" stroke-width="1.1" opacity=".55"/>`;
+   const bow=tail(-1,4.6)+tail(1,5.3)+loop(-1)+loop(1)+
+     `<ellipse cx="100" cy="${BY+1}" rx="7.5" ry="6.5" fill="#b02c40" stroke="#5a0f1c" stroke-width=".9"/>`;
+   /* 날의 새김 — 지금, 여기. 관 한가운데의 별과 아래 매듭을 피해 날 윗부분에 새긴다 */
+   const ins=`<text x="0" y="0" transform="translate(103.5 192) rotate(-90)"
+     font-family="Cinzel,'Cormorant Garamond',serif" font-size="10" font-weight="700" letter-spacing="2.6"
+     fill="#8a6420" opacity=".62">HIC ET NVNC</text>`;
+   /* 지금 — 관의 한가운데, 날 위의 한 점 */
+   const now=`<g transform="translate(${CX} ${CY})"><circle r="16" fill="#fff6dc" opacity=".24">
+      <animate attributeName="r" values="11;20;11" dur="3.2s" repeatCount="indefinite"/></circle>
+     <path d="M0 -15 L3 -3.2 L15 0 L3 3.2 L0 15 L-3 3.2 L-15 0 L-3 -3.2 Z" fill="#ffffff">
+      <animateTransform attributeName="transform" type="scale" values=".72;1.12;.72" dur="3.2s" repeatCount="indefinite"/>
+      <animate attributeName="opacity" values=".62;1;.62" dur="3.2s" repeatCount="indefinite"/></path></g>`;
+   /* 떠오르는 금빛 — 흘려보낸 순간들 */
+   let motes="";
+   for(let i=0,N=QC(7);i<N;i++){const x=(46+((i*41)%110)).toFixed(0),du=(4.4+(i%4)*.9).toFixed(1);
+    motes+=`<circle cx="${x}" cy="370" r="${(1.6+(i%3)*.6).toFixed(1)}" fill="#ffe9b0" opacity="0">
+      <animate attributeName="cy" values="372;96" dur="${du}s" begin="${(i*.7).toFixed(1)}s" repeatCount="indefinite"/>
+      <animate attributeName="opacity" values="0;.85;0" dur="${du}s" begin="${(i*.7).toFixed(1)}s" repeatCount="indefinite"/></circle>`;}
+   dcF=ins+wreath+bow+now+motes;
    break;}
   case "영겁 永劫":{                          // 무한대 기호와 큰 고리
    dcB=`<path d="M60 250 C60 226 100 226 100 250 C100 274 140 274 140 250 C140 226 100 226 100 250 C100 274 60 274 60 250 Z" fill="none" stroke="${s.e}" stroke-width="1.6" opacity=".5">

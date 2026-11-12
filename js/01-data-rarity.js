@@ -26,6 +26,12 @@ const RARITY=[
  /* ── 최상위: 푸름과 흼이 번갈아 흐르는 등급. 전용 서체(font)와 글자 떨림(jitter)을 쓴다 ── */
  {id:"absolute",n:"ABSOLUTE",one:25000000000000, c:"#bfe0ff", g:20000000000, mode:"theme", pd:8.0, end:15600,
   grad:1, cg:["#2f7fd8","#ffffff","#7fc4ff","#eaf6ff"], font:1, jitter:1},
+ /* ── 마지막 등급: 피날레 ──
+    앞의 것들은 떨고(ABSOLUTE) 깨지고 지워졌다. 끝은 고요하다 —
+    금박 위로 빛이 천천히 지나갈 뿐 글자는 떨지 않는다. 전용 필기체(fin)를 쓴다.
+    ABSOLUTE 보다 40배 드물다(ABSOLUTE 도 영겁보다 50배였다). */
+ {id:"finale",n:"Finale",one:1e15, c:"#ffe3a6", g:200000000000, mode:"theme", pd:8.0, end:33200,
+  grad:1, cg:["#c99a3e","#fff3d6","#f2cf7c","#fffaf0"], fin:1},
 ];
 const CUT_FROM=6, PITY_AT=1200;
 
@@ -144,3 +150,28 @@ const OBL_T={
 };
 const OBL_PD=OBL_T.close;
 const OBL_END=Math.round((OBL_T.close+OBL_T.fade)*1000);
+
+/* ═════════ 「Present」 연출 타이밍 (초) ═════════
+   이 게임을 끝맺는 컷신. 검은 등장하지 않는다(bare).
+   s1~s9 는 문장이 쓰이기 시작하는 시각, title 은 빛의 펜촉이 이름을 쓰기 시작하는 시각.
+   영어 문장이라 한 줄에 3초 가까이 준다 — 쓰이는 걸 따라 읽을 시간이 있어야 한다.
+   여기 숫자만 고치면 화면·음악·글자가 전부 따라온다. */
+const PRS_T={
+ open:  1.5,   // ① 화면이 따뜻한 어둠으로 가라앉고, 불씨 하나만 남는다
+ s1:    1.6,   // "When you first came, the forge was cold."
+ s2:    4.6,   // "You struck it anyway — again, and again."   불티가 두 번 튄다
+ roll:  4.6,   // 지나온 등급들이 뒤에서 천천히 올라간다 (엔딩 크레디트)
+ s3:    7.6,   // "Most of it was common." / "Some of it was impossible."
+ s4:   10.9,   // "Time broke. The world glitched. Memory faded."   ABSOLUTE 세 자루
+ s5:   14.0,   // "And still, you stayed."
+ s6:   16.4,   // "This last blade was never forged." / "It is every moment you spent here."
+ s7:   19.8,   // "Not the past. Not the future."
+ s8:   22.2,   // "Only the"
+ title:23.0,   // 「Present」 — 빛의 펜촉이 이름을 쓴다
+ s9:   27.6,   // "Thank you for playing."
+ fin:  29.8,   // Fin — 불씨가 꺼진다
+ close:31.6,   // ② 어둠이 걷히고 화로로 돌아온다
+ fade:  1.6,
+};
+const PRS_PD=PRS_T.close;
+const PRS_END=Math.round((PRS_T.close+PRS_T.fade)*1000);

@@ -74,6 +74,10 @@ const SWORDS=[
  {t:17,n:"O B L I V I O N",b:"crystal",g:"halo",c:["#c9a8ff","#3a1f6e"],e:"#eddcff",gem:"#a06aff",gr:"#241238",
   th:"obl",pd:OBL_PD,end:OBL_END,bare:1,nfx:"oblivion",vb:"-64 0 328 560",acc:"#c9a8ff",
   d:"베인 것은 사라지지 않는다. 사라졌다는 것조차 아무도 기억하지 못하게 될 뿐이다."},
+ /* ── Finale ── 이 게임의 마지막 검. 컷신은 게임을 끝맺고, 검은 끝내 등장하지 않는다 ── */
+ {t:18,n:"Present",b:"straight",g:"cross",c:["#fff6df","#b8892e"],e:"#fffdf5",gem:"#ffd98a",gr:"#4a2f14",
+  th:"prs",pd:PRS_PD,end:PRS_END,bare:1,nfx:"present",vb:"-60 0 320 560",acc:"#ffe3a6",
+  d:"불에서 벼린 검이 아니다. 여기서 보낸 모든 순간으로 이루어져 있다. 지나간 것도, 아직 오지 않은 것도 아닌 — 지금."},
 ];
 SWORDS.forEach(s=>{if(s.gem==="#f濃")s.gem="#ff8fb8";});
 
@@ -123,6 +127,9 @@ const FX={
  "T I M E  D E S T R O Y E R":{luck:2.6,speed:.72,gem:1.6,pdur:.8,twin:1},
  "G L I T C H":{dupe:3.2,luck:2.4,gem:1.4,rer:12},
  "O B L I V I O N":{luck:3.0,pdur:1.4,gem:1.2},
+ /* Finale — 마지막 트로피. 행운은 OBLIVION 보다 한 칸 위(✦V 기준 최대 행운 +11%)에서 멈추고,
+    대신 쌍 판정·보석·주화·포션 지속을 고루 쥔다. 하나만 몰아주면 다른 축의 곡선이 깨진다. */
+ "Present":{luck:3.4,twin:1,gem:2.0,gold:.8,pdur:1.6},
 };
 SWORDS.forEach(x=>{x.fx=FX[x.n]||{gold:x.t*.02};});
 

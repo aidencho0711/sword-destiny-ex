@@ -1236,6 +1236,131 @@ function themeHTML(s,R){
     <i class="tz-pop cl"></i><i class="tz-pop cl b"></i>
     <div class="tz-white"></div>
   </div>${say}</div>`;}
+ case "prs":{                                    // Present — 이 게임을 끝맺는다. 검은 등장하지 않는다
+  const T=PRS_T,TOT=PRS_END/1000;
+  const P=t=>+(Math.max(0,Math.min(TOT,t))/TOT*100).toFixed(3);
+  const E=v=>String(v).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/"/g,"&quot;");
+
+  /* ── 문장 ── [시작, 끝, 문장(| 는 줄바꿈), 세로 위치, class]
+     글자 하나하나가 차례로 쓰인다. 한 화면에 쓰는 데 걸리는 시간은 그 화면 길이에 맞춰
+     늘였다 줄인다 — 긴 문장이 다 쓰이기도 전에 지워지면 안 된다. */
+  const LINES=[
+   [T.s1,T.s2,"When you first came, the forge was cold.","40%",""],
+   [T.s2,T.s3,"You struck it anyway — again, and again.","40%",""],
+   [T.s3,T.s4,"Most of what it gave you was common.|Some of it was impossible.","40%",""],
+   [T.s4,T.s5,"Time broke. The world glitched. Memory faded.","40%",""],
+   [T.s5,T.s6,"And still, you stayed.","40%",""],
+   [T.s6,T.s7,"This last blade was never forged.|It is made of every moment you spent here.","40%",""],
+   [T.s7,T.s8,"Not the past. Not the future.","40%",""],
+   [T.s8,T.s9-.35,"Only the","30.5%","only"],
+   [T.s9,T.fin-.1,"Thank you for playing.","41%","thx"],
+  ];
+  /* 낱말이 쓰이는 순간에 맞춰 터뜨릴 것들 — 불티(again), ABSOLUTE 세 자루의 잔상 */
+  const at={again:[],broke:0,glitched:0,faded:0};
+  const lines=LINES.map(([a,b,tx,top,cl])=>{
+   const n=tx.replace(/[|\s]/g,"").length;
+   const stg=Math.min(.036,Math.max(.017,(b-a-1.4)/n));
+   let k=0,h="";
+   tx.split("|").forEach((pt,pi)=>{
+    if(pi)h+="<br>";
+    for(let i=0;i<pt.length;i++){
+     const ch=pt[i],tt=a+.15+k*stg;
+     if(pt.startsWith("again",i))at.again.push(tt);
+     for(const w of ["broke","glitched","faded"])if(pt.startsWith(w,i))at[w]=tt;
+     if(ch===" "){h+=" ";continue;}
+     h+=`<span class="pc" style="--d:${tt.toFixed(3)}s">${E(ch)}</span>`;k++;}
+   });
+   return `<div class="pr-l ${cl}" style="top:${top};--a:${a}s;--b:${b}s"><div class="pr-in">${h}</div></div>`;
+  }).join("");
+  PRS_AT=at;                                     // 소리(sfxPresent)가 같은 시각에 불티·잔상을 울린다
+
+  /* ── 지나온 등급들 — 엔딩 크레디트처럼 뒤에서 천천히 올라간다 ── */
+  const RN=["Common","Refined","Rare","Elite","Heroic","Saga","Legend","Immortal","Myth",
+   "Transcendent","Celestial","Divine","Origin","Destiny","Aeon","Chaos","Aeternum","Absolute"];
+  const roll=RN.map((nm,i)=>`<div class="rn" style="color:${(RARITY[i].cg&&RARITY[i].cg[0])||RARITY[i].c}">${nm}</div>`).join("");
+
+  /* ── 불티 — "again" 이 쓰이는 두 번, 불씨에서 튄다 ── */
+  let sparks="";
+  at.again.forEach((t0,j)=>{for(let i=0,N=QC(8);i<N;i++){
+   const a=(-150+i*(120/Math.max(1,N-1))+((i*37+j*19)%17)-8)*Math.PI/180,d=34+((i*29+j*11)%38);
+   sparks+=`<i class="pr-sp" style="--t:${(t0+.05).toFixed(3)}s;--sx:${(Math.cos(a)*d).toFixed(0)}px;--sy:${(Math.sin(a)*d).toFixed(0)}px"></i>`;}});
+
+  /* ── 잔상 셋 — 시간이 부서지고(시계), 세계가 어긋나고(색 조각), 기억이 바랜다(보랏빛) ── */
+  let ticks="";
+  for(let i=0;i<12;i++){const q=i*Math.PI/6,b=i%3===0;
+   ticks+=`<line x1="${(Math.cos(q)*(b?31:35)).toFixed(1)}" y1="${(Math.sin(q)*(b?31:35)).toFixed(1)}"
+     x2="${(Math.cos(q)*39).toFixed(1)}" y2="${(Math.sin(q)*39).toFixed(1)}" stroke-width="${b?2.2:1.2}"/>`;}
+  const dial=`<svg viewBox="-50 -50 100 100" fill="none" stroke="#bfe0ff" stroke-linecap="round">
+    <circle r="42" stroke-width="1.6"/>${ticks}
+    <line x1="0" y1="0" x2="0" y2="-22" stroke-width="2.6"/><line x1="0" y1="0" x2="27" y2="9" stroke-width="1.6"/>
+    <circle r="2.4" fill="#bfe0ff" stroke="none"/></svg>`;
+  const GC=["#ff2d4d","#31e8ff","#ff4df0","#ffffff","#5eff7a"];
+  let gl="";
+  for(let i=0,N=QC(8);i<N;i++)
+   gl+=`<i style="left:${(50+(((i*37)%60)-30)).toFixed(0)}%;top:${(50+(((i*53)%44)-22)).toFixed(0)}%;
+     width:${10+(i%4)*7}px;height:${3+(i%3)*3}px;background:${GC[i%GC.length]};--j:${(i%2?1:-1)*(4+(i%3)*3)}px"></i>`;
+  const echo=`<div class="pr-echo">
+    <div class="pr-ck l" style="--t:${at.broke.toFixed(3)}s">${dial}</div>
+    <div class="pr-ck r" style="--t:${at.broke.toFixed(3)}s">${dial}</div>
+    <div class="pr-gl" style="--t:${at.glitched.toFixed(3)}s">${gl}</div>
+    <i class="pr-wisp" style="--t:${at.faded.toFixed(3)}s"></i></div>`;
+
+  /* ── 떠오르는 금빛 — 여기서 보낸 순간들 ── */
+  let motes="";
+  for(let i=0,N=QC(26);i<N;i++)
+   motes+=`<i class="pr-mt" style="left:${(4+((i*61)%92)).toFixed(0)}%;--du:${(7+((i*13)%5)).toFixed(1)}s;
+     --dl:${(-((i*29)%70)/10).toFixed(1)}s;--sz:${(2+(i%3)*1.2).toFixed(1)}px"></i>`;
+
+  /* ── 불씨가 꺼질 때 오르는 연기 ── */
+  let smoke="";
+  for(let i=0;i<3;i++)smoke+=`<i class="pr-sm" style="--t:${(T.fin+.55+i*.28).toFixed(2)}s;--x:${(i-1)*7}px"></i>`;
+
+  /* ── 국면 곡선 — 불씨·빛무리·빛살·금빛이 한 키프레임 안에서 시간을 따라 숨을 쉰다 ── */
+  const kf=(nm,pts,f)=>`@keyframes ${nm}{${pts.map(([t,...v])=>`${P(t)}%{${f(...v)}}`).join("")}}`;
+  const css=
+   kf("prEmb",[[0,0,.6],[T.open-.6,0,.6],[T.open+.3,.72,1],[T.s2+.9,.72,1],[T.s2+1.2,1,1.2],
+     [T.s2+1.7,.8,1],[T.s5,.8,1],[T.s5+.9,1,1.12],[T.s7,.9,1.04],[T.title-.15,.95,1.04],
+     [T.title+.45,1,1.55],[T.title+1.8,.86,1.08],[T.fin+.35,.86,1.04],[T.fin+1.3,0,.3],[TOT,0,.3]],
+     (o,s)=>`opacity:${o};transform:translate(-50%,-50%) scale(${s})`)+
+   kf("prHaze",[[0,0],[T.open+.4,.42],[T.s5,.48],[T.s5+1,.66],[T.title,.72],[T.title+.8,1],
+     [T.s9,.72],[T.fin+1.4,.22],[TOT,.22]],o=>`opacity:${o}`)+
+   kf("prRaysK",[[0,0],[T.title-.3,0],[T.title+.9,.6],[T.s9-.2,.42],[T.fin,.12],[T.fin+1,0],[TOT,0]],
+     o=>`opacity:${o}`)+
+   kf("prMotesK",[[0,0],[T.s1,.3],[T.s6,.32],[T.s6+1.1,.9],[T.title+2.2,.85],[T.fin,.3],[T.fin+1.6,0],[TOT,0]],
+     o=>`opacity:${o}`);
+
+  /* ── 이름 — 빛의 펜촉이 왼쪽에서 오른쪽으로 쓴다 ──
+     필기체는 이어 써야 하므로 글자를 쪼개지 않는다. 대신 셔터 두 장(바깥 창·안쪽 글씨)을
+     반대로 밀어 창만 지나가게 한다 — clip-path 를 움직이는 것보다 훨씬 싸다. */
+  const W=1.9;
+  return `<div class="pl"><style>${css}</style>
+  <div class="th th-prs" style="--tot:${TOT}s;--po:${T.open}s;--pc:${T.close}s;--pf:${T.fade}s;
+    --pt:${T.title}s;--pw:${W}s;--pfin:${T.fin}s;--ps9:${T.s9}s;--pr0:${T.roll}s;--pr1:${(T.s5+.8-T.roll).toFixed(2)}s">
+   <div class="pr-veil"></div>
+   <div class="pr-scene">
+    <div class="pr-haze"></div>
+    <div class="pr-rays"></div>
+    <div class="pr-roll"><div class="pr-col">${roll}</div></div>
+    <div class="pr-motes">${motes}</div>
+    ${echo}
+    <div class="pr-ember"><i class="gw"></i><i class="co"></i></div>
+    ${sparks}${smoke}
+    <div class="pr-bloom"></div>
+    ${lines}
+    <div class="pr-title">
+     <i class="pr-tg"></i>
+     <div class="pr-word"><span class="pr-size">Present</span>
+      <div class="pr-wipe"><div class="pr-ink"><span>Present</span></div></div>
+      <div class="pr-edge"><i class="pr-nib"></i></div></div>
+     <svg class="pr-flour" viewBox="0 0 300 40" fill="none" stroke-linecap="round">
+      <path pathLength="100" d="M18 24 C8 18 14 6 26 10 C40 15 34 30 22 27 C70 38 120 8 170 18 C214 27 254 14 286 18"/></svg>
+     <div class="pr-tier">F I N A L E</div>
+    </div>
+    <div class="pr-fin"><b>Fin</b>
+     <svg viewBox="0 0 200 16" fill="none" stroke-linecap="round"><path pathLength="100" d="M8 8 H88 M112 8 H192"/>
+      <path pathLength="100" d="M100 2 L106 8 L100 14 L94 8 Z"/></svg></div>
+   </div>
+  </div></div>`;}
  case "ascend":{                                 // 운명 이상 공용 — 색이 흐르는 승천
   const cg=(R.cg&&R.cg.length?R.cg:[R.c,"#ffffff"]);
   const grad=cg.concat(cg[0]).join(",");
@@ -1250,6 +1375,13 @@ function themeHTML(s,R){
   </div></div>`;}
  }
  return "";}
+
+/* 피날레 컷신의 글꼴은 다른 곳에서 거의 쓰이지 않아, 처음 쓰이는 순간에야 내려받기 시작한다.
+   그러면 첫 문장이 대체 글꼴로 떴다가 바뀐다. 한가할 때 미리 받아 둔다. */
+setTimeout(()=>{try{if(document.fonts){
+ document.fonts.load('italic 500 24px "Cormorant Garamond"');
+ document.fonts.load('500 14px "Cormorant Garamond"');
+ document.fonts.load('400 40px "Pinyon Script"');}}catch(e){}},4000);
 
 let csT=null;
 function playCutscene(s,R){

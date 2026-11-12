@@ -54,6 +54,10 @@ function gradText(R,text,sw){
   const r=(i*2654435761)%1013/1013;
   return `<i class="oj" style="--ot:${(3.4+r*2.6).toFixed(2)}s;--od2:${(-r*5.2).toFixed(2)}s">${attrEsc(ch)}</i>`;
  }).join("")+`</span>`;
+ /* 피날레 — 고전 필기체 위로 금박의 광택이 천천히 지나간다. 글자는 떨지 않는다.
+    필기체는 글자끼리 이어져 있다. 다른 등급처럼 글자마다 쪼개 움직이면
+    이음새가 끊겨 보이므로 낱말 하나를 통째로 칠한다. 등급명(Finale)도 같은 표기를 쓴다. */
+ if((sw&&sw.nfx==="present")||(R&&R.fin))return `<span class="fjit">${attrEsc(text)}</span>`;
  if(!R||!R.grad)return text;
  const cg=(R.cg&&R.cg.length?R.cg:[R.c,"#ffffff"]);
  const bg="linear-gradient(90deg,"+cg.concat(cg[0]).join(",")+")";
@@ -98,9 +102,14 @@ function migrateEcon(o){
  o.econ=ECON_VER;
  return true;}
 
+/* 도감 요구치·도감 완성에 세는 검 — 피날레는 뺀다.
+   SWORDS.length 를 그대로 쓰면 환생 15회차부터 "도감 60종"이 되어, 1/1000조짜리
+   마지막 검이 없으면 환생 자체가 막힌다. 끝을 보는 것은 선택이어야 한다. */
+const mainSwords=()=>SWORDS.filter(x=>!RARITY[x.t].fin);
+const collMain=()=>mainSwords().filter(x=>hasSword(x.n)).length;
 function rbReq(n){
  if(n<RB_BASE.length)return RB_BASE[n];
- const k=n-RB_BASE.length+1,c=Math.min(SWORDS.length,30+k*3);
+ const k=n-RB_BASE.length+1,c=Math.min(mainSwords().length,30+k*3);
  const g=Math.round(60*Math.pow(1.85,k));
  return {gold:Math.round(750000000*Math.pow(2.4,k)),gems:g,tier:13,need:1,coll:c,
          note:"운명 1자루 · 도감 "+c+"종 · 보석 "+g};}
@@ -123,7 +132,7 @@ const tierCount=t=>SWORDS.filter(x=>x.t>=t&&hasSword(x.n)).length;
 const GEM_FROM=11;
 const GEM_DROP={11:{p:.10,min:1,max:3},12:{p:.12,min:3,max:6},13:{p:.15,min:6,max:10},
  14:{p:.22,min:12,max:22},15:{p:.34,min:24,max:40},16:{p:.5,min:50,max:90},
- 17:{p:.7,min:120,max:200}};
+ 17:{p:.7,min:120,max:200},18:{p:1,min:400,max:700}};
 function gemDrop(t){
  const d=GEM_DROP[t]; if(!d||Math.random()>=d.p)return 0;
  return d.min+Math.floor(Math.random()*(d.max-d.min+1));}
@@ -139,8 +148,8 @@ const enchRate=lv=>ENCH_RATE[lv];
 function rbCheck(){
  const q=rbReq(S.rebirth),gneed=q.gems||0;
  return {q,gold:S.gold>=q.gold,gems:(S.gems||0)>=gneed,sword:tierCount(q.tier)>=(q.need||1),
-         coll:!q.coll||coll()>=q.coll,
-         ok:S.gold>=q.gold&&(S.gems||0)>=gneed&&tierCount(q.tier)>=(q.need||1)&&(!q.coll||coll()>=q.coll)};}
+         coll:!q.coll||collMain()>=q.coll,
+         ok:S.gold>=q.gold&&(S.gems||0)>=gneed&&tierCount(q.tier)>=(q.need||1)&&(!q.coll||collMain()>=q.coll)};}
 function doRebirth(){
  const c=rbCheck();if(!c.ok)return false;
  const gneed=c.q.gems||0;
@@ -169,7 +178,8 @@ const ACH=[
  {id:"a11",n:"서른 자루",       d:"도감 30종",             c:()=>coll()>=30,        r:{pdur:.15},  x:4,y:3,p:["a7","a8"]},
  {id:"a12",n:"십만 번",         d:"주조 100,000회",        c:()=>S.rolls>=1e5,      r:{pity:120},  x:1,y:4,p:["a9"]},
  {id:"a13",n:"천상에 닿다",     d:"천상 등급 획득",         c:()=>S.best>=10,        r:{luck:.08},  x:2,y:4,p:["a10"]},
- {id:"a14",n:"도감 완성",       d:SWORDS.length+"종 전부 수집", c:()=>coll()>=SWORDS.length, r:{luck:.12,gold:.18}, x:3,y:4,p:["a11"]},
+ /* 도감 완성은 피날레를 뺀 수로 센다 — 마지막 검은 아래 a30 이 따로 맡는다 */
+ {id:"a14",n:"도감 완성",       d:mainSwords().length+"종 전부 수집", c:()=>collMain()>=mainSwords().length, r:{luck:.12,gold:.18}, x:3,y:4,p:["a11"]},
  {id:"a15",n:"신성에 닿다",     d:"신성 등급 획득",         c:()=>S.best>=11,        r:{luck:.1},   x:2,y:5,p:["a13"]},
  {id:"a16",n:"다시 태어나다",   d:"환생 1회",              c:()=>S.rebirth>=1,      r:{gold:.10},   x:0,y:5,p:["a12"]},
  {id:"a17",n:"거부의 영역",     d:"누적 주화 10조",         c:()=>S.goldTot>=1e13,   r:{gold:.14},   x:4,y:5,p:["a14"]},
@@ -189,6 +199,8 @@ const ACH=[
  /* ── 심화 ── */
  {id:"a28",n:"다섯 번의 윤회",  d:"환생 5회",              c:()=>S.rebirth>=5,      r:{luck:.18,gold:.18}, x:2,y:8,p:["a20"]},
  {id:"a29",n:"백만 번의 주조",  d:"주조 1,000,000회",       c:()=>S.rolls>=1e6,      r:{speed:.05},         x:1,y:5,p:["a12"]},
+ /* ── 끝 ── */
+ {id:"a30",n:"피날레",         d:"Present 를 손에 넣는다",   c:()=>S.best>=18,        r:{luck:.2,gold:.2},   x:3,y:10,p:["a23"]},
 ];
 const ACHM=Object.fromEntries(ACH.map(a=>[a.id,a]));
 const RN={luck:"행운",gold:"주화 획득",speed:"주조 속도",pdur:"포션 지속",pity:"전설 보장",gem:"보석 획득",ench:"인첸트 성공"};
