@@ -449,6 +449,7 @@ function arFxOnly(mo,dir,x,y,c,sig){
  if(sig==="tdz")      F.push({k:"tdzEcho",x,y,a:dir,t:0,d:.5,c});
  else if(sig==="glx") F.push({k:"glxTear",x,y,a:dir,t:0,d:.3,c});
  else if(sig==="obl") F.push({k:"oblErase",x:x+Math.cos(dir)*58,y:y+Math.sin(dir)*58,t:0,d:.55,c});
+ else if(sig==="prs") F.push({k:"prsNote",x:x+Math.cos(dir)*52,y:y+Math.sin(dir)*52,t:0,d:.9,c});
 }
 /* 상대가 쏜 조각 — 내 화면에서 실제로 날아오고, 나에게 닿으면 내가 맞았다고 본다.
    지금까지 1vs1 에는 이게 없어서 수정검(shard)은 판정도 그림도 아예 없었다. */
@@ -574,7 +575,7 @@ function arDraw(){
  for(const f of BA.fx)
   if(f.k==="slash"||f.k==="crescent"||f.k==="lance"||f.k==="flame"||
      f.k==="cross"||f.k==="dash"||f.k==="rift"||f.k==="muzzle")arDrawSwingFx(g,f);
-  else if(f.k==="tdzEcho"||f.k==="glxTear"||f.k==="oblErase")arDrawAbsFx(g,f);
+  else if(f.k==="tdzEcho"||f.k==="glxTear"||f.k==="oblErase"||f.k==="prsNote")arDrawAbsFx(g,f);
   else if(f.k==="bossIn"||f.k==="bossTell")arDrawBossFx(g,f);
  for(const f of BA.fx) if(f.k==="pop"&&f.t>=0){
   const k=f.t/f.d;
@@ -1001,7 +1002,24 @@ function arDrawAbsAura(g,sig,c,T,px,py){
  /* 스스로 자리를 잡는다 — 호출부의 translate 에 기대면 복원 뒤에 불릴 때 원점에 그려진다 */
  g.save();g.translate(px!=null?px:BA.p.x,py!=null?py:BA.p.y);
  g.globalCompositeOperation="lighter";
- if(sig==="tdz"){                        // 시계 — 바늘이 도는 작은 시계들이 공전한다
+ if(sig==="prs"){                        // Finale — 발밑을 도는 월계관, 그 위로 떠오르는 음표
+  const glw=g.createRadialGradient(0,0,4,0,0,60);
+  glw.addColorStop(0,"rgba(255,226,160,.28)");glw.addColorStop(1,"rgba(255,226,160,0)");
+  g.globalAlpha=.8+Math.sin(T*1.6)*.12;g.fillStyle=glw;
+  g.beginPath();g.arc(0,0,60,0,6.283);g.fill();
+  g.save();g.rotate(T*.22);
+  g.fillStyle=c;g.globalAlpha=.7;
+  for(let s=-1;s<=1;s+=2)                // 양쪽 가지 — 아래에서 올라가 위에서 벌어진다
+   for(let i=0,N=QC(9);i<N;i++){
+    const a=Math.PI/2+s*(.25+i*(2.5/N)),r=46;
+    g.save();g.translate(Math.cos(a)*r,Math.sin(a)*r);g.rotate(a+s*.6);
+    g.beginPath();g.ellipse(0,0,5.4-i*.25,2.3,0,0,6.283);g.fill();g.restore();}
+  g.restore();
+  g.font="600 15px serif";g.textAlign="center";
+  for(let i=0;i<3;i++){const k=((T*.4+i/3)%1);
+   g.globalAlpha=.75*Math.sin(Math.PI*k);g.fillStyle=c;
+   g.fillText(i%2?"♪":"♩",Math.cos(i*2.1+T*.5)*30,22-k*58);}
+ }else if(sig==="tdz"){                  // 시계 — 바늘이 도는 작은 시계들이 공전한다
   g.globalAlpha=.3;g.strokeStyle=c;g.lineWidth=1.2;
   g.save();g.rotate(-T*.35);              // 큰 문자판은 거꾸로 돈다
   g.beginPath();g.arc(0,0,58,0,6.283);g.stroke();
@@ -1066,6 +1084,9 @@ function arAbsAttack(sig,dmg,tr,dir){
    BA.bul.push({x:P.x,y:P.y,vx:Math.cos(a)*380,vy:Math.sin(a)*380,
      r:7,dmg:dmg*.4,tr,foe:0,t:0,c,gl:1,ghost:arAsGhost()});}
   BA.fx.push({k:"glxTear",x:P.x,y:P.y,a:dir,t:0,d:.3,c});
+ }else if(sig==="prs"){
+  /* 벤 자리에서 음표 하나가 떠오른다 — 판정은 건드리지 않는 순수한 연출 */
+  BA.fx.push({k:"prsNote",x:P.x+Math.cos(dir)*52,y:P.y+Math.sin(dir)*52,t:0,d:.9,c});
  }else{
   /* 지워진다 — 베인 자리가 잠깐 없던 것이 된다 */
   BA.fx.push({k:"oblErase",x:P.x+Math.cos(dir)*58,y:P.y+Math.sin(dir)*58,t:0,d:.55,c});
@@ -1075,7 +1096,15 @@ function arDrawAbsFx(g,f){
  if(f.t<0)return;
  const k=f.t/f.d, ik=1-k;
  g.save();
- if(f.k==="tdzEcho"){                     // 되감기는 시곗바늘
+ if(f.k==="prsNote"){                     // 벤 자리에서 떠오르는 음표 하나와 작은 고리
+  g.globalCompositeOperation="lighter";
+  g.translate(f.x,f.y);
+  g.globalAlpha=ik*.7;g.strokeStyle=f.c;g.lineWidth=1.6;
+  g.beginPath();g.arc(0,0,10+k*26,0,6.283);g.stroke();
+  g.globalAlpha=k<.2?k/.2:ik;g.fillStyle=f.c;
+  g.font="700 20px serif";g.textAlign="center";
+  g.fillText((Math.round(f.x+f.y)%2)?"♪":"♩",Math.sin(k*5)*6,-k*46);
+ }else if(f.k==="tdzEcho"){               // 되감기는 시곗바늘
   g.globalCompositeOperation="lighter";
   g.translate(f.x,f.y);
   g.globalAlpha=ik*.8;g.strokeStyle=f.c;g.lineWidth=2;

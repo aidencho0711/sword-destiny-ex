@@ -186,6 +186,7 @@ const ABS_SIG={
  "T I M E  D E S T R O Y E R":"tdz",   // 시계 · 되감김 · 잠깐 멎는 시간
  "G L I T C H":"glx",                  // 색 어긋남 · 노이즈 · 튀는 조각
  "O B L I V I O N":"obl",              // 보랏빛 지워짐 · 잊혀 가는 잔상
+ "Present":"prs",                      // Finale — 도는 월계관 · 벤 자리에서 떠오르는 음표
 };
 const absSigOf=s=>ABS_SIG[s.n]||null;
 

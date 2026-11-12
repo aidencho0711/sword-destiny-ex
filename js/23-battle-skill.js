@@ -388,6 +388,35 @@ const SKILLS={
   },null,{col:C.col});
   skFx("oblv",{x:C.x,y:C.y,d:1.4,c:C.col});
   skSound("oblv");}},
+
+/* ── Finale ── */
+"Present":{n:"피날레",en:"FINALE",cost:1.4,
+ d:"마지막 악장. 여덟 박자마다 모든 적에게 빛이 내리고, 끝 화음에 지친 것들은 인사하고 퇴장한다. 남은 두 자루에게는 선물이 간다.",
+ run(C){
+  const beats=8,bt=.4;
+  /* 선물은 시전한 쪽의 나머지 두 자루에게 — AI 동료가 쓰면 동료의 검이 받는다 */
+  const own=(BA.bot&&BA.bot.team.indexOf(C.e)>=0)?BA.bot.team:BA.team;
+  BA.p.inv=Math.max(BA.p.inv,beats*bt+.6);       // 연주가 끝날 때까지는 다치지 않는다
+  skJob("finale",beats*bt,function(j,dt){        // 끝 화음은 마지막 박 다음 박에 온다
+   const n=Math.min(beats,Math.floor(j.t/bt)+1);
+   while((j.nb||0)<n){
+    for(const o of BA.mobs){
+     arHit(o,C.dmg*1.4,null,1);
+     if((j.notes=(j.notes||0)+1)<=QC(40))      // 떨어지는 음표 — 너무 많으면 저사양에서 버겁다
+      skFx("fnote",{x:o.x,y:o.y,d:.7,c:C.col,g:((j.nb||0)%2?"♪":"♩")});}
+    BA.p.hp=Math.min(BA.p.hpMax,BA.p.hp+Math.round(BA.p.hpMax*.012));
+    skSound("fbeat",j.nb);
+    j.nb=(j.nb||0)+1;}
+  },function(){                                   // 끝 화음
+   for(let i=BA.mobs.length-1;i>=0;i--){
+    const o=BA.mobs[i];
+    if(o.boss)arHit(o,C.dmg*6,null,1);
+    else if(o.hp<=o.hpMax*.5)arHit(o,o.hp+1,null,1);}
+   for(const e of own) if(e!==C.e&&e.sk&&e.need)e.gauge=Math.min(e.need,e.gauge+e.need*.35);
+   skFx("fchord",{x:BA.p.x,y:BA.p.y,d:1.5,c:C.col});
+   skSound("fchord");
+  },{col:C.col});
+  skSound("finale");}},
 };
 
 /* ── 소리 ── */
@@ -437,6 +466,15 @@ function skSound(k,v){
                bNote(t,73,.6,"square",.05,400); break;
  case "oblv":  bNote(t,196,1.4,"sine",.05,900);bNote(t+.2,165,1.4,"sine",.04,700);
                bNote(t+.4,110,1.6,"sine",.045,500);bNoise(t,.06,1.2,800); break;
+ /* 피날레 — 컷신과 같은 D장조. 박마다 오르골이 화음을 하나씩 짚고, 끝에 화음이 울린다 */
+ case "finale":["D5","E5","F#5","A5","B5","D6"].forEach((n,i)=>
+                bNote(t+i*.05,PN[n],.9,"triangle",.03,7000)); break;
+ case "fbeat": {const ar=["D5","F#5","A5","D6","A5","F#5","E5","C#5"];
+                bNote(t,PN[ar[(v||0)%8]],.8,"triangle",.045,6000);
+                bNote(t,PN[ar[(v||0)%8]]*2,.4,"sine",.012);
+                if((v||0)%2===0)bNote(t,PN.D3,.6,"sine",.04,600); break;}
+ case "fchord":["D3","A3","F#5","A5","D6"].forEach(n=>bNote(t,PN[n],2.4,"sine",.04,4000));
+               bNote(t,PN.D2,2.6,"sine",.06,400);bNoise(t,.05,.6,2600); break;
  }
 }
 
@@ -484,7 +522,18 @@ function skDraw(g){
  /* ── 화면 전체를 덮는 것들 먼저 ── */
  for(const j of J){
   const k=j.t/j.d, ik=1-k;
-  if(j.k==="terminus"){                        // 종착 — 시간이 멎은 화면
+  if(j.k==="finale"){                          // 피날레 — 화면 위로 오선지가 흘러간다
+   const a=Math.min(1,k*6)*Math.min(1,ik*5);
+   g.save();g.globalCompositeOperation="lighter";
+   g.fillStyle="rgba(255,214,140,"+(.06*a).toFixed(3)+")";g.fillRect(0,0,W,H);
+   g.strokeStyle=j.col||"#ffe3a6";g.lineWidth=1.2;g.globalAlpha=.42*a;
+   const y0=H*.13,sh=(T*60)%40;
+   for(let i=0;i<5;i++){g.beginPath();g.moveTo(0,y0+i*9);g.lineTo(W,y0+i*9);g.stroke();}
+   g.font="600 26px serif";g.textAlign="center";g.fillStyle=j.col||"#ffe3a6";
+   for(let x=-sh;x<W+40;x+=40){                 // 오선 위를 미끄러지는 음표
+    g.globalAlpha=.55*a;g.fillText((Math.round((x+sh)/40)%2)?"♪":"♩",x,y0+18+((x/40|0)%3)*9);}
+   g.restore();g.globalAlpha=1;g.globalCompositeOperation="source-over";
+  }else if(j.k==="terminus"){                  // 종착 — 시간이 멎은 화면
    g.save();
    g.fillStyle="rgba(180,200,235,"+(.12*Math.min(1,ik*3)).toFixed(3)+")";
    g.fillRect(0,0,W,H);
@@ -793,6 +842,20 @@ function skDraw(g){
     const kk=Math.max(0,k-i*.14);
     g.globalAlpha=(1-kk)*.6;
     g.beginPath();g.arc(0,0,kk*Math.max(W,H)*.75,0,6.283);g.stroke();}
+  }else if(f.k==="fnote"){                       // 피날레 — 적 위로 음표가 내려앉는다
+   g.translate(f.x,f.y-58*(1-Math.min(1,k*2.2)));g.globalCompositeOperation="lighter";
+   g.globalAlpha=k<.45?1:ik/.55;g.fillStyle=f.c;g.textAlign="center";
+   g.font="700 22px serif";g.fillText(f.g||"♪",0,0);
+   if(k>.4){g.globalAlpha=ik;g.strokeStyle=f.c;g.lineWidth=2;
+    g.beginPath();g.arc(0,8,6+(k-.4)*40,0,6.283);g.stroke();}
+  }else if(f.k==="fchord"){                      // 끝 화음 — 금빛 고리 셋과 흩어지는 음표
+   g.translate(f.x,f.y);g.globalCompositeOperation="lighter";
+   for(let i=0;i<3;i++){const kk=Math.max(0,k-i*.1);
+    g.globalAlpha=(1-kk)*.75;g.strokeStyle=i?f.c:"#fff6dc";g.lineWidth=(3-i)*1.6+1;
+    g.beginPath();g.arc(0,0,kk*Math.max(W,H)*.7,0,6.283);g.stroke();}
+   g.font="700 24px serif";g.textAlign="center";g.fillStyle=f.c;
+   for(let i=0,N=QC(12);i<N;i++){const a=i*6.283/N+k*.8,d=40+k*Math.max(W,H)*.42;
+    g.globalAlpha=ik*.9;g.fillText(i%2?"♪":"♩",Math.cos(a)*d,Math.sin(a)*d);}
   }
   g.restore();g.globalAlpha=1;g.globalCompositeOperation="source-over";
  }
